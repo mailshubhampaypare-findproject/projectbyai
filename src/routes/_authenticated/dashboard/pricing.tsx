@@ -83,7 +83,7 @@ function Pricing() {
     const finalPrice = getDiscountedPrice(Number(plan.price));
 
     const options = {
-      key: "rzp_test_T9aKebvfGIfoPs",
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_T9aKebvfGIfoPs",
       amount: Math.round(finalPrice * 100), // Convert INR to Paisa cents
       currency: "INR",
       name: "ScholarBuild",
