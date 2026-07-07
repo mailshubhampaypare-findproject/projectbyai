@@ -11,7 +11,7 @@ export function BrandLogo({ className, to = "/" }: BrandLogoProps) {
       <img 
         src="/logo.png" 
         alt="projectbyAI" 
-        className="h-8 md:h-9 w-auto object-contain max-w-[160px] dark:brightness-110" 
+        className="h-11 md:h-14 w-auto object-contain max-w-[220px] dark:brightness-110" 
       />
     </Link>
   );
