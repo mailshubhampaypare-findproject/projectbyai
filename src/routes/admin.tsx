@@ -42,7 +42,8 @@ import {
   AlignJustify,
   ListOrdered,
   Users,
-  Tag
+  Tag,
+  Mail
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -268,7 +269,12 @@ function AdminPortal() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   
-  const [activeTab, setActiveTab] = useState<"library" | "blogs" | "users" | "coupons">("library");
+  const [activeTab, setActiveTab] = useState<"library" | "blogs" | "users" | "coupons" | "queries">("library");
+
+  // Contact queries state
+  const [queries, setQueries] = useState<any[]>([]);
+  const [loadingQueries, setLoadingQueries] = useState(false);
+  const [queriesTableMissing, setQueriesTableMissing] = useState(false);
 
   // Users state
   const [users, setUsers] = useState<any[]>([]);
@@ -382,6 +388,7 @@ function AdminPortal() {
       loadBlogPosts();
       loadUsers();
       loadCoupons();
+      loadQueries();
     }
   }, [isLogged]);
 
@@ -498,6 +505,46 @@ function AdminPortal() {
       setCouponsTableMissing(true);
     } finally {
       setLoadingCoupons(false);
+    }
+  };
+
+  const loadQueries = async () => {
+    setLoadingQueries(true);
+    setQueriesTableMissing(false);
+    try {
+      const { data, error } = await supabase
+        .from("contact_queries")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) {
+        if (error.message.includes("does not exist") || error.code === "PGRST116") {
+          setQueriesTableMissing(true);
+        } else {
+          throw error;
+        }
+      } else {
+        setQueries(data || []);
+      }
+    } catch (err: any) {
+      console.warn("Queries load failed: ", err);
+      setQueriesTableMissing(true);
+    } finally {
+      setLoadingQueries(false);
+    }
+  };
+
+  const handleDeleteQuery = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this contact query?")) return;
+    try {
+      const { error } = await supabase
+        .from("contact_queries")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Query deleted successfully");
+      loadQueries();
+    } catch (err: any) {
+      toast.error("Failed to delete query: " + err.message);
     }
   };
 
@@ -1050,6 +1097,15 @@ function AdminPortal() {
             >
               <Tag className="h-4 w-4" />
               Marketing Coupons
+            </button>
+            <button
+              onClick={() => setActiveTab("queries")}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeTab === "queries" ? "bg-primary text-primary-foreground shadow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+              }`}
+            >
+              <Mail className="h-4 w-4" />
+              Contact Queries
             </button>
           </nav>
         </div>
@@ -2194,6 +2250,125 @@ CREATE POLICY "Allow write access to authenticated users" ON public.coupons
                   </CardContent>
                 </Card>
               </div>
+            )}
+          </div>
+        ) : activeTab === "queries" ? (
+          <div className="space-y-8 max-w-6xl mx-auto animate-fade-in">
+            {/* Header */}
+            <div className="border-b pb-5 flex justify-between items-center flex-wrap gap-4">
+              <div>
+                <h1 className="text-3xl font-extrabold tracking-tight">Contact Queries</h1>
+                <p className="text-muted-foreground text-sm mt-1">View queries submitted by students via the Contact Us form.</p>
+              </div>
+              <Button onClick={loadQueries} variant="outline" size="sm" className="border-slate-200">
+                Refresh Queries
+              </Button>
+            </div>
+
+            {/* If contact_queries table doesn't exist, show database migration instructions */}
+            {queriesTableMissing ? (
+              <Card className="p-6 border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-900/50 space-y-4">
+                <div className="flex gap-3">
+                  <HelpCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div className="space-y-2 w-full">
+                    <h3 className="font-bold text-sm text-amber-800 dark:text-amber-300">Supabase Table Migration Required</h3>
+                    <p className="text-xs text-amber-700/90 dark:text-amber-400/90 leading-relaxed">
+                      To start managing client queries, you must create a <code>contact_queries</code> table in your database. 
+                      Copy and execute the SQL query below in your Supabase SQL Editor:
+                    </p>
+
+                    <pre className="bg-slate-900 text-slate-100 p-4 rounded text-[11px] overflow-x-auto font-mono max-w-full select-all">
+{`CREATE TABLE IF NOT EXISTS public.contact_queries (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  name text NOT NULL,
+  email text NOT NULL,
+  phone text,
+  message text NOT NULL,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Enable Row Level Security
+ALTER TABLE public.contact_queries ENABLE ROW LEVEL SECURITY;
+
+-- Allow insert access for anyone
+CREATE POLICY "Allow insert for everyone" ON public.contact_queries
+  FOR INSERT TO public WITH CHECK (true);
+
+-- Allow full access for authenticated users (admins)
+CREATE POLICY "Allow write access to authenticated users" ON public.contact_queries
+  FOR ALL TO authenticated USING (true);`}
+                    </pre>
+
+                    <Button onClick={loadQueries} className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold h-8 mt-2">
+                      I have executed this, click to retry loading
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ) : (
+              <Card className="border bg-white shadow-sm overflow-hidden">
+                <CardHeader className="pb-2 border-b">
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-slate-600">Queries Received ({queries.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {loadingQueries ? (
+                    <div className="p-12 text-center text-slate-400 flex items-center justify-center gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin" /> Loading queries...
+                    </div>
+                  ) : queries.length === 0 ? (
+                    <div className="p-12 text-center text-slate-400">
+                      No customer queries found. Create queries using the public form!
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm text-slate-600 border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50 border-b text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            <th className="px-5 py-3">Student Name</th>
+                            <th className="px-5 py-3">Email Address</th>
+                            <th className="px-5 py-3">Phone Number</th>
+                            <th className="px-5 py-3">Comment / Query</th>
+                            <th className="px-5 py-3">Date Submitted</th>
+                            <th className="px-5 py-3 text-right">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {queries.map((q) => (
+                            <tr key={q.id} className="hover:bg-slate-50/50 transition-colors align-top">
+                              <td className="px-5 py-3 font-semibold text-slate-800 text-xs">
+                                {q.name}
+                              </td>
+                              <td className="px-5 py-3 text-xs">
+                                <a href={`mailto:${q.email}`} className="text-primary hover:underline font-medium">{q.email}</a>
+                              </td>
+                              <td className="px-5 py-3 text-xs text-slate-700 font-mono">
+                                {q.phone || "(none)"}
+                              </td>
+                              <td className="px-5 py-3 text-xs text-slate-700 max-w-sm whitespace-pre-wrap leading-relaxed">
+                                {q.message}
+                              </td>
+                              <td className="px-5 py-3 text-slate-500 text-xs font-mono">
+                                {new Date(q.created_at).toLocaleDateString()}
+                              </td>
+                              <td className="px-5 py-3 text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteQuery(q.id)}
+                                  className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                  title="Delete Query"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             )}
           </div>
         ) : null}
