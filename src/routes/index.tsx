@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/BrandLogo";
 import {
   GraduationCap,
   Sparkles,
@@ -19,10 +20,10 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
-  component: Landing,
+  component: LandingPage,
 });
 
-function Landing() {
+function LandingPage() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
@@ -33,9 +34,7 @@ function Landing() {
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <header className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-          <GraduationCap className="h-6 w-6 text-primary" /> <span className="text-gradient">ScholarBuild</span>
-        </Link>
+        <BrandLogo />
         <nav className="flex items-center gap-4">
           <Link to="/blog" className="text-sm font-medium hover:text-primary transition-colors hidden sm:inline-block">Blog</Link>
           <Link to="/projects" className="text-sm font-medium hover:text-primary transition-colors hidden sm:inline-block">Project Library</Link>
@@ -185,9 +184,7 @@ function Landing() {
       <footer className="border-t py-16 bg-card">
         <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-8 text-sm">
           <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-              <GraduationCap className="h-6 w-6 text-primary" /> <span>ScholarBuild</span>
-            </Link>
+            <BrandLogo />
             <p className="text-muted-foreground text-xs leading-relaxed max-w-sm">
               An AI-powered workspace mapping and generating source code, slideshows, reports, and viva answers for engineering student projects.
             </p>

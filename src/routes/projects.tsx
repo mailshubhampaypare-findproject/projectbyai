@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/BrandLogo";
 import { GraduationCap, ArrowLeft, Search, ShoppingBag, Instagram, Youtube, Linkedin } from "lucide-react";
 import { toast } from "sonner";
 
@@ -67,9 +68,7 @@ function PublicProjectsPage() {
   return (
     <div className="min-h-screen bg-gradient-subtle flex flex-col">
       <header className="max-w-6xl mx-auto w-full px-6 py-5 flex items-center justify-between border-b">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-          <GraduationCap className="h-6 w-6 text-primary" /> <span className="text-gradient">ScholarBuild</span>
-        </Link>
+        <BrandLogo />
         <Button variant="ghost" size="sm" asChild>
           <Link to="/" className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" /> Back to Home
@@ -170,9 +169,7 @@ function PublicProjectsPage() {
       <footer className="border-t bg-card/30 mt-auto">
         <div className="max-w-6xl mx-auto px-6 py-12 grid md:grid-cols-2 gap-8 items-center">
           <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-              <GraduationCap className="h-6 w-6 text-primary" /> <span className="text-gradient">ScholarBuild</span>
-            </Link>
+            <BrandLogo />
             <p className="text-sm text-muted-foreground max-w-sm">
               An AI-powered workspace generating source code, slideshows, reports, and viva answers for engineering student projects.
             </p>
