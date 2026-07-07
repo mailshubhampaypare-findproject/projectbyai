@@ -1006,9 +1006,12 @@ function AdminPortal() {
       {/* Side bar */}
       <aside className="w-full md:w-64 bg-slate-900 text-slate-100 p-6 flex flex-col justify-between shrink-0 shadow-lg">
         <div className="space-y-6">
-          <div className="flex items-center gap-2 font-bold text-lg text-primary">
-            <GraduationCap className="h-6 w-6" />
-            <span>ScholarBuild Admin</span>
+          <div className="flex items-center gap-2">
+            <img 
+              src="/logo.png" 
+              alt="projectbyAI Admin" 
+              className="h-9 w-auto object-contain brightness-0 invert" 
+            />
           </div>
 
           <nav className="space-y-1">
