@@ -4,10 +4,10 @@ import { PREBUILT_PROJECTS, type PrebuiltProject } from "@/lib/prebuilt-data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Check, ShoppingCart, Download, X } from "lucide-react";
+import { ArrowLeft, Check, ShoppingCart, Download, X, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/dashboard/prebuilt/$slug")({
   head: ({ params }) => {
@@ -50,6 +50,7 @@ function PrebuiltDetail() {
   const [activeScreenshot, setActiveScreenshot] = useState<string | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const navigate = useNavigate();
+  const [showPurchaseSuccess, setShowPurchaseSuccess] = useState(false);
 
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<any | null>(null);
@@ -155,16 +156,13 @@ function PrebuiltDetail() {
                 status: "Paid"
               });
 
-            toast.success("Project added to your workspace!");
-          } catch (dbErr) {
-            console.error("Error adding project to workspace:", dbErr);
-            toast.error("Failed to add project to workspace.");
-          } finally {
-            setTimeout(() => {
-              navigate({ to: "/dashboard" });
-            }, 1000);
-          }
-        })();
+             toast.success("Project added to your workspace!");
+             setShowPurchaseSuccess(true);
+           } catch (dbErr) {
+             console.error("Error adding project to workspace:", dbErr);
+             toast.error("Failed to add project to workspace.");
+           }
+         })();
       },
       prefill: {
         name: fullName,
@@ -357,6 +355,49 @@ function PrebuiltDetail() {
           </div>
         </div>
       )}
+
+      {/* Purchase Success Modal */}
+      <Dialog open={showPurchaseSuccess} onOpenChange={(open) => {
+        setShowPurchaseSuccess(open);
+        if (!open) {
+          navigate({ to: "/dashboard/my-projects" });
+        }
+      }}>
+        <DialogContent className="max-w-md p-6 bg-white border rounded-lg">
+          <DialogHeader className="space-y-3 text-center flex flex-col items-center">
+            <div className="h-12 w-12 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-250 text-emerald-600">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-slate-900">Payment Successful!</DialogTitle>
+            <DialogDescription className="text-slate-500 text-sm leading-relaxed max-w-xs mx-auto">
+              Your purchase is complete. You can download the code package directly or manage it in your student workspace.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="my-4 p-4 rounded-lg bg-slate-50 border border-slate-100 space-y-1">
+            <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Project Purchased</div>
+            <div className="text-sm font-bold text-slate-800 leading-snug">{project.title}</div>
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-2.5">
+            <Button asChild className="w-full bg-gradient-primary font-bold shadow-elegant">
+              <a href={project.zipUrl} download target="_blank" rel="noopener noreferrer">
+                <Download className="h-4 w-4 mr-2 animate-bounce" /> Download ZIP Package
+              </a>
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowPurchaseSuccess(false);
+                navigate({ to: "/dashboard/my-projects" });
+              }} 
+              className="w-full border-slate-200 text-slate-700 font-semibold"
+            >
+              Go to Workspace
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
