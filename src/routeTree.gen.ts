@@ -19,6 +19,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
+import { Route as ProjectsSlugRouteImport } from './routes/projects.$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -79,6 +80,11 @@ const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsSlugRoute = ProjectsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => ProjectsRoute,
 } as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
   id: '/blog/$slug',
@@ -150,12 +156,13 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
-  '/projects': typeof ProjectsRoute
+  '/projects': typeof ProjectsRouteWithChildren
   '/refund': typeof RefundRoute
   '/terms-and-condition': typeof TermsAndConditionRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/projects/$slug': typeof ProjectsSlugRoute
   '/blog/': typeof BlogIndexRoute
   '/dashboard/my-projects': typeof AuthenticatedDashboardMyProjectsRoute
   '/dashboard/prebuilt': typeof AuthenticatedDashboardPrebuiltRouteWithChildren
@@ -172,11 +179,12 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
-  '/projects': typeof ProjectsRoute
+  '/projects': typeof ProjectsRouteWithChildren
   '/refund': typeof RefundRoute
   '/terms-and-condition': typeof TermsAndConditionRoute
   '/api/chat': typeof ApiChatRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/projects/$slug': typeof ProjectsSlugRoute
   '/blog': typeof BlogIndexRoute
   '/dashboard/my-projects': typeof AuthenticatedDashboardMyProjectsRoute
   '/dashboard/pricing': typeof AuthenticatedDashboardPricingRoute
@@ -194,12 +202,13 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
-  '/projects': typeof ProjectsRoute
+  '/projects': typeof ProjectsRouteWithChildren
   '/refund': typeof RefundRoute
   '/terms-and-condition': typeof TermsAndConditionRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/projects/$slug': typeof ProjectsSlugRoute
   '/blog/': typeof BlogIndexRoute
   '/_authenticated/dashboard/my-projects': typeof AuthenticatedDashboardMyProjectsRoute
   '/_authenticated/dashboard/prebuilt': typeof AuthenticatedDashboardPrebuiltRouteWithChildren
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/api/chat'
     | '/blog/$slug'
+    | '/projects/$slug'
     | '/blog/'
     | '/dashboard/my-projects'
     | '/dashboard/prebuilt'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/terms-and-condition'
     | '/api/chat'
     | '/blog/$slug'
+    | '/projects/$slug'
     | '/blog'
     | '/dashboard/my-projects'
     | '/dashboard/pricing'
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/api/chat'
     | '/blog/$slug'
+    | '/projects/$slug'
     | '/blog/'
     | '/_authenticated/dashboard/my-projects'
     | '/_authenticated/dashboard/prebuilt'
@@ -285,7 +297,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
   PrivacyRoute: typeof PrivacyRoute
-  ProjectsRoute: typeof ProjectsRoute
+  ProjectsRoute: typeof ProjectsRouteWithChildren
   RefundRoute: typeof RefundRoute
   TermsAndConditionRoute: typeof TermsAndConditionRoute
   ApiChatRoute: typeof ApiChatRoute
@@ -364,6 +376,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/blog/'
       preLoaderRoute: typeof BlogIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/projects/$slug': {
+      id: '/projects/$slug'
+      path: '/$slug'
+      fullPath: '/projects/$slug'
+      preLoaderRoute: typeof ProjectsSlugRouteImport
+      parentRoute: typeof ProjectsRoute
     }
     '/blog/$slug': {
       id: '/blog/$slug'
@@ -501,6 +520,18 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface ProjectsRouteChildren {
+  ProjectsSlugRoute: typeof ProjectsSlugRoute
+}
+
+const ProjectsRouteChildren: ProjectsRouteChildren = {
+  ProjectsSlugRoute: ProjectsSlugRoute,
+}
+
+const ProjectsRouteWithChildren = ProjectsRoute._addFileChildren(
+  ProjectsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
@@ -508,7 +539,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
   PrivacyRoute: PrivacyRoute,
-  ProjectsRoute: ProjectsRoute,
+  ProjectsRoute: ProjectsRouteWithChildren,
   RefundRoute: RefundRoute,
   TermsAndConditionRoute: TermsAndConditionRoute,
   ApiChatRoute: ApiChatRoute,

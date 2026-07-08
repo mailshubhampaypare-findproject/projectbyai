@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, useLocation } from "@tanstack/react-router";
 import styles from "./Footer.module.css";
 
 export default function Footer() {
-  const pathname = usePathname();
+  const location = useLocation();
+  const pathname = location.pathname;
 
   // Hide footer on dashboard workspace and admin pages
   const isDashboard = pathname?.startsWith("/dashboard");
@@ -30,20 +30,20 @@ export default function Footer() {
         <div className={styles.linksGroup}>
           <div className={styles.column}>
             <span className={styles.title}>Services</span>
-            <Link href="/dashboard" className={styles.link}>AI Generator</Link>
-            <Link href="/store" className={styles.link}>Prebuilt Store</Link>
+            <Link to="/dashboard" className={styles.link}>AI Generator</Link>
+            <Link to="/projects" className={styles.link}>Prebuilt Store</Link>
           </div>
           
           <div className={styles.column}>
             <span className={styles.title}>Resources</span>
-            <Link href="/blog" className={styles.link}>Blog Articles</Link>
-            <Link href="/faq" className={styles.link}>FAQ</Link>
+            <Link to="/blog" className={styles.link}>Blog Articles</Link>
+            <Link to="/faq" className={styles.link}>FAQ</Link>
           </div>
 
           <div className={styles.column}>
             <span className={styles.title}>Legal</span>
-            <Link href="/privacy" className={styles.link}>Privacy Policy</Link>
-            <Link href="/terms-and-condition" className={styles.link}>Terms of Service</Link>
+            <Link to="/privacy" className={styles.link}>Privacy Policy</Link>
+            <Link to="/terms-and-condition" className={styles.link}>Terms of Service</Link>
           </div>
         </div>
       </div>

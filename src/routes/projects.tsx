@@ -52,17 +52,8 @@ function PublicProjectsPage() {
         p.description.toLowerCase().includes(query.toLowerCase()))
   );
 
-  const handleProjectClick = async (slug: string) => {
-    const { data } = await supabase.auth.getSession();
-    if (data.session) {
-      navigate({ to: `/dashboard/prebuilt/${slug}` });
-    } else {
-      toast.info("Please sign up or sign in to view this project.");
-      navigate({
-        to: "/auth",
-        search: { redirect_to: `/dashboard/prebuilt/${slug}` },
-      });
-    }
+  const handleProjectClick = (slug: string) => {
+    navigate({ to: `/projects/${slug}` });
   };
 
   return (
