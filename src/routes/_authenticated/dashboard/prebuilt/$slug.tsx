@@ -128,6 +128,7 @@ function PrebuiltDetail() {
       name: "ScholarBuild",
       description: `Purchase ${project.title}`,
       image: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6ce9b27c-0d24-44a6-9792-659971ff637e/id-preview-763aa04d--76a070a1-12d6-4684-a608-6b50d760aa47.lovable.app-1783062772600.png",
+      payment_capture: 1,
       handler: function (response: any) {
         toast.success("Payment Successful! Transaction ID: " + response.razorpay_payment_id);
         (async () => {
