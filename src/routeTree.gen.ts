@@ -11,13 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsAndConditionRouteImport } from './routes/terms-and-condition'
 import { Route as RefundRouteImport } from './routes/refund'
-import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as ProjectsSlugRouteImport } from './routes/projects.$slug'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
@@ -40,11 +40,6 @@ const TermsAndConditionRoute = TermsAndConditionRouteImport.update({
 const RefundRoute = RefundRouteImport.update({
   id: '/refund',
   path: '/refund',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProjectsRoute = ProjectsRouteImport.update({
-  id: '/projects',
-  path: '/projects',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -76,15 +71,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsSlugRoute = ProjectsSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => ProjectsRoute,
+  id: '/projects/$slug',
+  path: '/projects/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
   id: '/blog/$slug',
@@ -156,7 +156,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
-  '/projects': typeof ProjectsRouteWithChildren
   '/refund': typeof RefundRoute
   '/terms-and-condition': typeof TermsAndConditionRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
@@ -164,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/blog/': typeof BlogIndexRoute
+  '/projects/': typeof ProjectsIndexRoute
   '/dashboard/my-projects': typeof AuthenticatedDashboardMyProjectsRoute
   '/dashboard/prebuilt': typeof AuthenticatedDashboardPrebuiltRouteWithChildren
   '/dashboard/pricing': typeof AuthenticatedDashboardPricingRoute
@@ -179,13 +179,13 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
-  '/projects': typeof ProjectsRouteWithChildren
   '/refund': typeof RefundRoute
   '/terms-and-condition': typeof TermsAndConditionRoute
   '/api/chat': typeof ApiChatRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/blog': typeof BlogIndexRoute
+  '/projects': typeof ProjectsIndexRoute
   '/dashboard/my-projects': typeof AuthenticatedDashboardMyProjectsRoute
   '/dashboard/pricing': typeof AuthenticatedDashboardPricingRoute
   '/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
@@ -202,7 +202,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
-  '/projects': typeof ProjectsRouteWithChildren
   '/refund': typeof RefundRoute
   '/terms-and-condition': typeof TermsAndConditionRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
@@ -210,6 +209,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/blog/': typeof BlogIndexRoute
+  '/projects/': typeof ProjectsIndexRoute
   '/_authenticated/dashboard/my-projects': typeof AuthenticatedDashboardMyProjectsRoute
   '/_authenticated/dashboard/prebuilt': typeof AuthenticatedDashboardPrebuiltRouteWithChildren
   '/_authenticated/dashboard/pricing': typeof AuthenticatedDashboardPricingRoute
@@ -227,7 +227,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/contact'
     | '/privacy'
-    | '/projects'
     | '/refund'
     | '/terms-and-condition'
     | '/dashboard'
@@ -235,6 +234,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/projects/$slug'
     | '/blog/'
+    | '/projects/'
     | '/dashboard/my-projects'
     | '/dashboard/prebuilt'
     | '/dashboard/pricing'
@@ -250,13 +250,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/contact'
     | '/privacy'
-    | '/projects'
     | '/refund'
     | '/terms-and-condition'
     | '/api/chat'
     | '/blog/$slug'
     | '/projects/$slug'
     | '/blog'
+    | '/projects'
     | '/dashboard/my-projects'
     | '/dashboard/pricing'
     | '/dashboard/profile'
@@ -272,7 +272,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/contact'
     | '/privacy'
-    | '/projects'
     | '/refund'
     | '/terms-and-condition'
     | '/_authenticated/dashboard'
@@ -280,6 +279,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/projects/$slug'
     | '/blog/'
+    | '/projects/'
     | '/_authenticated/dashboard/my-projects'
     | '/_authenticated/dashboard/prebuilt'
     | '/_authenticated/dashboard/pricing'
@@ -297,12 +297,13 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
   PrivacyRoute: typeof PrivacyRoute
-  ProjectsRoute: typeof ProjectsRouteWithChildren
   RefundRoute: typeof RefundRoute
   TermsAndConditionRoute: typeof TermsAndConditionRoute
   ApiChatRoute: typeof ApiChatRoute
   BlogSlugRoute: typeof BlogSlugRoute
+  ProjectsSlugRoute: typeof ProjectsSlugRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  ProjectsIndexRoute: typeof ProjectsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -319,13 +320,6 @@ declare module '@tanstack/react-router' {
       path: '/refund'
       fullPath: '/refund'
       preLoaderRoute: typeof RefundRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/projects': {
-      id: '/projects'
-      path: '/projects'
-      fullPath: '/projects'
-      preLoaderRoute: typeof ProjectsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -370,6 +364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/projects/': {
+      id: '/projects/'
+      path: '/projects'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof ProjectsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/': {
       id: '/blog/'
       path: '/blog'
@@ -379,10 +380,10 @@ declare module '@tanstack/react-router' {
     }
     '/projects/$slug': {
       id: '/projects/$slug'
-      path: '/$slug'
+      path: '/projects/$slug'
       fullPath: '/projects/$slug'
       preLoaderRoute: typeof ProjectsSlugRouteImport
-      parentRoute: typeof ProjectsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/blog/$slug': {
       id: '/blog/$slug'
@@ -520,18 +521,6 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
-interface ProjectsRouteChildren {
-  ProjectsSlugRoute: typeof ProjectsSlugRoute
-}
-
-const ProjectsRouteChildren: ProjectsRouteChildren = {
-  ProjectsSlugRoute: ProjectsSlugRoute,
-}
-
-const ProjectsRouteWithChildren = ProjectsRoute._addFileChildren(
-  ProjectsRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
@@ -539,12 +528,13 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
   PrivacyRoute: PrivacyRoute,
-  ProjectsRoute: ProjectsRouteWithChildren,
   RefundRoute: RefundRoute,
   TermsAndConditionRoute: TermsAndConditionRoute,
   ApiChatRoute: ApiChatRoute,
   BlogSlugRoute: BlogSlugRoute,
+  ProjectsSlugRoute: ProjectsSlugRoute,
   BlogIndexRoute: BlogIndexRoute,
+  ProjectsIndexRoute: ProjectsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

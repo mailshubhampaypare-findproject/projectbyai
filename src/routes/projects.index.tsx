@@ -10,7 +10,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { GraduationCap, ArrowLeft, Search, ShoppingBag, Instagram, Youtube, Linkedin } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/projects")({
+export const Route = createFileRoute("/projects/")({
   head: () => ({ meta: [{ title: "Project Library — ScholarBuild" }] }),
   component: PublicProjectsPage,
 });
