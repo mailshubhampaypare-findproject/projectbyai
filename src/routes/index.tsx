@@ -206,7 +206,7 @@ function LandingPage() {
               <Link to="/blog" className="hover:text-primary transition-colors">Blog</Link>
               <Link to="/projects" className="hover:text-primary transition-colors">Project Library</Link>
               <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-              <Link to="/terms" className="hover:text-primary transition-colors">Terms & Conditions</Link>
+              <Link to="/terms-and-condition" className="hover:text-primary transition-colors">Terms & Conditions</Link>
               <Link to="/refund" className="hover:text-primary transition-colors">Refund Policy</Link>
               <Link to="/contact" className="hover:text-primary transition-colors">Contact Us</Link>
             </div>

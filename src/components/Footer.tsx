@@ -43,7 +43,7 @@ export default function Footer() {
           <div className={styles.column}>
             <span className={styles.title}>Legal</span>
             <Link href="/privacy" className={styles.link}>Privacy Policy</Link>
-            <Link href="/terms" className={styles.link}>Terms of Service</Link>
+            <Link href="/terms-and-condition" className={styles.link}>Terms of Service</Link>
           </div>
         </div>
       </div>

@@ -9,7 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TermsAndConditionRouteImport } from './routes/terms-and-condition'
 import { Route as RefundRouteImport } from './routes/refund'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -31,9 +31,9 @@ import { Route as AuthenticatedDashboardPrebuiltIndexRouteImport } from './route
 import { Route as AuthenticatedDashboardProjectIdRouteImport } from './routes/_authenticated/dashboard/project.$id'
 import { Route as AuthenticatedDashboardPrebuiltSlugRouteImport } from './routes/_authenticated/dashboard/prebuilt/$slug'
 
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
+const TermsAndConditionRoute = TermsAndConditionRouteImport.update({
+  id: '/terms-and-condition',
+  path: '/terms-and-condition',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RefundRoute = RefundRouteImport.update({
@@ -152,7 +152,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/projects': typeof ProjectsRoute
   '/refund': typeof RefundRoute
-  '/terms': typeof TermsRoute
+  '/terms-and-condition': typeof TermsAndConditionRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -174,7 +174,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/projects': typeof ProjectsRoute
   '/refund': typeof RefundRoute
-  '/terms': typeof TermsRoute
+  '/terms-and-condition': typeof TermsAndConditionRoute
   '/api/chat': typeof ApiChatRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog': typeof BlogIndexRoute
@@ -196,7 +196,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/projects': typeof ProjectsRoute
   '/refund': typeof RefundRoute
-  '/terms': typeof TermsRoute
+  '/terms-and-condition': typeof TermsAndConditionRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -220,7 +220,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/projects'
     | '/refund'
-    | '/terms'
+    | '/terms-and-condition'
     | '/dashboard'
     | '/api/chat'
     | '/blog/$slug'
@@ -242,7 +242,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/projects'
     | '/refund'
-    | '/terms'
+    | '/terms-and-condition'
     | '/api/chat'
     | '/blog/$slug'
     | '/blog'
@@ -263,7 +263,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/projects'
     | '/refund'
-    | '/terms'
+    | '/terms-and-condition'
     | '/_authenticated/dashboard'
     | '/api/chat'
     | '/blog/$slug'
@@ -287,7 +287,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ProjectsRoute: typeof ProjectsRoute
   RefundRoute: typeof RefundRoute
-  TermsRoute: typeof TermsRoute
+  TermsAndConditionRoute: typeof TermsAndConditionRoute
   ApiChatRoute: typeof ApiChatRoute
   BlogSlugRoute: typeof BlogSlugRoute
   BlogIndexRoute: typeof BlogIndexRoute
@@ -295,11 +295,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
+    '/terms-and-condition': {
+      id: '/terms-and-condition'
+      path: '/terms-and-condition'
+      fullPath: '/terms-and-condition'
+      preLoaderRoute: typeof TermsAndConditionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/refund': {
@@ -510,7 +510,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ProjectsRoute: ProjectsRoute,
   RefundRoute: RefundRoute,
-  TermsRoute: TermsRoute,
+  TermsAndConditionRoute: TermsAndConditionRoute,
   ApiChatRoute: ApiChatRoute,
   BlogSlugRoute: BlogSlugRoute,
   BlogIndexRoute: BlogIndexRoute,
