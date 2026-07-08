@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { GraduationCap, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — Scholarly" }] }),
+  head: () => ({ meta: [{ title: "Sign in — projectbyAI" }] }),
   validateSearch: (search) => ({
     redirect_to: (search.redirect_to as string) || undefined,
   }),
@@ -81,8 +81,12 @@ function AuthPage() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-gradient-subtle">
       <div className="hidden lg:flex flex-col justify-between p-12 text-primary-foreground bg-gradient-primary">
-        <Link to="/" className="flex items-center gap-2 text-lg font-semibold">
-          <GraduationCap className="h-6 w-6" /> Scholarly
+        <Link to="/" className="flex items-center gap-2">
+          <img 
+            src="/logo-dark.png" 
+            alt="projectbyAI" 
+            className="h-11 w-auto object-contain" 
+          />
         </Link>
         <div className="space-y-6">
           <Sparkles className="h-10 w-10" />
@@ -93,7 +97,7 @@ function AuthPage() {
             Generate source code, project reports, viva questions and slide decks in minutes.
           </p>
         </div>
-        <p className="text-sm text-primary-foreground/70">© {new Date().getFullYear()} Scholarly</p>
+        <p className="text-sm text-primary-foreground/70">© {new Date().getFullYear()} projectbyAI</p>
       </div>
 
       <div className="flex items-center justify-center p-6">
@@ -101,7 +105,7 @@ function AuthPage() {
           <div>
             <h1 className="text-2xl font-bold">{mode === "signin" ? "Welcome back" : "Create your account"}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {mode === "signin" ? "Sign in to your Scholarly workspace." : "Start building smarter projects today."}
+              {mode === "signin" ? "Sign in to your projectbyAI workspace." : "Start building smarter projects today."}
             </p>
           </div>
 
