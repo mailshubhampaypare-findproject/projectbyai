@@ -1,6 +1,8 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { PREBUILT_PROJECTS, type PrebuiltProject } from "@/lib/prebuilt-data";
+import { createRazorpayOrder } from "@/lib/projects.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -51,6 +53,7 @@ function PrebuiltDetail() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const navigate = useNavigate();
   const [showPurchaseSuccess, setShowPurchaseSuccess] = useState(false);
+  const callCreateOrder = useServerFn(createRazorpayOrder);
 
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<any | null>(null);
@@ -111,8 +114,12 @@ function PrebuiltDetail() {
 
   const handleBuy = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    const email = session?.user?.email || "student@example.com";
-    const fullName = session?.user?.user_metadata?.full_name || "Student";
+    if (!session) {
+      toast.error("You must be logged in to purchase projects.");
+      return;
+    }
+    const email = session.user.email || "student@example.com";
+    const fullName = session.user.user_metadata?.full_name || "Student";
     
     if (!(window as any).Razorpay) {
       toast.error("Razorpay SDK is loading. Please wait a second and click buy again.");
@@ -121,6 +128,14 @@ function PrebuiltDetail() {
 
     const finalPrice = getDiscountedPrice(Number(project.price));
 
+    let orderId = null;
+    try {
+      const orderRes = await callCreateOrder({ data: { amount: finalPrice } });
+      orderId = orderRes?.orderId;
+    } catch (orderErr) {
+      console.error("Order creation failed, falling back to direct capture:", orderErr);
+    }
+
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_T9aKebvfGIfoPs",
       amount: Math.round(finalPrice * 100), // Convert INR to Paisa cents
@@ -128,6 +143,7 @@ function PrebuiltDetail() {
       name: "ScholarBuild",
       description: `Purchase ${project.title}`,
       image: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6ce9b27c-0d24-44a6-9792-659971ff637e/id-preview-763aa04d--76a070a1-12d6-4684-a608-6b50d760aa47.lovable.app-1783062772600.png",
+      order_id: orderId || undefined,
       payment_capture: 1,
       handler: function (response: any) {
         toast.success("Payment Successful! Transaction ID: " + response.razorpay_payment_id);

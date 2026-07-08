@@ -399,3 +399,43 @@ export const listRegisteredUsers = createServerFn({ method: "GET" })
 
     return data || [];
   });
+
+export const createRazorpayOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ amount: z.number() }).parse(d))
+  .handler(async ({ data }) => {
+    const keyId = process.env.VITE_RAZORPAY_KEY_ID || "rzp_test_T9aKebvfGIfoPs";
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+    if (!keySecret) {
+      console.warn("RAZORPAY_KEY_SECRET is not configured on the server. Falling back to frontend-only capture.");
+      return { orderId: null };
+    }
+
+    try {
+      const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
+      const res = await fetch("https://api.razorpay.com/v1/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${auth}`,
+        },
+        body: JSON.stringify({
+          amount: Math.round(data.amount * 100), // Convert to Paisa cents
+          currency: "INR",
+          receipt: `rcpt_${Date.now().toString().slice(-8)}`,
+        }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Razorpay API error: ${errText}`);
+      }
+
+      const order = await res.json();
+      return { orderId: order.id as string };
+    } catch (err: any) {
+      console.error("Error creating Razorpay order:", err);
+      throw new Error(err.message || "Failed to create payment order");
+    }
+  });

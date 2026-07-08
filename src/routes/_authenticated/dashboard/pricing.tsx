@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { PRICING_PLANS } from "@/lib/prebuilt-data";
+import { createRazorpayOrder } from "@/lib/projects.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Zap, Sparkles } from "lucide-react";
@@ -16,6 +18,7 @@ function Pricing() {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<any | null>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const callCreateOrder = useServerFn(createRazorpayOrder);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -72,8 +75,12 @@ function Pricing() {
 
   const handleBuyPlan = async (plan: any) => {
     const { data: { session } } = await supabase.auth.getSession();
-    const email = session?.user?.email || "student@example.com";
-    const fullName = session?.user?.user_metadata?.full_name || "Student";
+    if (!session) {
+      toast.error("You must be logged in to purchase plans.");
+      return;
+    }
+    const email = session.user.email || "student@example.com";
+    const fullName = session.user.user_metadata?.full_name || "Student";
 
     if (!(window as any).Razorpay) {
       toast.error("Razorpay SDK is loading. Please wait a second and try again.");
@@ -82,6 +89,14 @@ function Pricing() {
 
     const finalPrice = getDiscountedPrice(Number(plan.price));
 
+    let orderId = null;
+    try {
+      const orderRes = await callCreateOrder({ data: { amount: finalPrice } });
+      orderId = orderRes?.orderId;
+    } catch (orderErr) {
+      console.error("Order creation failed, falling back to direct capture:", orderErr);
+    }
+
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_T9aKebvfGIfoPs",
       amount: Math.round(finalPrice * 100), // Convert INR to Paisa cents
@@ -89,6 +104,7 @@ function Pricing() {
       name: "ScholarBuild",
       description: `Purchase ${plan.name} Token Pack`,
       image: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6ce9b27c-0d24-44a6-9792-659971ff637e/id-preview-763aa04d--76a070a1-12d6-4684-a608-6b50d760aa47.lovable.app-1783062772600.png",
+      order_id: orderId || undefined,
       payment_capture: 1,
       handler: function (response: any) {
         toast.success(`Plan ${plan.name} activated successfully! Transaction ID: ${response.razorpay_payment_id}`);
