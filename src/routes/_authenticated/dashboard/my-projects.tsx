@@ -121,7 +121,7 @@ function MyProjects() {
                         </div>
                         <h3 className="font-bold text-lg leading-snug line-clamp-1">{p.title}</h3>
                         <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                          {p.description ?? "No description provided."}
+                          {p.description ? p.description.replace(/<[^>]*>/g, '') : "No description provided."}
                         </p>
                       </div>
 
@@ -186,7 +186,7 @@ function MyProjects() {
                         </div>
                         <h3 className="font-bold text-lg leading-snug line-clamp-1">{p.title}</h3>
                         <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                          {p.description ?? "No description provided."}
+                          {p.description ? p.description.replace(/<[^>]*>/g, '') : "No description provided."}
                         </p>
                       </div>
                       
