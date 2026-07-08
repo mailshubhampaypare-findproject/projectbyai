@@ -38,7 +38,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/prebuilt/$slug")
       tech: p.tech || [],
       buyUrl: p.buy_url || (p as any).buyUrl || "#",
       faqs: p.faqs || [],
-      zipUrl: p.zip_url || "/assets/mock-projects/chat-app-source.zip",
+      zipUrl: p.zip_url || "",
     };
     return { project: normalized };
   },

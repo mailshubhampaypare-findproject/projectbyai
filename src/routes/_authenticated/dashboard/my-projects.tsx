@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listProjects, deleteProject } from "@/lib/projects.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,17 @@ function MyProjects() {
     queryFn: () => load(),
   });
 
+  const { data: libraryProjects = [] } = useQuery({
+    queryKey: ["library_projects_list"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("library_projects")
+        .select("id, title, zip_url");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const remove = async (id: string) => {
     if (!confirm("Delete this project? This cannot be undone.")) return;
     try {
@@ -34,7 +46,19 @@ function MyProjects() {
   };
 
   const createdProjects = projects.filter((p) => p.source !== "purchased");
-  const purchasedProjects = projects.filter((p) => p.source === "purchased");
+  const purchasedProjects = projects
+    .filter((p) => p.source === "purchased")
+    .map((p) => {
+      const matchedLib = libraryProjects.find(
+        (lp) => lp.title.trim().toLowerCase() === p.title.trim().toLowerCase()
+      );
+      // Fallback to p.code if not found in active library
+      const resolvedZip = matchedLib ? matchedLib.zip_url : p.code;
+      return {
+        ...p,
+        code: resolvedZip,
+      };
+    });
 
   return (
     <div className="h-full overflow-auto">
