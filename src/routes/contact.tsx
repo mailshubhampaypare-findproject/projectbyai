@@ -9,6 +9,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import Footer from "@/components/Footer";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({ meta: [{ title: "Contact Us — projectbyAI" }] }),
@@ -158,9 +159,7 @@ function ContactUs() {
         </Card>
       </main>
 
-      <footer className="border-t py-8 text-center text-xs text-muted-foreground bg-white">
-        © {new Date().getFullYear()} projectbyAI. All rights reserved.
-      </footer>
+      <Footer />
 
       {/* Query Success Modal pop-up */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>

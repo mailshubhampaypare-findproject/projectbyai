@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/BrandLogo";
+import Footer from "@/components/Footer";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({ meta: [{ title: "Privacy Policy — projectbyAI" }] }),
@@ -147,9 +148,7 @@ function PrivacyPolicy() {
         </div>
       </main>
 
-      <footer className="border-t border-slate-200 py-6 text-center text-[11px] text-slate-400 bg-white">
-        © {new Date().getFullYear()} projectbyAI. All rights reserved.
-      </footer>
+      <Footer />
     </div>
   );
 }

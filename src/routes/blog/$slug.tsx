@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MOCK_BLOG_POSTS } from "@/lib/blog-data";
 import { GraduationCap, ArrowLeft, Calendar, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Footer from "@/components/Footer";
 
 export const Route = createFileRoute("/blog/$slug")({
   head: ({ params }) => {
@@ -99,9 +100,7 @@ function BlogDetail() {
         />
       </main>
 
-      <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Eduprojects Solution. All rights reserved.
-      </footer>
+      <Footer />
     </div>
   );
 }

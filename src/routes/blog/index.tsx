@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, ArrowLeft, Search, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Footer from "@/components/Footer";
 
 export const Route = createFileRoute("/blog/")({
   head: () => ({ meta: [{ title: "Blog — ScholarBuild" }] }),
@@ -156,9 +157,7 @@ function BlogGrid() {
         )}
       </main>
 
-      <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Eduprojects Solution. All rights reserved.
-      </footer>
+      <Footer />
     </div>
   );
 }
