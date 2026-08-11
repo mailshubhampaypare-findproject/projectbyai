@@ -207,8 +207,13 @@ function PrebuiltDetail() {
 
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <div className="aspect-video rounded-xl overflow-hidden shadow-elegant">
-              <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover" />
+            <div className="aspect-video rounded-xl overflow-hidden shadow-elegant bg-slate-100">
+              {(() => {
+                const [thumbUrl, thumbAlt] = (project.thumbnail || "").split("||");
+                return (
+                  <img src={thumbUrl} alt={thumbAlt || project.title} className="w-full h-full object-cover" />
+                );
+              })()}
             </div>
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -224,15 +229,18 @@ function PrebuiltDetail() {
             <section>
               <h2 className="text-xl font-semibold mb-3">Screenshots</h2>
               <div className="grid sm:grid-cols-3 gap-3">
-                {project.screenshots.map((s: string, i: number) => (
-                  <div 
-                    key={i} 
-                    className="aspect-video rounded-lg overflow-hidden border cursor-pointer hover:opacity-95 hover:scale-[1.01] transition-all"
-                    onClick={() => setActiveScreenshot(s)}
-                  >
-                    <img src={s} alt="" className="w-full h-full object-cover" />
-                  </div>
-                ))}
+                {project.screenshots.map((s: string, i: number) => {
+                  const [scrUrl, scrAlt] = s.split("||");
+                  return (
+                    <div 
+                      key={i} 
+                      className="aspect-video rounded-lg overflow-hidden border cursor-pointer hover:opacity-95 hover:scale-[1.01] transition-all"
+                      onClick={() => setActiveScreenshot(s)}
+                    >
+                      <img src={scrUrl} alt={scrAlt || `Screenshot ${i + 1}`} className="w-full h-full object-cover" />
+                    </div>
+                  );
+                })}
               </div>
             </section>
 
@@ -368,7 +376,12 @@ function PrebuiltDetail() {
             >
               <X className="h-5 w-5" />
             </button>
-            <img src={activeScreenshot} alt="Screenshot preview" className="max-w-full max-h-[80vh] rounded-lg shadow-2xl object-contain border border-slate-800 bg-slate-950" />
+            {(() => {
+              const [activeUrl, activeAlt] = activeScreenshot.split("||");
+              return (
+                <img src={activeUrl} alt={activeAlt || "Screenshot preview"} className="max-w-full max-h-[80vh] rounded-lg shadow-2xl object-contain border border-slate-800 bg-slate-950" />
+              );
+            })()}
           </div>
         </div>
       )}

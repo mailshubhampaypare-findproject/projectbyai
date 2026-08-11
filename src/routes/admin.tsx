@@ -312,6 +312,7 @@ function AdminPortal() {
     price: "",
     category: "",
     thumbnail: "",
+    thumbnail_alt: "",
     screenshots: "",
     youtube_id: "",
     tech: "",
@@ -691,7 +692,9 @@ function AdminPortal() {
       long_description: projectForm.long_description,
       price: parseFloat(projectForm.price),
       category: finalCategory,
-      thumbnail: projectForm.thumbnail || "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
+      thumbnail: projectForm.thumbnail 
+        ? (projectForm.thumbnail.trim() + (projectForm.thumbnail_alt ? "||" + projectForm.thumbnail_alt.trim() : ""))
+        : "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
       screenshots: projectForm.screenshots.split(",").map((s) => s.trim()).filter(Boolean),
       youtube_id: extractYoutubeId(projectForm.youtube_id),
       tech: projectForm.tech.split(",").map((t) => t.trim()).filter(Boolean),
@@ -734,6 +737,7 @@ function AdminPortal() {
       price: "",
       category: "",
       thumbnail: "",
+      thumbnail_alt: "",
       screenshots: "",
       youtube_id: "",
       tech: "",
@@ -748,6 +752,7 @@ function AdminPortal() {
 
   const editProject = (p: any) => {
     setEditingProject(p);
+    const [thumbUrl, thumbAlt] = (p.thumbnail || "").split("||");
     setProjectForm({
       slug: p.slug,
       title: p.title,
@@ -755,7 +760,8 @@ function AdminPortal() {
       long_description: p.long_description || "",
       price: p.price.toString(),
       category: p.category,
-      thumbnail: p.thumbnail,
+      thumbnail: thumbUrl || "",
+      thumbnail_alt: thumbAlt || "",
       screenshots: (p.screenshots || []).join(", "),
       youtube_id: p.youtube_id || "",
       tech: (p.tech || []).join(", "),
@@ -1344,10 +1350,16 @@ function AdminPortal() {
                               </label>
                               {projectForm.thumbnail && <span className="text-[10px] text-green-600 font-semibold flex items-center gap-0.5"><Check className="h-3 w-3" /> Ready</span>}
                             </div>
+                            <Input
+                              value={projectForm.thumbnail_alt}
+                              onChange={(e) => setProjectForm({ ...projectForm, thumbnail_alt: e.target.value })}
+                              placeholder="Thumbnail Alt Tag (SEO keyword)..."
+                              className="bg-white mt-2 text-xs h-8"
+                            />
                           </div>
                           {projectForm.thumbnail && (
-                            <div className="h-16 w-24 rounded border overflow-hidden shrink-0 bg-slate-100">
-                              <img src={projectForm.thumbnail} className="w-full h-full object-cover" alt="" />
+                            <div className="h-20 w-28 rounded border overflow-hidden shrink-0 bg-slate-100 self-start">
+                              <img src={projectForm.thumbnail} className="w-full h-full object-cover" alt={projectForm.thumbnail_alt} />
                             </div>
                           )}
                         </div>
@@ -1360,7 +1372,7 @@ function AdminPortal() {
                           value={projectForm.screenshots}
                           onChange={(e) => setProjectForm({ ...projectForm, screenshots: e.target.value })}
                           placeholder="Upload screenshots below or paste URLs..."
-                          className="bg-white mb-2"
+                          className="bg-white mb-2 text-xs"
                         />
                         <div className="flex flex-col gap-2">
                           <label className="cursor-pointer inline-flex items-center justify-center rounded-md text-xs font-medium border border-input bg-white hover:bg-slate-50 h-8 px-3 transition-colors gap-1.5 self-start">
@@ -1376,16 +1388,63 @@ function AdminPortal() {
                             />
                           </label>
                           
-                          {/* Screenshots preview */}
-                          {projectForm.screenshots && (
-                            <div className="flex flex-wrap gap-2 pt-2">
-                              {projectForm.screenshots.split(",").map((s, i) => (
-                                <div key={i} className="h-10 w-16 border rounded overflow-hidden shrink-0 relative group">
-                                  <img src={s.trim()} className="w-full h-full object-cover" alt="" />
+                          {/* Screenshots preview & alt tag inputs list */}
+                          {(() => {
+                            const screenshotsList = projectForm.screenshots
+                              ? projectForm.screenshots.split(",").map(s => {
+                                  const parts = s.trim().split("||");
+                                  return {
+                                    url: parts[0] || "",
+                                    alt: parts[1] || ""
+                                  };
+                                }).filter(item => item.url)
+                              : [];
+
+                            if (screenshotsList.length === 0) return null;
+
+                            return (
+                              <div className="space-y-3 pt-2 w-full">
+                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Manage Screenshots & Alt Tags:</div>
+                                <div className="grid gap-3 sm:grid-cols-2 max-h-60 overflow-y-auto pr-1">
+                                  {screenshotsList.map((item, idx) => (
+                                    <div key={idx} className="flex gap-2.5 p-2 bg-white border rounded-lg items-center relative group shadow-sm">
+                                      <div className="h-11 w-16 rounded border overflow-hidden shrink-0 bg-slate-100">
+                                        <img src={item.url} className="w-full h-full object-cover" alt={item.alt} />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="text-[9px] text-slate-400 truncate mb-1" title={item.url}>{item.url}</div>
+                                        <Input
+                                          size="sm"
+                                          value={item.alt}
+                                          onChange={(e) => {
+                                            const updatedList = [...screenshotsList];
+                                            updatedList[idx] = { ...item, alt: e.target.value };
+                                            const serialized = updatedList.map(x => x.url + (x.alt ? "||" + x.alt : "")).join(", ");
+                                            setProjectForm(prev => ({ ...prev, screenshots: serialized }));
+                                          }}
+                                          placeholder="Alt Tag (SEO keyword)..."
+                                          className="h-6.5 text-[11px] bg-slate-50/50 py-1"
+                                        />
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const updatedList = screenshotsList.filter((_, i) => i !== idx);
+                                          const serialized = updatedList.map(x => x.url + (x.alt ? "||" + x.alt : "")).join(", ");
+                                          setProjectForm(prev => ({ ...prev, screenshots: serialized }));
+                                          toast.success("Screenshot removed.");
+                                        }}
+                                        className="h-4.5 w-4.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 self-start mt-0.5"
+                                        title="Remove screenshot"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                          )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
 
