@@ -73,6 +73,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
+      { name: "google-site-verification", content: "google597ea2f2189dd4a4" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "projectbyAI — AI project workspace for students" },
       { name: "description", content: "Create, document, and present student projects with AI. Generate code, reports, viva questions, and slide decks in one place." },
