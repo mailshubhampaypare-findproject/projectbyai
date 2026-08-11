@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Disallow specific private folders or files if needed
+Disallow: /admin/
+Disallow: /private/
+
+# Link to your sitemap
+Sitemap: https://www.projectbyai.com/sitemap.xml
