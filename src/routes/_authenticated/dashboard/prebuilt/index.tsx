@@ -74,7 +74,12 @@ function PrebuiltGrid() {
             <Link key={p.slug} to="/dashboard/prebuilt/$slug" params={{ slug: p.slug }}>
               <Card className="overflow-hidden hover:shadow-elegant transition-all group cursor-pointer h-full flex flex-col">
                 <div className="aspect-video overflow-hidden bg-muted">
-                  <img src={p.thumbnail} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  {(() => {
+                    const [thumbUrl, thumbAlt] = (p.thumbnail || "").split("||");
+                    return (
+                      <img src={thumbUrl} alt={thumbAlt || p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    );
+                  })()}
                 </div>
                 <div className="p-4 space-y-2 flex-1 flex flex-col">
                   <div className="flex items-center justify-between gap-2">

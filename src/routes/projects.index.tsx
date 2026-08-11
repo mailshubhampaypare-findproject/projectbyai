@@ -128,11 +128,16 @@ function PublicProjectsPage() {
               >
                 <div>
                   <div className="aspect-[16/10] overflow-hidden bg-muted relative">
-                    <img
-                      src={p.thumbnail}
-                      alt={p.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+                    {(() => {
+                      const [thumbUrl, thumbAlt] = (p.thumbnail || "").split("||");
+                      return (
+                        <img
+                          src={thumbUrl}
+                          alt={thumbAlt || p.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      );
+                    })()}
                     <Badge className="absolute top-3 left-3 bg-slate-900/80 text-white border-0 hover:bg-slate-900">
                       {p.category}
                     </Badge>

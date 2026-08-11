@@ -1160,7 +1160,12 @@ function AdminPortal() {
                 {projects.map((p) => (
                   <Card key={p.id} className="overflow-hidden bg-white shadow hover:shadow-elegant transition-all flex flex-col border border-slate-200">
                     <div className="aspect-[16/10] overflow-hidden bg-slate-100">
-                      <img src={p.thumbnail} alt={p.title} className="w-full h-full object-cover" />
+                      {(() => {
+                        const [thumbUrl, thumbAlt] = (p.thumbnail || "").split("||");
+                        return (
+                          <img src={thumbUrl} alt={thumbAlt || p.title} className="w-full h-full object-cover" />
+                        );
+                      })()}
                     </div>
                     <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                       <div className="space-y-2">
