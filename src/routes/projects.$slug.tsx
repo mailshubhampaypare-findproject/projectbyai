@@ -21,6 +21,14 @@ export const Route = createFileRoute("/projects/$slug")({
         ]
       };
     }
+    if (project?.slug === "Cursor-Control-with-Hand-Gestures") {
+      return {
+        meta: [
+          { title: "Cursor Control with Hand Gestures - Python & OpenCV Project" },
+          { name: "description", content: "Download the AI-based Cursor Control with Hand Gestures project. Includes complete Python source code, OpenCV integration, and project documentation for just ₹49." }
+        ]
+      };
+    }
     return {
       meta: [
         { title: project ? `${project.title} — projectbyAI` : "Project Details — projectbyAI" },
@@ -97,6 +105,33 @@ function PublicProjectDetail() {
               },
               "applicationCategory": "EducationalApplication",
               "operatingSystem": "Windows, macOS, Linux",
+              "offers": {
+                "@type": "Offer",
+                "priceCurrency": "INR",
+                "price": "49",
+                "availability": "https://schema.org/InStock"
+              }
+            })
+          }}
+        />
+      )}
+      {project.slug === "Cursor-Control-with-Hand-Gestures" && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org/",
+              "@type": ["Product", "SoftwareApplication"],
+              "name": "Cursor Control with Hand Gestures Project in Python",
+              "image": "https://icfzsirmxzgltzjvsdis.supabase.co/storage/v1/object/public/uploads/thumbnails/a9kek7gbqde_1783366753324.avif",
+              "description": "Download the AI-based Cursor Control with Hand Gestures project. Includes complete Python source code, OpenCV integration, and project documentation.",
+              "brand": {
+                "@type": "Brand",
+                "name": "projectbyAI"
+              },
+              "applicationCategory": "EducationalApplication",
+              "operatingSystem": "Windows, macOS, Linux",
+              "softwareRequirements": "Python, OpenCV, MediaPipe",
               "offers": {
                 "@type": "Offer",
                 "priceCurrency": "INR",
