@@ -11,8 +11,22 @@ import { BrandLogo } from "@/components/BrandLogo";
 import Footer from "@/components/Footer";
 
 export const Route = createFileRoute("/projects/$slug")({
-  head: () => {
-    return { meta: [{ title: `Project Details — projectbyAI` }] };
+  head: ({ loaderData }) => {
+    const project = (loaderData as any)?.project;
+    if (project?.slug === "library-management-system") {
+      return {
+        meta: [
+          { title: "Library Management System - Java & MySQL Project with Source Code" },
+          { name: "description", content: "Download a complete Library Management System. This library management system project includes Java source code, MySQL database structure, and admin login features." }
+        ]
+      };
+    }
+    return {
+      meta: [
+        { title: project ? `${project.title} — projectbyAI` : "Project Details — projectbyAI" },
+        { name: "description", content: project ? project.description.replace(/<[^>]*>/g, '') : "View project details on projectbyAI." }
+      ]
+    };
   },
   loader: async ({ params }) => {
     const { data: project } = await supabase
@@ -67,6 +81,32 @@ function PublicProjectDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex flex-col">
+      {project.slug === "library-management-system" && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org/",
+              "@type": ["Product", "SoftwareApplication"],
+              "name": "Library Management System Project in Java and MySQL",
+              "image": "https://icfzsirmxzgltzjvsdis.supabase.co/storage/v1/object/public/uploads/thumbnails/95cwlyk0s4u_1783197346186.avif",
+              "description": "Download the complete Library Management System project in Java (NetBeans) and MySQL. Includes source code, database structure, and admin login.",
+              "brand": {
+                "@type": "Brand",
+                "name": "projectbyAI"
+              },
+              "applicationCategory": "EducationalApplication",
+              "operatingSystem": "Windows, macOS, Linux",
+              "offers": {
+                "@type": "Offer",
+                "priceCurrency": "INR",
+                "price": "49",
+                "availability": "https://schema.org/InStock"
+              }
+            })
+          }}
+        />
+      )}
       <header className="max-w-6xl mx-auto w-full px-6 py-5 flex items-center justify-between border-b">
         <BrandLogo />
         <Button variant="ghost" size="sm" asChild>
