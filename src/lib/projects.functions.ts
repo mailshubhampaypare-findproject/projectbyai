@@ -439,3 +439,35 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
       throw new Error(err.message || "Failed to create payment order");
     }
   });
+
+export const getSalesStatistics = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.SUPABASE_URL;
+
+    if (!supabaseUrl) {
+      throw new Error("SUPABASE_URL is missing in environment variables.");
+    }
+    if (!serviceKey) {
+      throw new Error("SUPABASE_SERVICE_ROLE_KEY is missing in environment variables.");
+    }
+
+    const serviceClient = createClient(supabaseUrl, serviceKey, {
+      auth: {
+        persistSession: false,
+      },
+    });
+
+    const { data, error } = await serviceClient
+      .from("billing_transactions")
+      .select("id, item_name, amount, created_at, status")
+      .like("item_name", "Library:%")
+      .eq("status", "Paid")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw new Error("Supabase query failed: " + error.message);
+    }
+
+    return data || [];
+  });

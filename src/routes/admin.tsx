@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { listRegisteredUsers } from "@/lib/projects.functions";
+import { listRegisteredUsers, getSalesStatistics } from "@/lib/projects.functions";
 import { MOCK_BLOG_POSTS } from "@/lib/blog-data";
 import { PREBUILT_PROJECTS } from "@/lib/prebuilt-data";
 import { Button } from "@/components/ui/button";
@@ -282,6 +282,12 @@ function AdminPortal() {
   const [usersSearch, setUsersSearch] = useState("");
   const fetchUsers = useServerFn(listRegisteredUsers);
 
+  // Sales state
+  const [sales, setSales] = useState<any[]>([]);
+  const [loadingSales, setLoadingSales] = useState(false);
+  const [isSalesModalOpen, setIsSalesModalOpen] = useState(false);
+  const fetchSales = useServerFn(getSalesStatistics);
+
   // Coupons state
   const [coupons, setCoupons] = useState<any[]>([]);
   const [loadingCoupons, setLoadingCoupons] = useState(false);
@@ -388,6 +394,7 @@ function AdminPortal() {
       loadLibraryProjects();
       loadBlogPosts();
       loadUsers();
+      loadSales();
       loadCoupons();
       loadQueries();
     }
@@ -481,6 +488,18 @@ function AdminPortal() {
       }
     } finally {
       setLoadingUsers(false);
+    }
+  };
+
+  const loadSales = async () => {
+    setLoadingSales(true);
+    try {
+      const data = await fetchSales();
+      setSales(data || []);
+    } catch (err: any) {
+      console.warn("Failed to load sales statistics: ", err);
+    } finally {
+      setLoadingSales(false);
     }
   };
 
@@ -1958,102 +1977,256 @@ function AdminPortal() {
           </div>
         ) : activeTab === "users" ? (
           /* Users Tab content */
-          <div className="space-y-8 max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="border-b pb-5">
-              <h1 className="text-3xl font-extrabold tracking-tight">Registered Users Manager</h1>
-              <p className="text-muted-foreground text-sm mt-1">View student accounts, subscription plans, and AI token balances.</p>
-            </div>
+          (() => {
+            // Compute projects sold stats
+            const totalProjectsSold = sales.length;
+            const salesByMonth: { [key: string]: any[] } = {};
+            const salesByDate: { [key: string]: any[] } = {};
 
-            {/* Error or Warning banner for Service Role Key */}
-            {usersError && (
-              <Card className="p-6 border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-900/50 space-y-4">
-                <div className="flex gap-3">
-                  <HelpCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-sm text-amber-800 dark:text-amber-300">SUPABASE_SERVICE_ROLE_KEY Required</h3>
-                    <p className="text-xs text-amber-700/90 dark:text-amber-400/90 leading-relaxed">
-                      {usersError}
-                    </p>
-                    <div className="text-xs text-amber-700/90 dark:text-amber-400/90 pt-2 space-y-1">
-                      <p><strong>To find your service role key:</strong></p>
-                      <ol className="list-decimal pl-4 space-y-0.5">
-                        <li>Go to your <a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer" className="underline font-bold hover:text-amber-900">Supabase Project Console</a></li>
-                        <li>Click on <strong>Project Settings</strong> (gear icon at bottom left)</li>
-                        <li>Select <strong>API</strong> settings in the submenu</li>
-                        <li>Scroll down to the <strong>Project API Keys</strong> section and copy the key labeled <code>service_role</code> / <code>secret</code> (starts with <code>eyJ...</code>)</li>
-                        <li>Open your project's local <strong><code>.env</code></strong> file and paste it: <br />
-                          <code>SUPABASE_SERVICE_ROLE_KEY="your-copied-service-role-key"</code>
-                        </li>
-                      </ol>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            )}
+            sales.forEach(sale => {
+              const dateObj = new Date(sale.created_at);
+              // Month grouping
+              const monthKey = dateObj.toLocaleString("en-US", { month: "long", year: "numeric" });
+              if (!salesByMonth[monthKey]) salesByMonth[monthKey] = [];
+              salesByMonth[monthKey].push(sale);
 
-            {!usersError && (
-              <>
-                {/* Metric Summary Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  <Card className="bg-white border shadow-sm">
-                    <CardContent className="p-6 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Users</p>
-                        <h3 className="text-2xl font-extrabold mt-1">{users.length}</h3>
-                      </div>
-                      <div className="p-3 bg-blue-50 text-blue-600 rounded-lg dark:bg-blue-900/20 dark:text-blue-400">
-                        <Users className="h-6 w-6" />
-                      </div>
-                    </CardContent>
-                  </Card>
+              // Date grouping
+              const dateKey = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+              if (!salesByDate[dateKey]) salesByDate[dateKey] = [];
+              salesByDate[dateKey].push(sale);
+            });
 
-                  <Card className="bg-white border shadow-sm">
-                    <CardContent className="p-6 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Premium Accounts</p>
-                        <h3 className="text-2xl font-extrabold mt-1">
-                          {users.filter((u) => u.plan === "premium").length}
-                        </h3>
-                      </div>
-                      <div className="p-3 bg-amber-50 text-amber-600 rounded-lg dark:bg-amber-900/20 dark:text-amber-400">
-                        <GraduationCap className="h-6 w-6" />
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-white border shadow-sm">
-                    <CardContent className="p-6 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Active Tokens</p>
-                        <h3 className="text-2xl font-extrabold mt-1">
-                          {users.reduce((acc, u) => acc + (u.tokens || 0), 0)}
-                        </h3>
-                      </div>
-                      <div className="p-3 bg-green-50 text-green-600 rounded-lg dark:bg-green-900/20 dark:text-green-400">
-                        <Check className="h-6 w-6" />
-                      </div>
-                    </CardContent>
-                  </Card>
+            return (
+              <div className="space-y-8 max-w-6xl mx-auto">
+                {/* Header */}
+                <div className="border-b pb-5">
+                  <h1 className="text-3xl font-extrabold tracking-tight">Registered Users Manager</h1>
+                  <p className="text-muted-foreground text-sm mt-1">View student accounts, subscription plans, and AI token balances.</p>
                 </div>
 
-                {/* Filter and Table Card */}
-                <Card className="bg-white border shadow-sm overflow-hidden">
-                  <CardHeader className="p-5 border-b bg-slate-50/50">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <div>
-                        <CardTitle className="text-base font-bold">User Registrations List</CardTitle>
-                        <CardDescription className="text-xs">Select and view user stats and account levels.</CardDescription>
+                {/* Error or Warning banner for Service Role Key */}
+                {usersError && (
+                  <Card className="p-6 border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-900/50 space-y-4">
+                    <div className="flex gap-3">
+                      <HelpCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <h3 className="font-bold text-sm text-amber-800 dark:text-amber-300">SUPABASE_SERVICE_ROLE_KEY Required</h3>
+                        <p className="text-xs text-amber-700/90 dark:text-amber-400/90 leading-relaxed">
+                          {usersError}
+                        </p>
+                        <div className="text-xs text-amber-700/90 dark:text-amber-400/90 pt-2 space-y-1">
+                          <p><strong>To find your service role key:</strong></p>
+                          <ol className="list-decimal pl-4 space-y-0.5">
+                            <li>Go to your <a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer" className="underline font-bold hover:text-amber-900">Supabase Project Console</a></li>
+                            <li>Click on <strong>Project Settings</strong> (gear icon at bottom left)</li>
+                            <li>Select <strong>API</strong> settings in the submenu</li>
+                            <li>Scroll down to the <strong>Project API Keys</strong> section and copy the key labeled <code>service_role</code> / <code>secret</code> (starts with <code>eyJ...</code>)</li>
+                            <li>Open your project's local <strong><code>.env</code></strong> file and paste it: <br />
+                              <code>SUPABASE_SERVICE_ROLE_KEY="your-copied-service-role-key"</code>
+                            </li>
+                          </ol>
+                        </div>
                       </div>
-                      <Input
-                        type="text"
-                        placeholder="Search by name or email..."
-                        value={usersSearch}
-                        onChange={(e) => setUsersSearch(e.target.value)}
-                        className="max-w-xs h-9 bg-white"
-                      />
                     </div>
-                  </CardHeader>
+                  </Card>
+                )}
+
+                {!usersError && (
+                  <>
+                    {/* Metric Summary Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <Card className="bg-white border shadow-sm">
+                        <CardContent className="p-6 flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Users</p>
+                            <h3 className="text-2xl font-extrabold mt-1">{users.length}</h3>
+                          </div>
+                          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg dark:bg-blue-900/20 dark:text-blue-400">
+                            <Users className="h-6 w-6" />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="bg-white border shadow-sm">
+                        <CardContent className="p-6 flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Premium Accounts</p>
+                            <h3 className="text-2xl font-extrabold mt-1">
+                              {users.filter((u) => u.plan === "premium").length}
+                            </h3>
+                          </div>
+                          <div className="p-3 bg-amber-50 text-amber-600 rounded-lg dark:bg-amber-900/20 dark:text-amber-400">
+                            <GraduationCap className="h-6 w-6" />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="bg-white border shadow-sm">
+                        <CardContent className="p-6 flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Active Tokens</p>
+                            <h3 className="text-2xl font-extrabold mt-1">
+                              {users.reduce((acc, u) => acc + (u.tokens || 0), 0)}
+                            </h3>
+                          </div>
+                          <div className="p-3 bg-green-50 text-green-600 rounded-lg dark:bg-green-900/20 dark:text-green-400">
+                            <Check className="h-6 w-6" />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card 
+                        className="bg-white border shadow-sm cursor-pointer hover:border-primary/50 transition-all group"
+                        onClick={() => setIsSalesModalOpen(true)}
+                      >
+                        <CardContent className="p-6 flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider group-hover:text-primary transition-colors flex items-center gap-1.5">
+                              Projects Sold
+                              <span className="text-[10px] text-slate-400 font-normal normal-case">(Click to view)</span>
+                            </p>
+                            <h3 className="text-2xl font-extrabold mt-1">
+                              {loadingSales ? (
+                                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                              ) : (
+                                totalProjectsSold
+                              )}
+                            </h3>
+                          </div>
+                          <div className="p-3 bg-purple-50 text-purple-600 rounded-lg dark:bg-purple-900/20 dark:text-purple-400">
+                            <Tag className="h-6 w-6" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Sales breakdown modal */}
+                    {isSalesModalOpen && (
+                      <div 
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                        onClick={() => setIsSalesModalOpen(false)}
+                      >
+                        <div 
+                          className="bg-white border rounded-xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-200" 
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {/* Modal Header */}
+                          <div className="p-6 border-b flex items-center justify-between">
+                            <div>
+                              <h3 className="text-lg font-bold text-slate-900">Projects Sales Statistics</h3>
+                              <p className="text-xs text-slate-500">Detailed breakdown of sales transactions by month and date.</p>
+                            </div>
+                            <button 
+                              type="button" 
+                              onClick={() => setIsSalesModalOpen(false)}
+                              className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                            >
+                              <X className="h-5 w-5" />
+                            </button>
+                          </div>
+
+                          {/* Modal Body */}
+                          <div className="p-6 overflow-y-auto space-y-6">
+                            {sales.length === 0 ? (
+                              <div className="py-8 text-center text-slate-500">No project sales recorded yet.</div>
+                            ) : (
+                              <>
+                                {/* Month-wise list */}
+                                <div className="space-y-3">
+                                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                    📅 Month-Wise Sales
+                                  </h4>
+                                  <div className="grid gap-2 sm:grid-cols-2">
+                                    {Object.entries(salesByMonth).map(([month, items]) => {
+                                      const totalRevenue = items.reduce((acc, x) => acc + parseFloat(x.amount || 0), 0);
+                                      return (
+                                        <div key={month} className="p-3 bg-slate-50 border rounded-lg flex items-center justify-between">
+                                          <div>
+                                            <div className="text-sm font-semibold text-slate-800">{month}</div>
+                                            <div className="text-xs text-slate-400">{items.length} projects sold</div>
+                                          </div>
+                                          <Badge className="bg-purple-100 hover:bg-purple-100 text-purple-700 border-0 font-bold">
+                                            ₹{totalRevenue}
+                                          </Badge>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                {/* Date-wise list */}
+                                <div className="space-y-3 pt-2">
+                                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                    📈 Date-Wise Sales History
+                                  </h4>
+                                  <div className="border rounded-lg overflow-hidden bg-white max-h-64 overflow-y-auto shadow-sm">
+                                    <table className="w-full text-left text-xs">
+                                      <thead className="bg-slate-50 border-b text-slate-500 font-semibold uppercase tracking-wider">
+                                        <tr>
+                                          <th className="p-3">Date</th>
+                                          <th className="p-3">Project Title / Invoice</th>
+                                          <th className="p-3 text-right">Price Paid</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y text-slate-700">
+                                        {sales.map((sale) => {
+                                          const cleanName = sale.item_name.replace(/^Library:\s*/, "");
+                                          const dateObj = new Date(sale.created_at);
+                                          const formattedDate = dateObj.toLocaleDateString("en-US", { 
+                                            month: "short", 
+                                            day: "numeric", 
+                                            year: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit"
+                                          });
+                                          return (
+                                            <tr key={sale.id} className="hover:bg-slate-50/50">
+                                              <td className="p-3 font-medium">{formattedDate}</td>
+                                              <td className="p-3">
+                                                <div className="font-semibold text-slate-800 truncate max-w-sm" title={cleanName}>
+                                                  {cleanName}
+                                                </div>
+                                                <div className="text-[10px] text-slate-400">{sale.invoice_no}</div>
+                                              </td>
+                                              <td className="p-3 text-right font-bold text-slate-900">₹{sale.amount}</td>
+                                            </tr>
+                                          );
+                                        })}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Modal Footer */}
+                          <div className="p-4 border-t bg-slate-50/50 flex justify-end">
+                            <Button onClick={() => setIsSalesModalOpen(false)} className="border-slate-200 font-semibold text-xs" variant="outline">
+                              Close
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Filter and Table Card */}
+                    <Card className="bg-white border shadow-sm overflow-hidden">
+                      <CardHeader className="p-5 border-b bg-slate-50/50">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <div>
+                            <CardTitle className="text-base font-bold">User Registrations List</CardTitle>
+                            <CardDescription className="text-xs">Select and view user stats and account levels.</CardDescription>
+                          </div>
+                          <Input
+                            type="text"
+                            placeholder="Search by name or email..."
+                            value={usersSearch}
+                            onChange={(e) => setUsersSearch(e.target.value)}
+                            className="max-w-xs h-9 bg-white"
+                          />
+                        </div>
+                      </CardHeader>
 
                   <CardContent className="p-0 overflow-x-auto">
                     {loadingUsers ? (
@@ -2120,6 +2293,8 @@ function AdminPortal() {
               </>
             )}
           </div>
+            );
+          })()
         ) : activeTab === "coupons" ? (
           <div className="space-y-8 max-w-6xl mx-auto">
             {/* Header */}
