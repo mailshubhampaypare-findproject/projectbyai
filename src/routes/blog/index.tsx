@@ -59,7 +59,10 @@ function BlogGrid() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-subtle flex flex-col">
+    <div 
+      className="min-h-screen bg-white dark:bg-slate-950 flex flex-col"
+      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
+    >
       <header className="max-w-6xl mx-auto w-full px-6 py-5 flex items-center justify-between border-b">
         <Link to="/" className="flex items-center gap-2 font-bold text-lg">
           <GraduationCap className="h-6 w-6 text-primary" /> <span className="text-gradient">ScholarBuild</span>

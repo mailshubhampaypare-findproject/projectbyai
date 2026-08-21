@@ -42,7 +42,10 @@ function BlogDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-subtle flex flex-col">
+    <div 
+      className="min-h-screen bg-white dark:bg-slate-950 flex flex-col"
+      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
+    >
       <header className="max-w-4xl mx-auto w-full px-6 py-5 flex items-center justify-between border-b">
         <Link to="/blog" className="flex items-center gap-2 font-bold text-lg">
           <GraduationCap className="h-6 w-6 text-primary" /> <span className="text-gradient">ScholarBuild</span>
@@ -54,25 +57,27 @@ function BlogDetail() {
         </Button>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 py-12 flex-1 space-y-6">
+      <main className="max-w-4xl mx-auto px-6 py-12 flex-1 space-y-8">
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
             <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
               {post.category || "General"}
             </span>
-            <div className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
+            <span className="text-slate-300">•</span>
+            <div className="flex items-center gap-1.5">
+              <Calendar className="h-4 w-4 text-slate-400" />
               <span>{formatDate(post.created_at)}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <User className="h-4 w-4" />
-              <span>By ScholarBuild Team</span>
             </div>
           </div>
           
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-tight text-slate-900 dark:text-white">
             {post.title}
           </h1>
+
+          <div className="flex items-center gap-1.5 text-sm text-slate-500 font-medium pt-1">
+            <User className="h-4 w-4 text-slate-400" />
+            <span>By {post.author || "Sam Dere"}</span>
+          </div>
         </div>
 
         <div className="aspect-[21/9] rounded-xl overflow-hidden shadow-elegant border my-8">
@@ -84,7 +89,8 @@ function BlogDetail() {
         </div>
 
         <article 
-          className="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-slate-200 leading-relaxed space-y-4 blog-html-content"
+          className="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed md:leading-loose text-base md:text-lg space-y-6 blog-html-content"
+          style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
           dangerouslySetInnerHTML={{ 
             __html: post.content.startsWith("<") || post.content.includes("</") || post.content.includes("<p>") 
               ? post.content 
@@ -92,9 +98,9 @@ function BlogDetail() {
                   if (!para.trim()) return "";
                   if (para.startsWith("- ") || para.startsWith("* ")) {
                     const items = para.split("\n").map(i => `<li>${i.replace(/^(-\s*|\*\s*)/, "")}</li>`).join("");
-                    return `<ul class="list-disc pl-5 my-3">${items}</ul>`;
+                    return `<ul class="list-disc pl-5 my-4">${items}</ul>`;
                   }
-                  return `<p class="my-3">${para.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>`;
+                  return `<p class="my-4">${para.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>`;
                 }).join("")
           }}
         />
