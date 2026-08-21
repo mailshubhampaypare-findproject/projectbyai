@@ -1,9 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { MOCK_BLOG_POSTS } from "@/lib/blog-data";
-import { GraduationCap, ArrowLeft, Calendar, User } from "lucide-react";
+import { ArrowLeft, Calendar, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export const Route = createFileRoute("/blog/$slug")({
   head: ({ params }) => {
@@ -47,9 +48,7 @@ function BlogDetail() {
       style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
     >
       <header className="max-w-4xl mx-auto w-full px-6 py-5 flex items-center justify-between border-b">
-        <Link to="/blog" className="flex items-center gap-2 font-bold text-lg">
-          <GraduationCap className="h-6 w-6 text-primary" /> <span className="text-gradient">ScholarBuild</span>
-        </Link>
+        <BrandLogo />
         <Button variant="ghost" size="sm" asChild>
           <Link to="/blog" className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" /> Back to Blog

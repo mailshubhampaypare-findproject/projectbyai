@@ -5,9 +5,10 @@ import { MOCK_BLOG_POSTS } from "@/lib/blog-data";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, ArrowLeft, Search, Calendar } from "lucide-react";
+import { ArrowLeft, Search, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export const Route = createFileRoute("/blog/")({
   head: () => ({ meta: [{ title: "Blog — ScholarBuild" }] }),
@@ -64,9 +65,7 @@ function BlogGrid() {
       style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
     >
       <header className="max-w-6xl mx-auto w-full px-6 py-5 flex items-center justify-between border-b">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-          <GraduationCap className="h-6 w-6 text-primary" /> <span className="text-gradient">ScholarBuild</span>
-        </Link>
+        <BrandLogo />
         <Button variant="ghost" size="sm" asChild>
           <Link to="/" className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" /> Back to Home
