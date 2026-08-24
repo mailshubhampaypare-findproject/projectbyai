@@ -1984,7 +1984,10 @@ function AdminPortal() {
             const salesByDate: { [key: string]: any[] } = {};
 
             sales.forEach(sale => {
+              if (!sale || !sale.created_at) return;
               const dateObj = new Date(sale.created_at);
+              if (isNaN(dateObj.getTime())) return;
+              
               // Month grouping
               const monthKey = dateObj.toLocaleString("en-US", { month: "long", year: "numeric" });
               if (!salesByMonth[monthKey]) salesByMonth[monthKey] = [];
@@ -2170,15 +2173,21 @@ function AdminPortal() {
                                       </thead>
                                       <tbody className="divide-y text-slate-700">
                                         {sales.map((sale) => {
-                                          const cleanName = sale.item_name.replace(/^Library:\s*/, "");
-                                          const dateObj = new Date(sale.created_at);
-                                          const formattedDate = dateObj.toLocaleDateString("en-US", { 
-                                            month: "short", 
-                                            day: "numeric", 
-                                            year: "numeric",
-                                            hour: "2-digit",
-                                            minute: "2-digit"
-                                          });
+                                          if (!sale) return null;
+                                          const cleanName = (sale.item_name || "").replace(/^Library:\s*/, "");
+                                          let formattedDate = "Invalid Date";
+                                          if (sale.created_at) {
+                                            const dateObj = new Date(sale.created_at);
+                                            if (!isNaN(dateObj.getTime())) {
+                                              formattedDate = dateObj.toLocaleDateString("en-US", { 
+                                                month: "short", 
+                                                day: "numeric", 
+                                                year: "numeric",
+                                                hour: "2-digit",
+                                                minute: "2-digit"
+                                              });
+                                            }
+                                          }
                                           return (
                                             <tr key={sale.id} className="hover:bg-slate-50/50">
                                               <td className="p-3 font-medium">{formattedDate}</td>
@@ -2186,9 +2195,9 @@ function AdminPortal() {
                                                 <div className="font-semibold text-slate-800 truncate max-w-sm" title={cleanName}>
                                                   {cleanName}
                                                 </div>
-                                                <div className="text-[10px] text-slate-400">{sale.invoice_no}</div>
+                                                <div className="text-[10px] text-slate-400">{sale.invoice_no || "N/A"}</div>
                                               </td>
-                                              <td className="p-3 text-right font-bold text-slate-900">₹{sale.amount}</td>
+                                              <td className="p-3 text-right font-bold text-slate-900">₹{sale.amount ?? 0}</td>
                                             </tr>
                                           );
                                         })}
