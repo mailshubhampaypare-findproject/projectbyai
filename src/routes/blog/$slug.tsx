@@ -88,7 +88,7 @@ function BlogDetail() {
         </div>
 
         <article 
-          className="prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed md:leading-loose text-base md:text-lg space-y-6 blog-html-content"
+          className="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed text-sm md:text-base blog-html-content"
           style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
           dangerouslySetInnerHTML={{ 
             __html: post.content.startsWith("<") || post.content.includes("</") || post.content.includes("<p>") 

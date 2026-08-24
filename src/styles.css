@@ -193,3 +193,61 @@
 .blog-html-content a:hover {
   color: #1d4ed8 !important;
 }
+
+/* Custom clean styling for blog paragraphs and headings */
+.blog-html-content p,
+.blog-html-content ul,
+.blog-html-content ol,
+.blog-html-content h1,
+.blog-html-content h2,
+.blog-html-content h3,
+.blog-html-content h4 {
+  margin-top: 0 !important;
+  margin-bottom: 24px !important; /* Uniform space after sentence/paragraph ends */
+}
+
+.blog-html-content p {
+  font-size: 15px !important;
+  line-height: 1.75 !important;
+  color: #334155 !important; /* slate-700 */
+}
+
+.blog-html-content h1 {
+  font-size: 28px !important;
+  font-weight: 800 !important;
+  color: #0f172a !important; /* slate-900 */
+  margin-top: 36px !important;
+}
+
+.blog-html-content h2 {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  margin-top: 32px !important;
+}
+
+.blog-html-content h3 {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  margin-top: 28px !important;
+}
+
+.blog-html-content li {
+  font-size: 15px !important;
+  line-height: 1.75 !important;
+  color: #334155 !important;
+  margin-bottom: 10px !important;
+}
+
+/* Dark mode overrides */
+.dark .blog-html-content p,
+.dark .blog-html-content li {
+  color: #cbd5e1 !important; /* slate-300 */
+}
+
+.dark .blog-html-content h1,
+.dark .blog-html-content h2,
+.dark .blog-html-content h3 {
+  color: #f8fafc !important; /* slate-50 */
+}
