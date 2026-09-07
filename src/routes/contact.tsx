@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { BrandLogo } from "@/components/BrandLogo";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import Footer from "@/components/Footer";
+import { useServerFn } from "@tanstack/react-start";
+import { submitContactQuery } from "@/lib/projects.functions";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({ meta: [{ title: "Contact Us — projectbyAI" }] }),
@@ -20,6 +21,7 @@ function ContactUs() {
   const [formData, setFormData] = useState({ name: "", email: "", phone: "", message: "" });
   const [sending, setSending] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const submitQuery = useServerFn(submitContactQuery);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,28 +31,24 @@ function ContactUs() {
     }
     setSending(true);
     try {
-      const { error } = await supabase
-        .from("contact_queries")
-        .insert({
+      await submitQuery({
+        data: {
           name: formData.name.trim(),
           email: formData.email.trim(),
           phone: formData.phone.trim() || null,
-          message: formData.message.trim()
-        });
-
-      if (error) throw error;
+          message: formData.message.trim(),
+        },
+      });
 
       setShowSuccessModal(true);
       setFormData({ name: "", email: "", phone: "", message: "" });
     } catch (err: any) {
-      console.error(err);
-      // Fallback: If table is missing, show local success but warn console
-      if (err.message?.includes("relation") || err.message?.includes("does not exist")) {
-        setShowSuccessModal(true);
-        setFormData({ name: "", email: "", phone: "", message: "" });
-        console.warn("contact_queries table is missing. Run the migration in your Supabase SQL editor.");
+      console.error("Failed to submit contact query:", err);
+      const msg = err?.message || String(err);
+      if (msg.includes("contact_queries") || msg.includes("does not exist") || msg.includes("PGRST205")) {
+        toast.error("Database table 'contact_queries' is not yet created. Please run the migration in Supabase SQL editor.");
       } else {
-        toast.error("Failed to send message: " + err.message);
+        toast.error("Failed to send message: " + msg);
       }
     } finally {
       setSending(false);

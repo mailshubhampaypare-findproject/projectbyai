@@ -471,3 +471,89 @@ export const getSalesStatistics = createServerFn({ method: "GET" })
 
     return data || [];
   });
+
+export const submitContactQuery = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({
+      name: z.string().min(1).max(200),
+      email: z.string().email().max(200),
+      phone: z.string().max(50).nullable().optional(),
+      message: z.string().min(1).max(5000),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.SUPABASE_URL;
+
+    if (!supabaseUrl || !serviceKey) {
+      throw new Error("Supabase environment configuration missing on server.");
+    }
+
+    const serviceClient = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false },
+    });
+
+    const { error } = await serviceClient.from("contact_queries").insert({
+      name: data.name.trim(),
+      email: data.email.trim(),
+      phone: data.phone?.trim() || null,
+      message: data.message.trim(),
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return { success: true };
+  });
+
+export const listContactQueries = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.SUPABASE_URL;
+
+    if (!supabaseUrl || !serviceKey) {
+      throw new Error("Supabase environment configuration missing on server.");
+    }
+
+    const serviceClient = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false },
+    });
+
+    const { data, error } = await serviceClient
+      .from("contact_queries")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data || [];
+  });
+
+export const deleteContactQuery = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ id: z.string() }).parse(d))
+  .handler(async ({ data }) => {
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.SUPABASE_URL;
+
+    if (!supabaseUrl || !serviceKey) {
+      throw new Error("Supabase environment configuration missing on server.");
+    }
+
+    const serviceClient = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false },
+    });
+
+    const { error } = await serviceClient
+      .from("contact_queries")
+      .delete()
+      .eq("id", data.id);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return { success: true };
+  });

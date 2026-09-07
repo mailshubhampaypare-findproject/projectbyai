@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { listRegisteredUsers, getSalesStatistics } from "@/lib/projects.functions";
+import { listRegisteredUsers, getSalesStatistics, listContactQueries, deleteContactQuery } from "@/lib/projects.functions";
 import { MOCK_BLOG_POSTS } from "@/lib/blog-data";
 import { PREBUILT_PROJECTS } from "@/lib/prebuilt-data";
 import { Button } from "@/components/ui/button";
@@ -275,6 +275,8 @@ function AdminPortal() {
   const [queries, setQueries] = useState<any[]>([]);
   const [loadingQueries, setLoadingQueries] = useState(false);
   const [queriesTableMissing, setQueriesTableMissing] = useState(false);
+  const fetchQueries = useServerFn(listContactQueries);
+  const deleteQueryFn = useServerFn(deleteContactQuery);
 
   // Users state
   const [users, setUsers] = useState<any[]>([]);
@@ -532,22 +534,21 @@ function AdminPortal() {
     setLoadingQueries(true);
     setQueriesTableMissing(false);
     try {
-      const { data, error } = await supabase
-        .from("contact_queries")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) {
-        if (error.message.includes("does not exist") || error.code === "PGRST116") {
-          setQueriesTableMissing(true);
-        } else {
-          throw error;
-        }
-      } else {
-        setQueries(data || []);
-      }
+      const data = await fetchQueries();
+      setQueries(data || []);
     } catch (err: any) {
       console.warn("Queries load failed: ", err);
-      setQueriesTableMissing(true);
+      const msg = err?.message || String(err);
+      if (
+        msg.includes("contact_queries") ||
+        msg.includes("does not exist") ||
+        msg.includes("PGRST205") ||
+        msg.includes("PGRST116")
+      ) {
+        setQueriesTableMissing(true);
+      } else {
+        toast.error("Failed to load queries: " + msg);
+      }
     } finally {
       setLoadingQueries(false);
     }
@@ -556,11 +557,7 @@ function AdminPortal() {
   const handleDeleteQuery = async (id: string) => {
     if (!confirm("Are you sure you want to delete this contact query?")) return;
     try {
-      const { error } = await supabase
-        .from("contact_queries")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
+      await deleteQueryFn({ data: { id } });
       toast.success("Query deleted successfully");
       loadQueries();
     } catch (err: any) {
@@ -2535,16 +2532,22 @@ CREATE POLICY "Allow write access to authenticated users" ON public.coupons
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Grant permissions
+GRANT ALL ON public.contact_queries TO anon, authenticated, service_role;
+
 -- Enable Row Level Security
 ALTER TABLE public.contact_queries ENABLE ROW LEVEL SECURITY;
 
--- Allow insert access for anyone
+-- Allow insert access for everyone
 CREATE POLICY "Allow insert for everyone" ON public.contact_queries
   FOR INSERT TO public WITH CHECK (true);
 
--- Allow full access for authenticated users (admins)
-CREATE POLICY "Allow write access to authenticated users" ON public.contact_queries
-  FOR ALL TO authenticated USING (true);`}
+-- Allow full access for service_role and authenticated users
+CREATE POLICY "Allow service_role full access" ON public.contact_queries
+  FOR ALL TO service_role USING (true);
+
+CREATE POLICY "Allow read access to authenticated users" ON public.contact_queries
+  FOR SELECT TO authenticated USING (true);`}
                     </pre>
 
                     <Button onClick={loadQueries} className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold h-8 mt-2">
