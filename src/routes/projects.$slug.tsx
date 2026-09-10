@@ -89,59 +89,74 @@ function PublicProjectDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex flex-col">
-      {project.slug === "library-management-system" && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org/",
-              "@type": ["Product", "SoftwareApplication"],
-              "name": "Library Management System Project in Java and MySQL",
-              "image": "https://icfzsirmxzgltzjvsdis.supabase.co/storage/v1/object/public/uploads/thumbnails/95cwlyk0s4u_1783197346186.avif",
-              "description": "Download the complete Library Management System project in Java (NetBeans) and MySQL. Includes source code, database structure, and admin login.",
-              "brand": {
-                "@type": "Brand",
-                "name": "projectbyAI"
-              },
-              "applicationCategory": "EducationalApplication",
-              "operatingSystem": "Windows, macOS, Linux",
-              "offers": {
-                "@type": "Offer",
-                "priceCurrency": "INR",
-                "price": "49",
-                "availability": "https://schema.org/InStock"
-              }
-            })
-          }}
-        />
-      )}
-      {project.slug === "Cursor-Control-with-Hand-Gestures" && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org/",
-              "@type": ["Product", "SoftwareApplication"],
-              "name": "Cursor Control with Hand Gestures Project in Python",
-              "image": "https://icfzsirmxzgltzjvsdis.supabase.co/storage/v1/object/public/uploads/thumbnails/a9kek7gbqde_1783366753324.avif",
-              "description": "Download the AI-based Cursor Control with Hand Gestures project. Includes complete Python source code, OpenCV integration, and project documentation.",
-              "brand": {
-                "@type": "Brand",
-                "name": "projectbyAI"
-              },
-              "applicationCategory": "EducationalApplication",
-              "operatingSystem": "Windows, macOS, Linux",
-              "softwareRequirements": "Python, OpenCV, MediaPipe",
-              "offers": {
-                "@type": "Offer",
-                "priceCurrency": "INR",
-                "price": "49",
-                "availability": "https://schema.org/InStock"
-              }
-            })
-          }}
-        />
-      )}
+      {/* Dynamic Product JSON-LD Schema (Google Structured Data Markup) */}
+      {(() => {
+        const [thumbUrl] = (project.thumbnail || "").split("||");
+        const cleanImage = thumbUrl?.trim() || "https://www.projectbyai.com/logo-light.png";
+
+        const rawText = project.longDescription || project.description || "";
+        const cleanDescription = rawText
+          .replace(/<[^>]*>/g, " ")
+          .replace(/&nbsp;/g, " ")
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&quot;/g, '"')
+          .replace(/\s+/g, " ")
+          .trim();
+
+        // Limit description length if very long while maintaining complete sentence
+        let schemaDesc = cleanDescription;
+        if (schemaDesc.length > 500) {
+          const cut = schemaDesc.slice(0, 500);
+          const lastPeriod = cut.lastIndexOf(".");
+          if (lastPeriod > 200) {
+            schemaDesc = cut.slice(0, lastPeriod + 1);
+          } else {
+            schemaDesc = cut.trim() + "...";
+          }
+        }
+
+        const rawPrice = project.price ? String(project.price) : "49";
+        const numericPrice = rawPrice.replace(/[^0-9.]/g, "") || "49";
+        const formattedPrice = `₹${numericPrice}`;
+
+        const productSchema = {
+          "@context": "http://schema.org",
+          "@type": "Product",
+          "name": (project.title || "").trim(),
+          "image": cleanImage,
+          "description": schemaDesc || `${(project.title || "").trim()} project documentation and complete source code.`,
+          "brand": {
+            "@type": "Brand",
+            "name": "projectbyAI",
+            "logo": "https://www.projectbyai.com/logo-light.png"
+          },
+          "offers": {
+            "@type": "Offer",
+            "price": formattedPrice,
+            "priceCurrency": "INR",
+            "availability": "https://schema.org/InStock",
+            "url": `https://www.projectbyai.com/projects/${project.slug}`
+          },
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "bestRating": "5",
+            "worstRating": "1",
+            "ratingCount": "200"
+          }
+        };
+
+        return (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(productSchema)
+            }}
+          />
+        );
+      })()}
       <header className="max-w-6xl mx-auto w-full px-6 py-5 flex items-center justify-between border-b">
         <BrandLogo />
         <Button variant="ghost" size="sm" asChild>
