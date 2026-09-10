@@ -119,7 +119,6 @@ function PublicProjectDetail() {
 
         const rawPrice = project.price ? String(project.price) : "49";
         const numericPrice = rawPrice.replace(/[^0-9.]/g, "") || "49";
-        const formattedPrice = `₹${numericPrice}`;
 
         const productSchema = {
           "@context": "http://schema.org",
@@ -134,7 +133,7 @@ function PublicProjectDetail() {
           },
           "offers": {
             "@type": "Offer",
-            "price": formattedPrice,
+            "price": numericPrice,
             "priceCurrency": "INR",
             "availability": "https://schema.org/InStock",
             "url": `https://www.projectbyai.com/projects/${project.slug}`
