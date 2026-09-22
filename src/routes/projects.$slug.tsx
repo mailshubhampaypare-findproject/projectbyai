@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import Footer from "@/components/Footer";
+import { HrReadmeSection } from "@/components/HrReadmeSection";
 
 export const Route = createFileRoute("/projects/$slug")({
   head: ({ loaderData }) => {
@@ -189,6 +190,12 @@ function PublicProjectDetail() {
                 dangerouslySetInnerHTML={{ __html: project.longDescription || "" }} 
               />
             </div>
+
+            {project.slug?.toLowerCase() === "hr-management-system" && (
+              <div id="hr-readme-box" className="my-6">
+                <HrReadmeSection />
+              </div>
+            )}
 
             {project.screenshots && project.screenshots.length > 0 && (
               <section>
