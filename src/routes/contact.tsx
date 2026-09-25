@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Mail, Phone, MapPin, Send, CheckCircle2, Clock } from "lucide-react";
+import { Mail, Send, CheckCircle2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -75,27 +75,12 @@ function ContactUs() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Email us</p>
-                <p className="text-sm font-semibold text-slate-800">support@projectbyai.com</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                <Phone className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Call us</p>
-                <p className="text-sm font-semibold text-slate-800">+91 98765 43210</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                <MapPin className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">HQ Office</p>
-                <p className="text-sm font-semibold text-slate-800">Mumbai, Maharashtra, India</p>
+                <a
+                  href="mailto:project.findproject@gmail.com"
+                  className="text-sm font-semibold text-slate-800 hover:text-primary transition-colors"
+                >
+                  project.findproject@gmail.com
+                </a>
               </div>
             </div>
           </div>
