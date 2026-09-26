@@ -126,11 +126,23 @@ export const PREBUILT_PROJECTS: PrebuiltProject[] = [
   },
 ];
 
-export const PRICING_PLANS = [
+export type PricingPlan = {
+  id: string;
+  name: string;
+  price: number;
+  tokens: number;
+  tagline: string;
+  features: string[];
+  highlight: boolean;
+  period?: string;
+  badge?: string;
+};
+
+export const PRICING_PLANS: PricingPlan[] = [
   {
     id: "starter",
     name: "Starter",
-    price: 99,
+    price: 999,
     tokens: 200,
     tagline: "For occasional assignments",
     features: [
@@ -145,7 +157,7 @@ export const PRICING_PLANS = [
   {
     id: "pro",
     name: "Pro",
-    price: 249,
+    price: 1999,
     tokens: 800,
     tagline: "Best for final-year students",
     features: [
@@ -160,16 +172,33 @@ export const PRICING_PLANS = [
   {
     id: "campus",
     name: "Campus",
-    price: 499,
+    price: 2999,
     tokens: 2500,
     tagline: "For serious builders & teams",
     features: [
-      "2 500 AI tokens / month",
+      "2,500 AI tokens / month",
       "Everything in Pro",
       "Team collaboration",
       "Custom branded reports",
       "Dedicated support",
     ],
     highlight: false,
+  },
+  {
+    id: "lifetime",
+    name: "Lifetime",
+    price: 29999,
+    tokens: 50000,
+    period: "lifetime",
+    tagline: "Unlimited permanent access",
+    features: [
+      "50,000 AI tokens included",
+      "Lifetime access & all future updates",
+      "Everything in Campus",
+      "Unlimited slide decks & reports",
+      "VIP priority 24/7 dedicated support",
+    ],
+    highlight: false,
+    badge: "Best Value",
   },
 ];

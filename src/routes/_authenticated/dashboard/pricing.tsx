@@ -101,8 +101,8 @@ function Pricing() {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_T9aKebvfGIfoPs",
       amount: Math.round(finalPrice * 100), // Convert INR to Paisa cents
       currency: "INR",
-      name: "ScholarBuild",
-      description: `Purchase ${plan.name} Token Pack`,
+      name: "projectbyAI",
+      description: plan.id === "lifetime" ? "Purchase Lifetime Plan" : `Purchase ${plan.name} Token Pack`,
       image: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6ce9b27c-0d24-44a6-9792-659971ff637e/id-preview-763aa04d--76a070a1-12d6-4684-a608-6b50d760aa47.lovable.app-1783062772600.png",
       order_id: orderId || undefined,
       payment_capture: 1,
@@ -167,7 +167,7 @@ function Pricing() {
 
   return (
     <div className="h-full overflow-auto">
-      <div className="max-w-6xl mx-auto p-6 lg:p-10 space-y-10">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-10">
         <div className="text-center space-y-3">
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-accent-foreground text-xs font-medium">
             <Zap className="h-3 w-3" /> Buy AI tokens
@@ -213,54 +213,86 @@ function Pricing() {
           )}
         </Card>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {PRICING_PLANS.map((plan) => (
             <Card
               key={plan.id}
-              className={`p-8 space-y-6 relative ${plan.highlight ? "border-primary shadow-elegant border-2" : ""}`}
+              className={`p-6 space-y-6 relative flex flex-col justify-between ${
+                plan.highlight 
+                  ? "border-primary shadow-elegant border-2" 
+                  : plan.id === "lifetime"
+                  ? "border-amber-400/80 shadow-md ring-1 ring-amber-300/40"
+                  : ""
+              }`}
             >
               {plan.highlight && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full shadow-elegant">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full shadow-elegant whitespace-nowrap">
                   Most popular
                 </div>
               )}
-              <div>
-                <h3 className="text-xl font-bold">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{plan.tagline}</p>
-              </div>
-              <div>
-                {appliedCoupon ? (
-                  <div className="flex flex-col">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-bold text-green-600">₹{getDiscountedPrice(Number(plan.price))}</span>
-                      <span className="text-sm text-slate-400 line-through">₹{plan.price}</span>
+              {plan.badge && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-elegant whitespace-nowrap">
+                  {plan.badge}
+                </div>
+              )}
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-bold">{plan.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{plan.tagline}</p>
+                </div>
+                <div>
+                  {appliedCoupon ? (
+                    <div className="flex flex-col">
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className="text-3xl lg:text-4xl font-bold text-green-600">
+                          ₹{getDiscountedPrice(Number(plan.price)).toLocaleString("en-IN")}
+                        </span>
+                        <span className="text-sm text-slate-400 line-through">
+                          ₹{plan.price.toLocaleString("en-IN")}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {plan.period ? `/${plan.period}` : "/month"}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-200 w-max mt-1 uppercase">
+                        Code {appliedCoupon.code} Applied!
+                      </span>
                     </div>
-                    <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-200 w-max mt-1 uppercase">
-                      Code {appliedCoupon.code} Applied!
-                    </span>
+                  ) : (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl lg:text-4xl font-bold">
+                        ₹{plan.price.toLocaleString("en-IN")}
+                      </span>
+                      <span className="text-muted-foreground text-sm">
+                        {plan.period ? `/${plan.period}` : "/month"}
+                      </span>
+                    </div>
+                  )}
+                  <div className="text-sm text-primary font-semibold mt-2">
+                    {plan.tokens.toLocaleString("en-IN")} AI tokens
                   </div>
-                ) : (
-                  <div>
-                    <span className="text-4xl font-bold">₹{plan.price}</span>
-                    <span className="text-muted-foreground">/month</span>
-                  </div>
-                )}
-                <div className="text-sm text-primary font-semibold mt-2">{plan.tokens.toLocaleString()} AI tokens</div>
+                </div>
+                <Button
+                  onClick={() => handleBuyPlan(plan)}
+                  className={`w-full ${
+                    plan.highlight 
+                      ? "bg-gradient-primary shadow-elegant" 
+                      : plan.id === "lifetime"
+                      ? "bg-amber-500 hover:bg-amber-600 text-white shadow-sm"
+                      : ""
+                  }`}
+                  variant={plan.highlight || plan.id === "lifetime" ? "default" : "outline"}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" /> Choose {plan.name}
+                </Button>
+                <ul className="space-y-2.5 text-sm pt-2">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-success mt-0.5 shrink-0" /> <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <Button
-                onClick={() => handleBuyPlan(plan)}
-                className={`w-full ${plan.highlight ? "bg-gradient-primary shadow-elegant" : ""}`}
-                variant={plan.highlight ? "default" : "outline"}
-              >
-                <Sparkles className="h-4 w-4 mr-2" /> Choose {plan.name}
-              </Button>
-              <ul className="space-y-2.5 text-sm">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2">
-                    <Check className="h-4 w-4 text-success mt-0.5 shrink-0" /> <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
             </Card>
           ))}
         </div>
