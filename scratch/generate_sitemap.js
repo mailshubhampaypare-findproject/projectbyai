@@ -25,7 +25,10 @@ async function run() {
     "/privacy",
     "/terms-and-condition",
     "/refund",
-    "/contact"
+    "/contact",
+    "/linkedin-extension",
+    "/linkedin-extension/privacy",
+    "/linkedin-extension/terms"
   ];
 
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
