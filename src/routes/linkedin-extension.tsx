@@ -720,16 +720,16 @@ function LinkedinExtensionPage() {
       {/* Strict Legal Notice & Mandatory Disclaimers Banner */}
       <section className="py-12 bg-slate-900 text-white border-t border-slate-800">
         <div className="max-w-5xl mx-auto px-6 space-y-6">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
-            <div className="space-y-2">
-              <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1.5 text-[5.5px] leading-[9.5px]" style={{ fontSize: "5.5px", lineHeight: "9.5px" }}>
+              <h4 className="font-bold text-white uppercase tracking-wider text-[6.5px] leading-[10.5px]" style={{ fontSize: "6.5px", lineHeight: "10.5px" }}>
                 Independent Browser Utility & Strict Legal Disclaimer
               </h4>
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-slate-300">
                 This extension is an independent productivity utility developed by projectbyAI and is <strong>NOT affiliated, associated, authorized, endorsed by, or in any way officially connected with LinkedIn Corporation, Microsoft Corporation, Google LLC, or Alphabet Inc.</strong> The names "LinkedIn", "Google", and "Chrome" as well as related names, marks, emblems, and images are registered trademarks of their respective owners.
               </p>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-slate-400">
                 <strong>Sole User Responsibility:</strong> The user bears 100% sole and exclusive responsibility for compliance with LinkedIn's User Agreement, anti-automation restrictions, privacy regulations (GDPR/CCPA), and applicable anti-spam laws (CAN-SPAM). Any account restrictions, rate limits, suspensions, or third-party legal claims resulting from use of this tool are the sole liability of the user. ProjectbyAI accepts zero liability.
               </p>
             </div>
