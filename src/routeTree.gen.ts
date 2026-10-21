@@ -12,17 +12,17 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsAndConditionRouteImport } from './routes/terms-and-condition'
 import { Route as RefundRouteImport } from './routes/refund'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as LinkedinExtensionTermsRouteImport } from './routes/linkedin-extension-terms'
+import { Route as LinkedinExtensionPrivacyRouteImport } from './routes/linkedin-extension-privacy'
+import { Route as LinkedinExtensionRouteImport } from './routes/linkedin-extension'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
-import { Route as LinkedinExtensionIndexRouteImport } from './routes/linkedin-extension/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as ProjectsSlugRouteImport } from './routes/projects.$slug'
-import { Route as LinkedinExtensionTermsRouteImport } from './routes/linkedin-extension/terms'
-import { Route as LinkedinExtensionPrivacyRouteImport } from './routes/linkedin-extension/privacy'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -48,6 +48,22 @@ const RefundRoute = RefundRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LinkedinExtensionTermsRoute = LinkedinExtensionTermsRouteImport.update({
+  id: '/linkedin-extension-terms',
+  path: '/linkedin-extension-terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LinkedinExtensionPrivacyRoute =
+  LinkedinExtensionPrivacyRouteImport.update({
+    id: '/linkedin-extension-privacy',
+    path: '/linkedin-extension-privacy',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LinkedinExtensionRoute = LinkedinExtensionRouteImport.update({
+  id: '/linkedin-extension',
+  path: '/linkedin-extension',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -79,11 +95,6 @@ const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
   path: '/projects/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LinkedinExtensionIndexRoute = LinkedinExtensionIndexRouteImport.update({
-  id: '/linkedin-extension/',
-  path: '/linkedin-extension/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
@@ -94,17 +105,6 @@ const ProjectsSlugRoute = ProjectsSlugRouteImport.update({
   path: '/projects/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LinkedinExtensionTermsRoute = LinkedinExtensionTermsRouteImport.update({
-  id: '/linkedin-extension/terms',
-  path: '/linkedin-extension/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LinkedinExtensionPrivacyRoute =
-  LinkedinExtensionPrivacyRouteImport.update({
-    id: '/linkedin-extension/privacy',
-    path: '/linkedin-extension/privacy',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
   id: '/blog/$slug',
   path: '/blog/$slug',
@@ -174,17 +174,17 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/linkedin-extension': typeof LinkedinExtensionRoute
+  '/linkedin-extension-privacy': typeof LinkedinExtensionPrivacyRoute
+  '/linkedin-extension-terms': typeof LinkedinExtensionTermsRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
   '/terms-and-condition': typeof TermsAndConditionRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/blog/$slug': typeof BlogSlugRoute
-  '/linkedin-extension/privacy': typeof LinkedinExtensionPrivacyRoute
-  '/linkedin-extension/terms': typeof LinkedinExtensionTermsRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/blog/': typeof BlogIndexRoute
-  '/linkedin-extension/': typeof LinkedinExtensionIndexRoute
   '/projects/': typeof ProjectsIndexRoute
   '/dashboard/my-projects': typeof AuthenticatedDashboardMyProjectsRoute
   '/dashboard/prebuilt': typeof AuthenticatedDashboardPrebuiltRouteWithChildren
@@ -200,16 +200,16 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/linkedin-extension': typeof LinkedinExtensionRoute
+  '/linkedin-extension-privacy': typeof LinkedinExtensionPrivacyRoute
+  '/linkedin-extension-terms': typeof LinkedinExtensionTermsRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
   '/terms-and-condition': typeof TermsAndConditionRoute
   '/api/chat': typeof ApiChatRoute
   '/blog/$slug': typeof BlogSlugRoute
-  '/linkedin-extension/privacy': typeof LinkedinExtensionPrivacyRoute
-  '/linkedin-extension/terms': typeof LinkedinExtensionTermsRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/blog': typeof BlogIndexRoute
-  '/linkedin-extension': typeof LinkedinExtensionIndexRoute
   '/projects': typeof ProjectsIndexRoute
   '/dashboard/my-projects': typeof AuthenticatedDashboardMyProjectsRoute
   '/dashboard/pricing': typeof AuthenticatedDashboardPricingRoute
@@ -226,17 +226,17 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/linkedin-extension': typeof LinkedinExtensionRoute
+  '/linkedin-extension-privacy': typeof LinkedinExtensionPrivacyRoute
+  '/linkedin-extension-terms': typeof LinkedinExtensionTermsRoute
   '/privacy': typeof PrivacyRoute
   '/refund': typeof RefundRoute
   '/terms-and-condition': typeof TermsAndConditionRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/blog/$slug': typeof BlogSlugRoute
-  '/linkedin-extension/privacy': typeof LinkedinExtensionPrivacyRoute
-  '/linkedin-extension/terms': typeof LinkedinExtensionTermsRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/blog/': typeof BlogIndexRoute
-  '/linkedin-extension/': typeof LinkedinExtensionIndexRoute
   '/projects/': typeof ProjectsIndexRoute
   '/_authenticated/dashboard/my-projects': typeof AuthenticatedDashboardMyProjectsRoute
   '/_authenticated/dashboard/prebuilt': typeof AuthenticatedDashboardPrebuiltRouteWithChildren
@@ -254,17 +254,17 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/contact'
+    | '/linkedin-extension'
+    | '/linkedin-extension-privacy'
+    | '/linkedin-extension-terms'
     | '/privacy'
     | '/refund'
     | '/terms-and-condition'
     | '/dashboard'
     | '/api/chat'
     | '/blog/$slug'
-    | '/linkedin-extension/privacy'
-    | '/linkedin-extension/terms'
     | '/projects/$slug'
     | '/blog/'
-    | '/linkedin-extension/'
     | '/projects/'
     | '/dashboard/my-projects'
     | '/dashboard/prebuilt'
@@ -280,16 +280,16 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/contact'
+    | '/linkedin-extension'
+    | '/linkedin-extension-privacy'
+    | '/linkedin-extension-terms'
     | '/privacy'
     | '/refund'
     | '/terms-and-condition'
     | '/api/chat'
     | '/blog/$slug'
-    | '/linkedin-extension/privacy'
-    | '/linkedin-extension/terms'
     | '/projects/$slug'
     | '/blog'
-    | '/linkedin-extension'
     | '/projects'
     | '/dashboard/my-projects'
     | '/dashboard/pricing'
@@ -305,17 +305,17 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/contact'
+    | '/linkedin-extension'
+    | '/linkedin-extension-privacy'
+    | '/linkedin-extension-terms'
     | '/privacy'
     | '/refund'
     | '/terms-and-condition'
     | '/_authenticated/dashboard'
     | '/api/chat'
     | '/blog/$slug'
-    | '/linkedin-extension/privacy'
-    | '/linkedin-extension/terms'
     | '/projects/$slug'
     | '/blog/'
-    | '/linkedin-extension/'
     | '/projects/'
     | '/_authenticated/dashboard/my-projects'
     | '/_authenticated/dashboard/prebuilt'
@@ -333,16 +333,16 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
+  LinkedinExtensionRoute: typeof LinkedinExtensionRoute
+  LinkedinExtensionPrivacyRoute: typeof LinkedinExtensionPrivacyRoute
+  LinkedinExtensionTermsRoute: typeof LinkedinExtensionTermsRoute
   PrivacyRoute: typeof PrivacyRoute
   RefundRoute: typeof RefundRoute
   TermsAndConditionRoute: typeof TermsAndConditionRoute
   ApiChatRoute: typeof ApiChatRoute
   BlogSlugRoute: typeof BlogSlugRoute
-  LinkedinExtensionPrivacyRoute: typeof LinkedinExtensionPrivacyRoute
-  LinkedinExtensionTermsRoute: typeof LinkedinExtensionTermsRoute
   ProjectsSlugRoute: typeof ProjectsSlugRoute
   BlogIndexRoute: typeof BlogIndexRoute
-  LinkedinExtensionIndexRoute: typeof LinkedinExtensionIndexRoute
   ProjectsIndexRoute: typeof ProjectsIndexRoute
 }
 
@@ -367,6 +367,27 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/linkedin-extension-terms': {
+      id: '/linkedin-extension-terms'
+      path: '/linkedin-extension-terms'
+      fullPath: '/linkedin-extension-terms'
+      preLoaderRoute: typeof LinkedinExtensionTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/linkedin-extension-privacy': {
+      id: '/linkedin-extension-privacy'
+      path: '/linkedin-extension-privacy'
+      fullPath: '/linkedin-extension-privacy'
+      preLoaderRoute: typeof LinkedinExtensionPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/linkedin-extension': {
+      id: '/linkedin-extension'
+      path: '/linkedin-extension'
+      fullPath: '/linkedin-extension'
+      preLoaderRoute: typeof LinkedinExtensionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -411,13 +432,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/linkedin-extension/': {
-      id: '/linkedin-extension/'
-      path: '/linkedin-extension'
-      fullPath: '/linkedin-extension/'
-      preLoaderRoute: typeof LinkedinExtensionIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/blog/': {
       id: '/blog/'
       path: '/blog'
@@ -430,20 +444,6 @@ declare module '@tanstack/react-router' {
       path: '/projects/$slug'
       fullPath: '/projects/$slug'
       preLoaderRoute: typeof ProjectsSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/linkedin-extension/terms': {
-      id: '/linkedin-extension/terms'
-      path: '/linkedin-extension/terms'
-      fullPath: '/linkedin-extension/terms'
-      preLoaderRoute: typeof LinkedinExtensionTermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/linkedin-extension/privacy': {
-      id: '/linkedin-extension/privacy'
-      path: '/linkedin-extension/privacy'
-      fullPath: '/linkedin-extension/privacy'
-      preLoaderRoute: typeof LinkedinExtensionPrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/$slug': {
@@ -588,16 +588,16 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
+  LinkedinExtensionRoute: LinkedinExtensionRoute,
+  LinkedinExtensionPrivacyRoute: LinkedinExtensionPrivacyRoute,
+  LinkedinExtensionTermsRoute: LinkedinExtensionTermsRoute,
   PrivacyRoute: PrivacyRoute,
   RefundRoute: RefundRoute,
   TermsAndConditionRoute: TermsAndConditionRoute,
   ApiChatRoute: ApiChatRoute,
   BlogSlugRoute: BlogSlugRoute,
-  LinkedinExtensionPrivacyRoute: LinkedinExtensionPrivacyRoute,
-  LinkedinExtensionTermsRoute: LinkedinExtensionTermsRoute,
   ProjectsSlugRoute: ProjectsSlugRoute,
   BlogIndexRoute: BlogIndexRoute,
-  LinkedinExtensionIndexRoute: LinkedinExtensionIndexRoute,
   ProjectsIndexRoute: ProjectsIndexRoute,
 }
 export const routeTree = rootRouteImport

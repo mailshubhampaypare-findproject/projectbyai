@@ -31,7 +31,7 @@ import {
   Share2
 } from "lucide-react";
 
-export const Route = createFileRoute("/linkedin-extension/")({
+export const Route = createFileRoute("/linkedin-extension")({
   head: () => ({
     meta: [
       { title: "LinkedIn Automation Chrome Extension — People, Company & HR Search | projectbyAI" },
@@ -71,7 +71,7 @@ function LinkedinExtensionPage() {
             <a href="#workflow" className="hover:text-primary transition-colors">Google Sheet Sync</a>
             <a href="#pricing" className="hover:text-primary transition-colors">Pricing</a>
             <a href="#faq" className="hover:text-primary transition-colors">FAQ</a>
-            <Link to="/linkedin-extension/privacy" className="hover:text-primary transition-colors text-xs text-slate-500">
+            <Link to="/linkedin-extension-privacy" className="hover:text-primary transition-colors text-xs text-slate-500">
               Privacy Policy
             </Link>
           </nav>
@@ -738,13 +738,13 @@ function LinkedinExtensionPage() {
           <div className="pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs font-semibold">
             <div className="flex items-center gap-6">
               <Link
-                to="/linkedin-extension/privacy"
+                to="/linkedin-extension-privacy"
                 className="text-blue-400 hover:text-blue-300 underline flex items-center gap-1.5 transition-colors"
               >
                 <ShieldCheck className="h-4 w-4" /> Read LinkedIn Extension Privacy Policy
               </Link>
               <Link
-                to="/linkedin-extension/terms"
+                to="/linkedin-extension-terms"
                 className="text-blue-400 hover:text-blue-300 underline flex items-center gap-1.5 transition-colors"
               >
                 <Scale className="h-4 w-4" /> Read Extension Terms of Service

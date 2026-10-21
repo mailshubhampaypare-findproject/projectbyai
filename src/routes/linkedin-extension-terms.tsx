@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/BrandLogo";
 import Footer from "@/components/Footer";
 
-export const Route = createFileRoute("/linkedin-extension/terms")({
+export const Route = createFileRoute("/linkedin-extension-terms")({
   head: () => ({
     meta: [
       { title: "Terms of Service — LinkedIn Automation Chrome Extension | projectbyAI" },
@@ -319,7 +319,7 @@ function LinkedinExtensionTermsPage() {
             <ArrowLeft className="h-3.5 w-3.5" /> Return to LinkedIn Extension Page
           </Link>
           <Link
-            to="/linkedin-extension/privacy"
+            to="/linkedin-extension-privacy"
             className="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1.5"
           >
             Read Privacy Policy <FileText className="h-3.5 w-3.5" />

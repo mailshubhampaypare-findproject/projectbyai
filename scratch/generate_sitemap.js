@@ -27,8 +27,8 @@ async function run() {
     "/refund",
     "/contact",
     "/linkedin-extension",
-    "/linkedin-extension/privacy",
-    "/linkedin-extension/terms"
+    "/linkedin-extension-privacy",
+    "/linkedin-extension-terms"
   ];
 
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
