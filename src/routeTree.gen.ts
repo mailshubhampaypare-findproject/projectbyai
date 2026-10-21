@@ -9,50 +9,59 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsAndConditionRouteImport } from './routes/terms-and-condition'
-import { Route as RefundRouteImport } from './routes/refund'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as LinkedinExtensionTermsRouteImport } from './routes/linkedin-extension-terms'
-import { Route as LinkedinExtensionPrivacyRouteImport } from './routes/linkedin-extension-privacy'
-import { Route as LinkedinExtensionRouteImport } from './routes/linkedin-extension'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
-import { Route as BlogIndexRouteImport } from './routes/blog/index'
-import { Route as ProjectsSlugRouteImport } from './routes/projects.$slug'
-import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
-import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as LinkedinExtensionRouteImport } from './routes/linkedin-extension'
+import { Route as LinkedinExtensionPrivacyRouteImport } from './routes/linkedin-extension-privacy'
+import { Route as LinkedinExtensionTermsRouteImport } from './routes/linkedin-extension-terms'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RefundRouteImport } from './routes/refund'
+import { Route as TermsAndConditionRouteImport } from './routes/terms-and-condition'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as BlogIndexRouteImport } from './routes/blog/index'
+import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
+import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
+import { Route as ProjectsSlugRouteImport } from './routes/projects.$slug'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard/index'
-import { Route as AuthenticatedDashboardProfileRouteImport } from './routes/_authenticated/dashboard/profile'
-import { Route as AuthenticatedDashboardPricingRouteImport } from './routes/_authenticated/dashboard/pricing'
-import { Route as AuthenticatedDashboardPrebuiltRouteImport } from './routes/_authenticated/dashboard/prebuilt'
 import { Route as AuthenticatedDashboardMyProjectsRouteImport } from './routes/_authenticated/dashboard/my-projects'
+import { Route as AuthenticatedDashboardPrebuiltRouteImport } from './routes/_authenticated/dashboard/prebuilt'
+import { Route as AuthenticatedDashboardPricingRouteImport } from './routes/_authenticated/dashboard/pricing'
+import { Route as AuthenticatedDashboardProfileRouteImport } from './routes/_authenticated/dashboard/profile'
 import { Route as AuthenticatedDashboardPrebuiltIndexRouteImport } from './routes/_authenticated/dashboard/prebuilt/index'
-import { Route as AuthenticatedDashboardProjectIdRouteImport } from './routes/_authenticated/dashboard/project.$id'
 import { Route as AuthenticatedDashboardPrebuiltSlugRouteImport } from './routes/_authenticated/dashboard/prebuilt/$slug'
+import { Route as AuthenticatedDashboardProjectIdRouteImport } from './routes/_authenticated/dashboard/project.$id'
 
-const TermsAndConditionRoute = TermsAndConditionRouteImport.update({
-  id: '/terms-and-condition',
-  path: '/terms-and-condition',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RefundRoute = RefundRouteImport.update({
-  id: '/refund',
-  path: '/refund',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LinkedinExtensionTermsRoute = LinkedinExtensionTermsRouteImport.update({
-  id: '/linkedin-extension-terms',
-  path: '/linkedin-extension-terms',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LinkedinExtensionRoute = LinkedinExtensionRouteImport.update({
+  id: '/linkedin-extension',
+  path: '/linkedin-extension',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LinkedinExtensionPrivacyRoute =
@@ -61,58 +70,24 @@ const LinkedinExtensionPrivacyRoute =
     path: '/linkedin-extension-privacy',
     getParentRoute: () => rootRouteImport,
   } as any)
-const LinkedinExtensionRoute = LinkedinExtensionRouteImport.update({
-  id: '/linkedin-extension',
-  path: '/linkedin-extension',
+const LinkedinExtensionTermsRoute = LinkedinExtensionTermsRouteImport.update({
+  id: '/linkedin-extension-terms',
+  path: '/linkedin-extension-terms',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const RefundRoute = RefundRouteImport.update({
+  id: '/refund',
+  path: '/refund',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
-  id: '/projects/',
-  path: '/projects/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogIndexRoute = BlogIndexRouteImport.update({
-  id: '/blog/',
-  path: '/blog/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProjectsSlugRoute = ProjectsSlugRouteImport.update({
-  id: '/projects/$slug',
-  path: '/projects/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/blog/$slug',
-  path: '/blog/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
+const TermsAndConditionRoute = TermsAndConditionRouteImport.update({
+  id: '/terms-and-condition',
+  path: '/terms-and-condition',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -120,28 +95,35 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsSlugRoute = ProjectsSlugRouteImport.update({
+  id: '/projects/$slug',
+  path: '/projects/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedDashboardIndexRoute =
   AuthenticatedDashboardIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
-const AuthenticatedDashboardProfileRoute =
-  AuthenticatedDashboardProfileRouteImport.update({
-    id: '/profile',
-    path: '/profile',
-    getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
-const AuthenticatedDashboardPricingRoute =
-  AuthenticatedDashboardPricingRouteImport.update({
-    id: '/pricing',
-    path: '/pricing',
-    getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
-const AuthenticatedDashboardPrebuiltRoute =
-  AuthenticatedDashboardPrebuiltRouteImport.update({
-    id: '/prebuilt',
-    path: '/prebuilt',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardMyProjectsRoute =
@@ -150,10 +132,34 @@ const AuthenticatedDashboardMyProjectsRoute =
     path: '/my-projects',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardPrebuiltRoute =
+  AuthenticatedDashboardPrebuiltRouteImport.update({
+    id: '/prebuilt',
+    path: '/prebuilt',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardPricingRoute =
+  AuthenticatedDashboardPricingRouteImport.update({
+    id: '/pricing',
+    path: '/pricing',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardProfileRoute =
+  AuthenticatedDashboardProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardPrebuiltIndexRoute =
   AuthenticatedDashboardPrebuiltIndexRouteImport.update({
     id: '/',
     path: '/',
+    getParentRoute: () => AuthenticatedDashboardPrebuiltRoute,
+  } as any)
+const AuthenticatedDashboardPrebuiltSlugRoute =
+  AuthenticatedDashboardPrebuiltSlugRouteImport.update({
+    id: '/$slug',
+    path: '/$slug',
     getParentRoute: () => AuthenticatedDashboardPrebuiltRoute,
   } as any)
 const AuthenticatedDashboardProjectIdRoute =
@@ -161,12 +167,6 @@ const AuthenticatedDashboardProjectIdRoute =
     id: '/project/$id',
     path: '/project/$id',
     getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
-const AuthenticatedDashboardPrebuiltSlugRoute =
-  AuthenticatedDashboardPrebuiltSlugRouteImport.update({
-    id: '/$slug',
-    path: '/$slug',
-    getParentRoute: () => AuthenticatedDashboardPrebuiltRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -348,67 +348,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms-and-condition': {
-      id: '/terms-and-condition'
-      path: '/terms-and-condition'
-      fullPath: '/terms-and-condition'
-      preLoaderRoute: typeof TermsAndConditionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/refund': {
-      id: '/refund'
-      path: '/refund'
-      fullPath: '/refund'
-      preLoaderRoute: typeof RefundRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/linkedin-extension-terms': {
-      id: '/linkedin-extension-terms'
-      path: '/linkedin-extension-terms'
-      fullPath: '/linkedin-extension-terms'
-      preLoaderRoute: typeof LinkedinExtensionTermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/linkedin-extension-privacy': {
-      id: '/linkedin-extension-privacy'
-      path: '/linkedin-extension-privacy'
-      fullPath: '/linkedin-extension-privacy'
-      preLoaderRoute: typeof LinkedinExtensionPrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/linkedin-extension': {
-      id: '/linkedin-extension'
-      path: '/linkedin-extension'
-      fullPath: '/linkedin-extension'
-      preLoaderRoute: typeof LinkedinExtensionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -418,46 +362,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/projects/': {
-      id: '/projects/'
-      path: '/projects'
-      fullPath: '/projects/'
-      preLoaderRoute: typeof ProjectsIndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blog/': {
-      id: '/blog/'
-      path: '/blog'
-      fullPath: '/blog/'
-      preLoaderRoute: typeof BlogIndexRouteImport
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/projects/$slug': {
-      id: '/projects/$slug'
-      path: '/projects/$slug'
-      fullPath: '/projects/$slug'
-      preLoaderRoute: typeof ProjectsSlugRouteImport
+    '/linkedin-extension': {
+      id: '/linkedin-extension'
+      path: '/linkedin-extension'
+      fullPath: '/linkedin-extension'
+      preLoaderRoute: typeof LinkedinExtensionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blog/$slug': {
-      id: '/blog/$slug'
-      path: '/blog/$slug'
-      fullPath: '/blog/$slug'
-      preLoaderRoute: typeof BlogSlugRouteImport
+    '/linkedin-extension-privacy': {
+      id: '/linkedin-extension-privacy'
+      path: '/linkedin-extension-privacy'
+      fullPath: '/linkedin-extension-privacy'
+      preLoaderRoute: typeof LinkedinExtensionPrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
+    '/linkedin-extension-terms': {
+      id: '/linkedin-extension-terms'
+      path: '/linkedin-extension-terms'
+      fullPath: '/linkedin-extension-terms'
+      preLoaderRoute: typeof LinkedinExtensionTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refund': {
+      id: '/refund'
+      path: '/refund'
+      fullPath: '/refund'
+      preLoaderRoute: typeof RefundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms-and-condition': {
+      id: '/terms-and-condition'
+      path: '/terms-and-condition'
+      fullPath: '/terms-and-condition'
+      preLoaderRoute: typeof TermsAndConditionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -467,32 +432,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects/': {
+      id: '/projects/'
+      path: '/projects'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof ProjectsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects/$slug': {
+      id: '/projects/$slug'
+      path: '/projects/$slug'
+      fullPath: '/projects/$slug'
+      preLoaderRoute: typeof ProjectsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/dashboard/': {
       id: '/_authenticated/dashboard/'
       path: '/'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof AuthenticatedDashboardIndexRouteImport
-      parentRoute: typeof AuthenticatedDashboardRoute
-    }
-    '/_authenticated/dashboard/profile': {
-      id: '/_authenticated/dashboard/profile'
-      path: '/profile'
-      fullPath: '/dashboard/profile'
-      preLoaderRoute: typeof AuthenticatedDashboardProfileRouteImport
-      parentRoute: typeof AuthenticatedDashboardRoute
-    }
-    '/_authenticated/dashboard/pricing': {
-      id: '/_authenticated/dashboard/pricing'
-      path: '/pricing'
-      fullPath: '/dashboard/pricing'
-      preLoaderRoute: typeof AuthenticatedDashboardPricingRouteImport
-      parentRoute: typeof AuthenticatedDashboardRoute
-    }
-    '/_authenticated/dashboard/prebuilt': {
-      id: '/_authenticated/dashboard/prebuilt'
-      path: '/prebuilt'
-      fullPath: '/dashboard/prebuilt'
-      preLoaderRoute: typeof AuthenticatedDashboardPrebuiltRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/my-projects': {
@@ -502,11 +481,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardMyProjectsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/prebuilt': {
+      id: '/_authenticated/dashboard/prebuilt'
+      path: '/prebuilt'
+      fullPath: '/dashboard/prebuilt'
+      preLoaderRoute: typeof AuthenticatedDashboardPrebuiltRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/pricing': {
+      id: '/_authenticated/dashboard/pricing'
+      path: '/pricing'
+      fullPath: '/dashboard/pricing'
+      preLoaderRoute: typeof AuthenticatedDashboardPricingRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/profile': {
+      id: '/_authenticated/dashboard/profile'
+      path: '/profile'
+      fullPath: '/dashboard/profile'
+      preLoaderRoute: typeof AuthenticatedDashboardProfileRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/prebuilt/': {
       id: '/_authenticated/dashboard/prebuilt/'
       path: '/'
       fullPath: '/dashboard/prebuilt/'
       preLoaderRoute: typeof AuthenticatedDashboardPrebuiltIndexRouteImport
+      parentRoute: typeof AuthenticatedDashboardPrebuiltRoute
+    }
+    '/_authenticated/dashboard/prebuilt/$slug': {
+      id: '/_authenticated/dashboard/prebuilt/$slug'
+      path: '/$slug'
+      fullPath: '/dashboard/prebuilt/$slug'
+      preLoaderRoute: typeof AuthenticatedDashboardPrebuiltSlugRouteImport
       parentRoute: typeof AuthenticatedDashboardPrebuiltRoute
     }
     '/_authenticated/dashboard/project/$id': {
@@ -515,13 +522,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/project/$id'
       preLoaderRoute: typeof AuthenticatedDashboardProjectIdRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
-    }
-    '/_authenticated/dashboard/prebuilt/$slug': {
-      id: '/_authenticated/dashboard/prebuilt/$slug'
-      path: '/$slug'
-      fullPath: '/dashboard/prebuilt/$slug'
-      preLoaderRoute: typeof AuthenticatedDashboardPrebuiltSlugRouteImport
-      parentRoute: typeof AuthenticatedDashboardPrebuiltRoute
     }
   }
 }
