@@ -9,7 +9,7 @@ const IdInput = z.object({ id: z.string().uuid() });
 
 export const createProject = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({ title: z.string().min(1).max(120), description: z.string().max(50000).optional() }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -39,7 +39,7 @@ export const listProjects = createServerFn({ method: "GET" })
 
 export const getProject = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => IdInput.parse(d))
+  .validator((d: unknown) => IdInput.parse(d))
   .handler(async ({ data, context }) => {
     const [{ data: project, error: pe }, { data: messages, error: me }] = await Promise.all([
       context.supabase.from("projects").select("*").eq("id", data.id).single(),
@@ -113,7 +113,7 @@ async function loadContext(supabase: any, id: string) {
 
 export const generateReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => IdInput.parse(d))
+  .validator((d: unknown) => IdInput.parse(d))
   .handler(async ({ data, context }) => {
     const { data: profile } = await context.supabase
       .from("profiles")
@@ -267,7 +267,7 @@ IMPORTANT: Output the report as raw HTML content ONLY. Do not use markdown synta
 
 export const generateViva = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => IdInput.parse(d))
+  .validator((d: unknown) => IdInput.parse(d))
   .handler(async ({ data, context }) => {
     const { data: profile } = await context.supabase
       .from("profiles")
@@ -310,7 +310,7 @@ export type Slide = { title: string; bullets: string[]; notes?: string };
 
 export const generateSlides = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => IdInput.parse(d))
+  .validator((d: unknown) => IdInput.parse(d))
   .handler(async ({ data, context }): Promise<{ slides: Slide[] }> => {
     const { data: profile } = await context.supabase
       .from("profiles")
@@ -363,7 +363,7 @@ ${transcript || "(none)"}`;
 
 export const deleteProject = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => IdInput.parse(d))
+  .validator((d: unknown) => IdInput.parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("projects").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -402,7 +402,7 @@ export const listRegisteredUsers = createServerFn({ method: "GET" })
 
 export const createRazorpayOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ amount: z.number() }).parse(d))
+  .validator((d: unknown) => z.object({ amount: z.number() }).parse(d))
   .handler(async ({ data }) => {
     const keyId = process.env.VITE_RAZORPAY_KEY_ID || "rzp_test_T9aKebvfGIfoPs";
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -473,7 +473,7 @@ export const getSalesStatistics = createServerFn({ method: "GET" })
   });
 
 export const submitContactQuery = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({
       name: z.string().min(1).max(200),
       email: z.string().email().max(200),
@@ -533,7 +533,7 @@ export const listContactQueries = createServerFn({ method: "GET" })
   });
 
 export const deleteContactQuery = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ id: z.string() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data }) => {
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const supabaseUrl = process.env.SUPABASE_URL;
