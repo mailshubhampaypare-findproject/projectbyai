@@ -89,7 +89,7 @@ type TabType =
 function ContributorDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [user, setUser] = useState<any>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
+  const [loadingUser, setLoadingUser] = useState(false);
   const [isDemoUser, setIsDemoUser] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -703,7 +703,7 @@ python app.py # or npm run dev
   // -------------------------------------------------------------------------------------------------
   // SCREEN 1: Dedicated Sign In / Sign Up Gate (When User is NOT Authenticated)
   // -------------------------------------------------------------------------------------------------
-  if (!loadingUser && !user && !isDemoUser) {
+  if (!user && !isDemoUser) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
         {/* Simple Top Navigation */}
