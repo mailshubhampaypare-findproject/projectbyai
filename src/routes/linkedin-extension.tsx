@@ -40,6 +40,7 @@ export const Route = createFileRoute("/linkedin-extension")({
         content:
           "Supercharge your LinkedIn lead generation. Advanced People, Company, and HR Candidate search with Google Sheets sync, automated connection requests, and auto-detected follow-up messaging.",
       },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: LinkedinExtensionPage,

@@ -13,6 +13,7 @@ export const Route = createFileRoute("/linkedin-extension-privacy")({
         content:
           "Privacy Policy, User Responsibility & Data Governance for the LinkedIn Automation Chrome Extension. Learn how your data is handled locally and user terms of compliance.",
       },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: LinkedinExtensionPrivacyPage,

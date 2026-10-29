@@ -26,10 +26,7 @@ async function run() {
     "/terms-and-condition",
     "/refund",
     "/contact",
-    "/contributor",
-    "/linkedin-extension",
-    "/linkedin-extension-privacy",
-    "/linkedin-extension-terms"
+    "/contributor"
   ];
 
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';

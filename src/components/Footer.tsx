@@ -55,7 +55,6 @@ export default function Footer() {
             <Link to="/blog" className="hover:text-primary transition-colors">Blog</Link>
             <Link to="/projects" className="hover:text-primary transition-colors">Project Library</Link>
             <Link to="/contributor" className="hover:text-primary transition-colors">Contributor Hub</Link>
-            <Link to="/linkedin-extension" className="hover:text-primary transition-colors">LinkedIn Extension</Link>
             <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link to="/terms-and-condition" className="hover:text-primary transition-colors">Terms & Conditions</Link>
             <Link to="/refund" className="hover:text-primary transition-colors">Refund Policy</Link>

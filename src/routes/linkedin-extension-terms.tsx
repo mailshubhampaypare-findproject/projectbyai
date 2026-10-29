@@ -13,6 +13,7 @@ export const Route = createFileRoute("/linkedin-extension-terms")({
         content:
           "Terms of Service and End User License Agreement (EULA) for the LinkedIn Automation Chrome Extension. Review user liability, platform risk assumption, and license terms.",
       },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: LinkedinExtensionTermsPage,
