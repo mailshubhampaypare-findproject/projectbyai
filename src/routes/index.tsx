@@ -18,6 +18,7 @@ import {
   Linkedin,
   ChevronDown,
   ChevronUp,
+  Video,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -38,16 +39,17 @@ function LandingPage() {
         <BrandLogo />
         <nav className="flex items-center gap-4">
           <Link to="/blog" className="text-sm font-medium hover:text-primary transition-colors hidden sm:inline-block">Blog</Link>
-          <Link to="/projects" className="text-sm font-medium hover:text-primary transition-colors hidden sm:inline-block">Project Library</Link>
+          <Link to="/projects" className="text-sm font-medium hover:text-primary transition-colors">Project Library</Link>
+          <Link to="/contributor" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors hidden sm:inline-block">Contributor Hub (Earn 70%–90%)</Link>
           {loggedIn ? (
             <Button asChild className="bg-gradient-primary shadow-elegant">
-              <Link to="/dashboard">Open dashboard</Link>
+              <Link to="/contributor">Contributor Hub</Link>
             </Button>
           ) : (
             <>
               <Button variant="ghost" asChild><Link to="/auth">Sign in</Link></Button>
               <Button asChild className="bg-gradient-primary shadow-elegant">
-                <Link to="/auth">Get started</Link>
+                <Link to="/contributor">Become a Contributor</Link>
               </Button>
             </>
           )}
@@ -56,22 +58,22 @@ function LandingPage() {
 
       <section className="max-w-4xl mx-auto px-6 pt-16 pb-20 text-center space-y-6">
         <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-accent-foreground text-xs font-medium">
-          <Sparkles className="h-3 w-3" /> Built for students, by students
+          <Sparkles className="h-3 w-3" /> Built for students, by student creators
         </span>
         <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-[1.05]">
-          Your final-year project, <span className="text-gradient">shipped in a weekend.</span>
+          Verified final-year projects with <span className="text-gradient">step-by-step tutorial videos.</span>
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          Chat with an AI mentor that writes your code, drafts your project report, generates viva questions, and builds your presentation slides — all in one workspace.
+          Explore complete engineering projects with clean source code, architecture breakdowns, viva questions, and full video guides. Or upload your own project and earn <strong>70% to 90% royalties</strong>.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
           <Button asChild size="lg" className="bg-gradient-primary shadow-elegant">
-            <Link to={loggedIn ? "/dashboard" : "/auth"}>
-              <Sparkles className="h-4 w-4 mr-2" /> Start building free
+            <Link to="/projects">
+              <Sparkles className="h-4 w-4 mr-2" /> Explore Project Library
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <Link to="/projects">Browse project library</Link>
+            <Link to="/contributor">Upload Project & Earn (70%–90%)</Link>
           </Button>
         </div>
       </section>
@@ -79,10 +81,10 @@ function LandingPage() {
       <section className="max-w-6xl mx-auto px-6 pb-24">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { icon: Code2, title: "AI code builder", text: "Describe your idea, get working source code in your chat." },
-            { icon: FileText, title: "Auto reports", text: "A complete project report with tech stack, versions & steps." },
-            { icon: MessageCircleQuestion, title: "Viva prep", text: "20 model interview/viva Q&A tailored to your project." },
-            { icon: Presentation, title: "Slide decks", text: "10-slide presentation ready to show your teacher." },
+            { icon: Code2, title: "Verified Source Code", text: "Production-grade starter code, complete database schemas, and clean ZIP archives." },
+            { icon: Video, title: "Step-by-Step Tutorials", text: "In-depth video tutorials explaining the project architecture and coding from scratch." },
+            { icon: FileText, title: "Comprehensive README", text: "Complete academic manuals, setup commands, API specs, and viva question answers." },
+            { icon: MessageCircleQuestion, title: "70% – 90% Royalties", text: "Upload your college project, help fellow students succeed, and earn weekly payouts." },
           ].map((f) => (
             <div key={f.title} className="p-6 rounded-xl border bg-card space-y-3">
               <div className="h-10 w-10 rounded-lg bg-gradient-primary text-primary-foreground flex items-center justify-center">
@@ -95,11 +97,11 @@ function LandingPage() {
         </div>
 
         <div className="mt-16 p-10 rounded-2xl bg-gradient-primary text-primary-foreground text-center shadow-elegant">
-          <h2 className="text-3xl font-bold">Ready to build something great?</h2>
-          <p className="mt-2 opacity-90">Free forever plan — no credit card required.</p>
+          <h2 className="text-3xl font-bold">Have a great project to share?</h2>
+          <p className="mt-2 opacity-90">Sign up as a Contributor. Earn 70% standard or 90% with a full video tutorial.</p>
           <Button asChild size="lg" variant="secondary" className="mt-6">
-            <Link to={loggedIn ? "/dashboard" : "/auth"}>
-              Open ScholarBuild <ArrowRight className="h-4 w-4 ml-2" />
+            <Link to="/contributor">
+              Open Contributor Hub <ArrowRight className="h-4 w-4 ml-2" />
             </Link>
           </Button>
         </div>
@@ -109,16 +111,16 @@ function LandingPage() {
       <section className="max-w-6xl mx-auto px-6 pb-24">
         <div className="text-center max-w-xl mx-auto mb-12 space-y-3">
           <h2 className="text-3xl font-extrabold tracking-tight">How it works</h2>
-          <p className="text-muted-foreground">Follow these 6 simple steps to design, generate, and ship your project.</p>
+          <p className="text-muted-foreground">Follow these simple steps to learn, ship, or monetize your project.</p>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {[
-            { num: "01", title: "Describe your project idea", desc: "Tell us in plain English what you want to build." },
-            { num: "02", title: "Answer AI requirement questions", desc: "A short guided questionnaire — no jargon." },
-            { num: "03", title: "Review project blueprint", desc: "Confirm stack, features, and deliverables." },
-            { num: "04", title: "Generate project", desc: "AI writes code, docs, reports, and slides." },
-            { num: "05", title: "Modify with AI chat", desc: "Refactor, add features, fix bugs by chatting." },
-            { num: "06", title: "Download project assets", desc: "Export a clean .zip with everything ready." }
+            { num: "01", title: "Browse Project Marketplace", desc: "Search through complete academic and real-world projects across ML, Web, App & IoT." },
+            { num: "02", title: "Watch Video Walkthrough", desc: "Understand every module, database table, and component before launching." },
+            { num: "03", title: "Instant ZIP Download", desc: "Download verified source code, config files, and pre-seeded SQLite/SQL databases." },
+            { num: "04", title: "Student Community Q&A", desc: "Ask doubts directly to the project contributor and get help within hours." },
+            { num: "05", title: "Ace Viva & Presentations", desc: "Use bundled academic reports, slide decks, and model viva answers to score top grades." },
+            { num: "06", title: "Become a Contributor", desc: "Upload your own projects, teach other students, and earn up to 90% payout." }
           ].map((step) => (
             <div key={step.num} className="p-6 rounded-xl border bg-card hover:border-primary/30 transition-all flex flex-col justify-between space-y-4">
               <span className="text-2xl font-black text-primary/45 tracking-wider">{step.num}</span>

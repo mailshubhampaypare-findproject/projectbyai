@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as ContributorRouteImport } from './routes/contributor'
 import { Route as LinkedinExtensionRouteImport } from './routes/linkedin-extension'
 import { Route as LinkedinExtensionPrivacyRouteImport } from './routes/linkedin-extension-privacy'
 import { Route as LinkedinExtensionTermsRouteImport } from './routes/linkedin-extension-terms'
@@ -57,6 +58,11 @@ const AuthRoute = AuthRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContributorRoute = ContributorRouteImport.update({
+  id: '/contributor',
+  path: '/contributor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LinkedinExtensionRoute = LinkedinExtensionRouteImport.update({
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/contributor': typeof ContributorRoute
   '/linkedin-extension': typeof LinkedinExtensionRoute
   '/linkedin-extension-privacy': typeof LinkedinExtensionPrivacyRoute
   '/linkedin-extension-terms': typeof LinkedinExtensionTermsRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/contributor': typeof ContributorRoute
   '/linkedin-extension': typeof LinkedinExtensionRoute
   '/linkedin-extension-privacy': typeof LinkedinExtensionPrivacyRoute
   '/linkedin-extension-terms': typeof LinkedinExtensionTermsRoute
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
+  '/contributor': typeof ContributorRoute
   '/linkedin-extension': typeof LinkedinExtensionRoute
   '/linkedin-extension-privacy': typeof LinkedinExtensionPrivacyRoute
   '/linkedin-extension-terms': typeof LinkedinExtensionTermsRoute
@@ -254,6 +263,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/contact'
+    | '/contributor'
     | '/linkedin-extension'
     | '/linkedin-extension-privacy'
     | '/linkedin-extension-terms'
@@ -280,6 +290,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/contact'
+    | '/contributor'
     | '/linkedin-extension'
     | '/linkedin-extension-privacy'
     | '/linkedin-extension-terms'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/contact'
+    | '/contributor'
     | '/linkedin-extension'
     | '/linkedin-extension-privacy'
     | '/linkedin-extension-terms'
@@ -333,6 +345,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
+  ContributorRoute: typeof ContributorRoute
   LinkedinExtensionRoute: typeof LinkedinExtensionRoute
   LinkedinExtensionPrivacyRoute: typeof LinkedinExtensionPrivacyRoute
   LinkedinExtensionTermsRoute: typeof LinkedinExtensionTermsRoute
@@ -381,6 +394,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contributor': {
+      id: '/contributor'
+      path: '/contributor'
+      fullPath: '/contributor'
+      preLoaderRoute: typeof ContributorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/linkedin-extension': {
@@ -588,6 +608,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
+  ContributorRoute: ContributorRoute,
   LinkedinExtensionRoute: LinkedinExtensionRoute,
   LinkedinExtensionPrivacyRoute: LinkedinExtensionPrivacyRoute,
   LinkedinExtensionTermsRoute: LinkedinExtensionTermsRoute,

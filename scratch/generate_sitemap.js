@@ -26,6 +26,7 @@ async function run() {
     "/terms-and-condition",
     "/refund",
     "/contact",
+    "/contributor",
     "/linkedin-extension",
     "/linkedin-extension-privacy",
     "/linkedin-extension-terms"
