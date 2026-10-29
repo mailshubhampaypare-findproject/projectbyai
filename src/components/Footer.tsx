@@ -54,7 +54,7 @@ export default function Footer() {
           <div className="flex flex-col gap-2.5 text-muted-foreground font-medium md:text-right">
             <Link to="/blog" className="hover:text-primary transition-colors">Blog</Link>
             <Link to="/projects" className="hover:text-primary transition-colors">Project Library</Link>
-            <Link to="/contributor" className="hover:text-primary transition-colors font-semibold text-blue-600">Contributor Hub (Earn 70%–90%)</Link>
+            <Link to="/contributor" className="hover:text-primary transition-colors">Contributor Hub</Link>
             <Link to="/linkedin-extension" className="hover:text-primary transition-colors">LinkedIn Extension</Link>
             <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link to="/terms-and-condition" className="hover:text-primary transition-colors">Terms & Conditions</Link>

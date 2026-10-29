@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { PREBUILT_PROJECTS } from "@/lib/prebuilt-data";
 import { BrandLogo } from "@/components/BrandLogo";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
@@ -59,17 +58,18 @@ import {
   ArrowRight,
   BarChart3,
   Clock,
-  CheckCheck
+  CheckCheck,
+  Inbox
 } from "lucide-react";
 
 export const Route = createFileRoute("/contributor")({
   head: () => ({
     meta: [
-      { title: "Project Contributor Hub — projectbyAI" },
+      { title: "Contributor Hub — projectbyAI" },
       {
         name: "description",
         content:
-          "Upload your projects, share step-by-step tutorial videos, help fellow students, and earn 70% to 90% commission on every sale.",
+          "Upload your projects, share step-by-step tutorial videos, help fellow students, and earn royalties on every sale.",
       },
     ],
   }),
@@ -89,8 +89,6 @@ type TabType =
 function ContributorDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [user, setUser] = useState<any>(null);
-  const [loadingUser, setLoadingUser] = useState(false);
-  const [isDemoUser, setIsDemoUser] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -102,152 +100,54 @@ function ContributorDashboardPage() {
   const [authCollege, setAuthCollege] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Contributor profile data
+  // Contributor profile data (clean - no prefilled demo data)
   const [contributorProfile, setContributorProfile] = useState<any>({
-    full_name: "Rahul Sharma",
-    college: "IIT Bombay",
-    email: "rahul.projects@gmail.com",
-    avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-    bio: "Computer Science final year graduate. Built & deployed 6+ full-stack AI and Web applications.",
-    upi_id: "rahul@okaxis",
-    bank_name: "HDFC Bank",
-    bank_account: "••••••••4892",
-    bank_ifsc: "HDFC0001234",
-    account_holder_name: "Rahul Sharma",
+    full_name: "",
+    college: "",
+    email: "",
+    avatar_url: "",
+    bio: "",
+    upi_id: "",
+    bank_name: "",
+    bank_account: "",
+    bank_ifsc: "",
+    account_holder_name: "",
     commission_tier: "standard_70", // standard_70 or video_90
-    total_earnings: 18450,
-    sales_count: 24,
-    rating: 4.9,
-    review_count: 19,
+    total_earnings: 0,
+    sales_count: 0,
+    rating: 0,
+    review_count: 0,
   });
 
-  // Projects state
+  // Projects state (clean - no demo projects)
   const [myProjects, setMyProjects] = useState<any[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(true);
+  const [loadingProjects, setLoadingProjects] = useState(false);
   const [projectSearch, setProjectSearch] = useState("");
   const [projectCategoryFilter, setProjectCategoryFilter] = useState("all");
 
-  // Community Discussions
-  const [communityMessages, setCommunityMessages] = useState<any[]>([
-    {
-      id: "cm-1",
-      user_name: "Aman Verma",
-      user_college: "VIT Vellore",
-      user_role: "Student / Buyer",
-      project_title: "Smart Attendance System with Face Recognition",
-      message: "Hey Rahul! Does this model work with external USB webcams or only built-in laptop cameras? Also does it require GPU?",
-      created_at: "2 hours ago",
-      upvotes: 6,
-      replies: [
-        {
-          id: "cr-1",
-          user_name: "Rahul Sharma",
-          user_role: "Contributor (Author)",
-          message: "Hey Aman! In app.py line 42 you can pass cv2.VideoCapture(1) for external USB camera. It runs smoothly on CPU using OpenCV haar cascades!",
-          created_at: "1 hour ago",
-        },
-      ],
-    },
-    {
-      id: "cm-2",
-      user_name: "Sneha Patel",
-      user_college: "DTU Delhi",
-      user_role: "Student / Buyer",
-      project_title: "AI Medical Disease Predictor & Diagnostic Assistant",
-      message: "Can we connect this to an external MySQL database instead of SQLite for our college final submission?",
-      created_at: "5 hours ago",
-      upvotes: 3,
-      replies: [
-        {
-          id: "cr-2",
-          user_name: "Rahul Sharma",
-          user_role: "Contributor (Author)",
-          message: "Yes absolutely! Just change the DATABASE_URL in config.py to mysql+pymysql://user:password@localhost/dbname and run alembic upgrade head.",
-          created_at: "3 hours ago",
-        },
-      ],
-    },
-    {
-      id: "cm-3",
-      user_name: "Karthik Nair",
-      user_college: "SRM University",
-      user_role: "Student",
-      project_title: "General Contributor Question",
-      message: "Are the step-by-step video tutorials mandatory to get paid, or do we still get 70% without video?",
-      created_at: "Yesterday",
-      upvotes: 8,
-      replies: [
-        {
-          id: "cr-3",
-          user_name: "Rahul Sharma",
-          user_role: "Contributor (Author)",
-          message: "You get 70% commission immediately with just source code and README! The video tutorial is an extra bonus that boosts your commission to 90%.",
-          created_at: "Yesterday",
-        },
-      ],
-    },
-  ]);
-
+  // Community Discussions (clean - no prefilled threads)
+  const [communityMessages, setCommunityMessages] = useState<any[]>([]);
   const [newQuestionText, setNewQuestionText] = useState("");
-  const [newQuestionProject, setNewQuestionProject] = useState("Smart Attendance System with Face Recognition");
+  const [newQuestionProject, setNewQuestionProject] = useState("");
   const [replyInputMap, setReplyInputMap] = useState<Record<string, string>>({});
 
-  // 90% Video Tutorial Tier Requests
-  const [tutorialRequests, setTutorialRequests] = useState<any[]>([
-    {
-      id: "tr-1",
-      project_title: "Smart Attendance System with Face Recognition",
-      video_url: "https://youtu.be/example-walkthrough",
-      duration: "42 mins",
-      notes: "Covers complete face recognition pipeline, OpenCV setup, database design, and viva defense questions.",
-      status: "approved",
-      commission_rate: 90,
-      submitted_at: "3 days ago",
-    },
-  ]);
+  // 90% Video Tutorial Tier Requests (clean - no prefilled requests)
+  const [tutorialRequests, setTutorialRequests] = useState<any[]>([]);
   const [reqProject, setReqProject] = useState("");
   const [reqVideoUrl, setReqVideoUrl] = useState("");
   const [reqDuration, setReqDuration] = useState("");
   const [reqNotes, setReqNotes] = useState("");
   const [submittingTierReq, setSubmittingTierReq] = useState(false);
 
-  // Reviews
-  const [reviewsList, setReviewsList] = useState<any[]>([
-    {
-      id: "rev-1",
-      reviewer_name: "Pooja Hegde",
-      college: "BMS College of Engineering",
-      rating: 5,
-      project_title: "Smart Attendance System with Face Recognition",
-      comment: "Super clean code and the step-by-step video tutorial was a lifesaver for our final year viva! Got an A grade. Highly recommend!",
-      created_at: "2 days ago",
-    },
-    {
-      id: "rev-2",
-      reviewer_name: "Devendra Singh",
-      college: "BITS Pilani",
-      rating: 5,
-      project_title: "AI Medical Disease Predictor & Diagnostic Assistant",
-      comment: "Documentation was so thorough that running it took less than 10 minutes. The architecture diagram made my presentation effortless.",
-      created_at: "1 week ago",
-    },
-    {
-      id: "rev-3",
-      reviewer_name: "Rohan Kulkarni",
-      college: "COEP Pune",
-      rating: 4.8,
-      project_title: "Decentralized Voting System using Ethereum & Solidity",
-      comment: "Very detailed smart contracts with clear tests. Rahul also answered my questions in the Q&A thread within an hour.",
-      created_at: "2 weeks ago",
-    },
-  ]);
+  // Reviews (clean - no prefilled reviews)
+  const [reviewsList, setReviewsList] = useState<any[]>([]);
   const [newReviewProject, setNewReviewProject] = useState("");
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [newReviewComment, setNewReviewComment] = useState("");
   const [newReviewName, setNewReviewName] = useState("");
   const [newReviewCollege, setNewReviewCollege] = useState("");
 
-  // Upload Form State (matching prebuilt project marketplace)
+  // Upload Form State
   const [uploadTitle, setUploadTitle] = useState("");
   const [uploadSlug, setUploadSlug] = useState("");
   const [uploadCategory, setUploadCategory] = useState("AI & Machine Learning");
@@ -257,7 +157,7 @@ function ContributorDashboardPage() {
   const [uploadZipUrl, setUploadZipUrl] = useState("");
   const [uploadThumbnailUrl, setUploadThumbnailUrl] = useState("");
   const [uploadTutorialVideoUrl, setUploadTutorialVideoUrl] = useState("");
-  const [uploadTechStack, setUploadTechStack] = useState<string[]>(["Python", "OpenCV", "Flask", "SQLite"]);
+  const [uploadTechStack, setUploadTechStack] = useState<string[]>(["Python", "FastAPI", "React"]);
   const [techInput, setTechInput] = useState("");
   const [uploadReadme, setUploadReadme] = useState(`## Project Overview
 A production-ready full-stack application built for academic submission and real-world deployment.
@@ -302,6 +202,102 @@ python app.py # or npm run dev
   const [settingHolder, setSettingHolder] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
+  // Fetch real data for logged-in user
+  const loadContributorData = async (userId: string, userEmail: string, userMeta: any) => {
+    setLoadingProjects(true);
+    try {
+      // 1. Load contributor profile
+      const { data: profile } = await supabase
+        .from("contributor_profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (profile) {
+        setContributorProfile({
+          full_name: profile.full_name || userMeta?.full_name || "",
+          college: profile.college || userMeta?.college || "",
+          email: userEmail || profile.email || "",
+          avatar_url: profile.avatar_url || "",
+          bio: profile.bio || "",
+          upi_id: profile.upi_id || "",
+          bank_name: profile.bank_name || "",
+          bank_account: profile.bank_account || "",
+          bank_ifsc: profile.bank_ifsc || "",
+          account_holder_name: profile.account_holder_name || profile.full_name || "",
+          commission_tier: profile.commission_tier || "standard_70",
+          total_earnings: profile.total_earnings || 0,
+          sales_count: profile.sales_count || 0,
+          rating: profile.rating || 0,
+          review_count: profile.review_count || 0,
+        });
+      } else {
+        setContributorProfile({
+          full_name: userMeta?.full_name || "",
+          college: userMeta?.college || "",
+          email: userEmail || "",
+          avatar_url: "",
+          bio: "",
+          upi_id: "",
+          bank_name: "",
+          bank_account: "",
+          bank_ifsc: "",
+          account_holder_name: userMeta?.full_name || "",
+          commission_tier: "standard_70",
+          total_earnings: 0,
+          sales_count: 0,
+          rating: 0,
+          review_count: 0,
+        });
+      }
+
+      // 2. Load ONLY this contributor's uploaded projects (no demo projects)
+      const { data: projs } = await supabase
+        .from("library_projects")
+        .select("*")
+        .eq("contributor_id", userId)
+        .order("created_at", { ascending: false });
+
+      setMyProjects(projs || []);
+      if (projs && projs.length > 0 && !newQuestionProject) {
+        setNewQuestionProject(projs[0].title);
+      }
+
+      // 3. Load community messages for this contributor
+      const { data: msgs } = await supabase
+        .from("project_community_messages")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      setCommunityMessages(msgs || []);
+
+      // 4. Load tutorial tier requests
+      const { data: treqs } = await supabase
+        .from("tutorial_tier_requests")
+        .select("*")
+        .eq("contributor_id", userId)
+        .order("created_at", { ascending: false });
+
+      setTutorialRequests(treqs || []);
+
+      // 5. Load reviews
+      const { data: revs } = await supabase
+        .from("project_reviews")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      setReviewsList(revs || []);
+    } catch (err) {
+      console.warn("Contributor data load note:", err);
+      setMyProjects([]);
+      setCommunityMessages([]);
+      setTutorialRequests([]);
+      setReviewsList([]);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
   // Initial Auth Check
   useEffect(() => {
     let mounted = true;
@@ -309,19 +305,16 @@ python app.py # or npm run dev
     async function checkAuth() {
       try {
         const { data } = await supabase.auth.getSession();
-        if (mounted) {
-          if (data?.session?.user) {
-            setUser(data.session.user);
-            setContributorProfile((prev: any) => ({
-              ...prev,
-              email: data.session.user.email || prev.email,
-              full_name: data.session.user.user_metadata?.full_name || prev.full_name,
-            }));
-          }
-          setLoadingUser(false);
+        if (mounted && data?.session?.user) {
+          setUser(data.session.user);
+          loadContributorData(
+            data.session.user.id,
+            data.session.user.email || "",
+            data.session.user.user_metadata || {}
+          );
         }
       } catch (err) {
-        if (mounted) setLoadingUser(false);
+        // stay on login view
       }
     }
 
@@ -331,12 +324,12 @@ python app.py # or npm run dev
       if (mounted) {
         if (session?.user) {
           setUser(session.user);
-          setContributorProfile((prev: any) => ({
-            ...prev,
-            email: session.user.email || prev.email,
-            full_name: session.user.user_metadata?.full_name || prev.full_name,
-          }));
-        } else if (!isDemoUser) {
+          loadContributorData(
+            session.user.id,
+            session.user.email || "",
+            session.user.user_metadata || {}
+          );
+        } else {
           setUser(null);
         }
       }
@@ -346,33 +339,9 @@ python app.py # or npm run dev
       mounted = false;
       authListener?.subscription?.unsubscribe();
     };
-  }, [isDemoUser]);
-
-  // Load projects from database or fallback to PREBUILT_PROJECTS
-  useEffect(() => {
-    async function loadProjects() {
-      try {
-        const { data } = await supabase
-          .from("library_projects")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (data && data.length > 0) {
-          setMyProjects(data);
-        } else {
-          setMyProjects(PREBUILT_PROJECTS.slice(0, 5));
-        }
-      } catch (err) {
-        setMyProjects(PREBUILT_PROJECTS.slice(0, 5));
-      } finally {
-        setLoadingProjects(false);
-      }
-    }
-
-    loadProjects();
   }, []);
 
-  // Sync settings inputs when contributorProfile loads
+  // Sync settings inputs when contributorProfile changes
   useEffect(() => {
     if (contributorProfile) {
       setSettingName(contributorProfile.full_name || "");
@@ -386,17 +355,6 @@ python app.py # or npm run dev
       setSettingHolder(contributorProfile.account_holder_name || "");
     }
   }, [contributorProfile]);
-
-  // Quick Demo Access Handler
-  const handleQuickDemoAccess = () => {
-    setIsDemoUser(true);
-    setUser({
-      id: "demo-contributor-123",
-      email: "rahul.projects@gmail.com",
-      user_metadata: { full_name: "Rahul Sharma" },
-    });
-    toast.success("Welcome to the Contributor Hub Demo! Exploring with sample metrics.");
-  };
 
   // Auth Submit Handler (Sign in / Sign up)
   const handleAuthSubmit = async (e: React.FormEvent) => {
@@ -423,13 +381,17 @@ python app.py # or npm run dev
           setUser(data.user);
           setContributorProfile((prev: any) => ({
             ...prev,
-            full_name: authFullName || "New Contributor",
-            college: authCollege || "University",
+            full_name: authFullName || "",
+            college: authCollege || "",
             email: authEmail,
           }));
+          loadContributorData(data.user.id, authEmail, {
+            full_name: authFullName,
+            college: authCollege,
+          });
           toast.success("Account created successfully! Welcome to the Contributor Hub.");
         } else {
-          toast.info("Verification email sent! Please check your inbox or use Quick Demo.");
+          toast.info("Verification email sent! Please check your inbox to confirm your account.");
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -441,11 +403,16 @@ python app.py # or npm run dev
 
         if (data.user) {
           setUser(data.user);
+          loadContributorData(
+            data.user.id,
+            data.user.email || authEmail,
+            data.user.user_metadata || {}
+          );
           toast.success("Welcome back to your Contributor Dashboard!");
         }
       }
     } catch (err: any) {
-      toast.error(err.message || "Authentication failed. Try Quick Demo Access.");
+      toast.error(err.message || "Authentication failed. Please check your credentials.");
     } finally {
       setAuthLoading(false);
     }
@@ -474,8 +441,28 @@ python app.py # or npm run dev
       // ignore
     }
     setUser(null);
-    setIsDemoUser(false);
     setActiveTab("overview");
+    setMyProjects([]);
+    setCommunityMessages([]);
+    setTutorialRequests([]);
+    setReviewsList([]);
+    setContributorProfile({
+      full_name: "",
+      college: "",
+      email: "",
+      avatar_url: "",
+      bio: "",
+      upi_id: "",
+      bank_name: "",
+      bank_account: "",
+      bank_ifsc: "",
+      account_holder_name: "",
+      commission_tier: "standard_70",
+      total_earnings: 0,
+      sales_count: 0,
+      rating: 0,
+      review_count: 0,
+    });
     toast.success("Signed out from Contributor Hub.");
   };
 
@@ -496,7 +483,6 @@ python app.py # or npm run dev
   const contributorEarn70 = Math.round(parsedPrice * 0.7);
   const platformFee30 = Math.round(parsedPrice * 0.3);
   const contributorEarn90 = Math.round(parsedPrice * 0.9);
-  const platformFee10 = Math.round(parsedPrice * 0.1);
 
   // Add Tech Tag
   const handleAddTech = () => {
@@ -535,16 +521,16 @@ python app.py # or npm run dev
           uploadThumbnailUrl ||
           "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=80",
         tech_stack: uploadTechStack,
-        contributor_id: user?.id || "demo-contributor-123",
-        contributor_name: contributorProfile.full_name,
+        contributor_id: user?.id,
+        contributor_name: contributorProfile.full_name || user?.user_metadata?.full_name || "Contributor",
         commission_rate: uploadTutorialVideoUrl ? 90 : 70,
         tutorial_video_url: uploadTutorialVideoUrl,
-        views_count: 1,
+        views_count: 0,
         sales_count: 0,
         created_at: new Date().toISOString(),
       };
 
-      // Try inserting into Supabase
+      // Insert into Supabase
       const { error } = await supabase.from("library_projects").insert([newProj]);
       if (error) {
         console.warn("Supabase insert note:", error.message);
@@ -585,9 +571,10 @@ python app.py # or npm run dev
     setTimeout(() => {
       const newReq = {
         id: `tr-${Date.now()}`,
+        contributor_id: user?.id,
         project_title: reqProject,
         video_url: reqVideoUrl,
-        duration: reqDuration || "35 mins",
+        duration: reqDuration || "30 mins",
         notes: reqNotes || "Full step-by-step code explanation and installation instructions.",
         status: "pending",
         commission_rate: 90,
@@ -602,7 +589,7 @@ python app.py # or npm run dev
       toast.success(
         "Tutorial submitted! Our team will review your video within 24 hours. Once verified, your commission boosts to 90%."
       );
-    }, 800);
+    }, 600);
   };
 
   // Community Question Submit
@@ -612,10 +599,10 @@ python app.py # or npm run dev
 
     const newMsg = {
       id: `cm-${Date.now()}`,
-      user_name: user?.user_metadata?.full_name || "Community Member",
-      user_college: "Engineering College",
-      user_role: "Student",
-      project_title: newQuestionProject,
+      user_name: contributorProfile.full_name || user?.user_metadata?.full_name || "Community Member",
+      user_college: contributorProfile.college || "College",
+      user_role: "Contributor",
+      project_title: newQuestionProject || "General Discussion",
       message: newQuestionText.trim(),
       created_at: "Just now",
       upvotes: 1,
@@ -638,10 +625,10 @@ python app.py # or npm run dev
           return {
             ...thread,
             replies: [
-              ...thread.replies,
+              ...(thread.replies || []),
               {
                 id: `cr-${Date.now()}`,
-                user_name: contributorProfile.full_name,
+                user_name: contributorProfile.full_name || "Contributor",
                 user_role: "Contributor (Author)",
                 message: text.trim(),
                 created_at: "Just now",
@@ -667,10 +654,10 @@ python app.py # or npm run dev
 
     const newRev = {
       id: `rev-${Date.now()}`,
-      reviewer_name: newReviewName.trim() || "Verified Buyer",
+      reviewer_name: newReviewName.trim() || "Student",
       college: newReviewCollege.trim() || "Engineering Institute",
       rating: newReviewRating,
-      project_title: newReviewProject || myProjects[0]?.title || "Smart Project",
+      project_title: newReviewProject || myProjects[0]?.title || "Project Review",
       comment: newReviewComment.trim(),
       created_at: "Just now",
     };
@@ -679,11 +666,11 @@ python app.py # or npm run dev
     setNewReviewComment("");
     setNewReviewName("");
     setNewReviewCollege("");
-    toast.success("Review submitted! Thank you for supporting the contributor.");
+    toast.success("Review submitted! Thank you for the feedback.");
   };
 
   // Save Settings
-  const handleSaveSettings = (e: React.FormEvent) => {
+  const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setContributorProfile((prev: any) => ({
       ...prev,
@@ -697,22 +684,45 @@ python app.py # or npm run dev
       bank_ifsc: settingIfsc,
       account_holder_name: settingHolder,
     }));
+
+    if (user?.id) {
+      try {
+        await supabase.from("contributor_profiles").upsert([
+          {
+            id: user.id,
+            full_name: settingName,
+            college: settingCollege,
+            bio: settingBio,
+            avatar_url: settingAvatar,
+            upi_id: settingUpi,
+            bank_name: settingBankName,
+            bank_account: settingAccount,
+            bank_ifsc: settingIfsc,
+            account_holder_name: settingHolder,
+            email: user.email,
+          },
+        ]);
+      } catch (err) {
+        console.warn("Profile save note:", err);
+      }
+    }
+
     toast.success("Profile and payout details updated successfully!");
   };
 
   // -------------------------------------------------------------------------------------------------
   // SCREEN 1: Dedicated Sign In / Sign Up Gate (When User is NOT Authenticated)
   // -------------------------------------------------------------------------------------------------
-  if (!user && !isDemoUser) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
-        {/* Simple Top Navigation */}
+        {/* Simple Top Navigation Header */}
         <header className="border-b border-border/80 bg-card/60 backdrop-blur sticky top-0 z-30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2">
               <BrandLogo />
               <Badge variant="secondary" className="ml-2 font-medium text-xs bg-primary/10 text-primary border border-primary/20">
-                Contributor Portal
+                Contributor Hub
               </Badge>
             </Link>
 
@@ -722,22 +732,13 @@ python app.py # or npm run dev
                   Browse Marketplace
                 </Button>
               </Link>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleQuickDemoAccess}
-                className="hidden sm:inline-flex border-dashed border-primary/50 text-primary hover:bg-primary/10"
-              >
-                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                Quick Demo Access
-              </Button>
             </div>
           </div>
         </header>
 
         {/* Main Split Authentication & Value Landing */}
         <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-12 lg:py-16 grid lg:grid-cols-12 gap-12 items-center">
-          {/* Left Column: Value Proposition & Social Proof */}
+          {/* Left Column: Value Proposition & Program Overview */}
           <div className="lg:col-span-7 space-y-8">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary">
               <Award className="w-4 h-4" />
@@ -808,26 +809,26 @@ python app.py # or npm run dev
               </div>
             </div>
 
-            {/* Quick Proof Ribbon */}
+            {/* Transparency Ribbon */}
             <div className="pt-4 flex flex-wrap items-center gap-8 border-t border-border/60 text-sm">
               <div>
-                <p className="text-2xl font-bold text-foreground">₹4.85L+</p>
-                <p className="text-xs text-muted-foreground">Paid to Contributors</p>
+                <p className="text-2xl font-bold text-foreground">70% – 90%</p>
+                <p className="text-xs text-muted-foreground">Royalty Rate</p>
               </div>
               <div className="w-px h-8 bg-border" />
               <div>
-                <p className="text-2xl font-bold text-foreground">1,400+</p>
-                <p className="text-xs text-muted-foreground">Student Projects Downloaded</p>
+                <p className="text-2xl font-bold text-foreground">Instant</p>
+                <p className="text-xs text-muted-foreground">UPI & Bank Settlements</p>
               </div>
               <div className="w-px h-8 bg-border" />
               <div>
-                <p className="text-2xl font-bold text-foreground">4.9 / 5.0</p>
-                <p className="text-xs text-muted-foreground">Average Contributor Rating</p>
+                <p className="text-2xl font-bold text-foreground">100%</p>
+                <p className="text-xs text-muted-foreground">Project Code Ownership</p>
               </div>
             </div>
           </div>
 
-          {/* Right Column: High-Converting Auth Card */}
+          {/* Right Column: Clean Auth Card */}
           <div className="lg:col-span-5">
             <Card className="p-6 sm:p-8 shadow-xl border-border/80 bg-card/95 backdrop-blur">
               {/* Tab Selector */}
@@ -841,7 +842,7 @@ python app.py # or npm run dev
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  Sign In to Portal
+                  Sign In
                 </button>
                 <button
                   type="button"
@@ -852,18 +853,18 @@ python app.py # or npm run dev
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  Become a Contributor
+                  Create Contributor Account
                 </button>
               </div>
 
               <div className="mb-6">
                 <h2 className="text-2xl font-bold tracking-tight">
-                  {authMode === "signin" ? "Welcome back, Contributor" : "Create Contributor Account"}
+                  {authMode === "signin" ? "Welcome back" : "Create Contributor Account"}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   {authMode === "signin"
-                    ? "Enter your credentials to access your earnings & projects dashboard."
-                    : "Join 1,200+ student creators and start monetizing your project work."}
+                    ? "Sign in to access your projects, sales, and payouts."
+                    : "Join as a project contributor and start sharing your knowledge."}
                 </p>
               </div>
 
@@ -911,7 +912,7 @@ python app.py # or npm run dev
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-foreground">Full Name</label>
                       <Input
-                        placeholder="e.g. Rahul Sharma"
+                        placeholder="Your full name"
                         value={authFullName}
                         onChange={(e) => setAuthFullName(e.target.value)}
                         required
@@ -921,7 +922,7 @@ python app.py # or npm run dev
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-foreground">College / University</label>
                       <Input
-                        placeholder="e.g. IIT Bombay / DTU / Anna University"
+                        placeholder="Your college name"
                         value={authCollege}
                         onChange={(e) => setAuthCollege(e.target.value)}
                         required
@@ -932,7 +933,7 @@ python app.py # or npm run dev
                 )}
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-foreground">College / Personal Email</label>
+                  <label className="text-xs font-semibold text-foreground">Email</label>
                   <Input
                     type="email"
                     placeholder="name@example.com"
@@ -969,28 +970,13 @@ python app.py # or npm run dev
                   ) : authMode === "signin" ? (
                     "Sign In to Dashboard"
                   ) : (
-                    "Create Contributor Account & Start Earning"
+                    "Create Contributor Account"
                   )}
                 </Button>
               </form>
 
-              {/* Quick Demo Exploration Access */}
-              <div className="mt-6 pt-5 border-t border-border/70 text-center space-y-2">
-                <p className="text-xs text-muted-foreground">Evaluating or testing the features?</p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleQuickDemoAccess}
-                  className="w-full text-xs font-medium border-dashed border-primary/60 text-primary hover:bg-primary/10"
-                >
-                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                  Explore Contributor Dashboard in Demo Mode
-                </Button>
-              </div>
-
               <p className="text-[11px] text-muted-foreground text-center mt-4 leading-tight">
-                By joining, you agree to projectbyAI's 70%/90% Contributor Royalty Agreement and Marketplace Terms of Service.
+                By joining, you agree to projectbyAI's Contributor Royalty Agreement and Marketplace Terms of Service.
               </p>
             </Card>
           </div>
@@ -1006,7 +992,7 @@ python app.py # or npm run dev
   // -------------------------------------------------------------------------------------------------
   const filteredProjects = myProjects.filter((p) => {
     const matchesSearch =
-      p.title.toLowerCase().includes(projectSearch.toLowerCase()) ||
+      p.title?.toLowerCase().includes(projectSearch.toLowerCase()) ||
       p.category?.toLowerCase().includes(projectSearch.toLowerCase());
     const matchesCategory =
       projectCategoryFilter === "all" || p.category === projectCategoryFilter;
@@ -1017,6 +1003,8 @@ python app.py # or npm run dev
     new Set(myProjects.map((p) => p.category).filter(Boolean))
   );
 
+  const totalViewsCount = myProjects.reduce((acc, p) => acc + (p.views_count || 0), 0);
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row">
       {/* --------------------------------------------------------------------------------- */}
@@ -1024,7 +1012,7 @@ python app.py # or npm run dev
       {/* --------------------------------------------------------------------------------- */}
       <aside className="w-full md:w-64 border-r border-border bg-card/80 backdrop-blur shrink-0 md:h-screen md:sticky md:top-0 flex flex-col justify-between z-40">
         <div>
-          {/* Contributor Brand Header / Store Switcher */}
+          {/* Contributor Brand Header */}
           <div className="p-4 border-b border-border flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2.5">
               <div className="h-9 w-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-primary">
@@ -1036,7 +1024,7 @@ python app.py # or npm run dev
                 </span>
                 <span className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                  70% – 90% Revenue Share
+                  Partner Dashboard
                 </span>
               </div>
             </Link>
@@ -1133,7 +1121,9 @@ python app.py # or npm run dev
                 <MessageSquare className="w-4 h-4 shrink-0" />
                 <span>Community Q&A</span>
               </div>
-              <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
+              {communityMessages.length > 0 && (
+                <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
+              )}
             </button>
 
             <button
@@ -1173,9 +1163,11 @@ python app.py # or npm run dev
                 <Star className="w-4 h-4 shrink-0" />
                 <span>Reviews & Ratings</span>
               </div>
-              <span className="text-xs font-semibold text-amber-500 flex items-center gap-0.5">
-                ★ {contributorProfile.rating}
-              </span>
+              {contributorProfile.rating > 0 && (
+                <span className="text-xs font-semibold text-amber-500 flex items-center gap-0.5">
+                  ★ {contributorProfile.rating}
+                </span>
+              )}
             </button>
 
             <div className="pt-2 pb-1">
@@ -1224,17 +1216,17 @@ python app.py # or npm run dev
         >
           <div className="flex items-center justify-between p-2 rounded-lg bg-muted/60">
             <div className="flex items-center gap-2.5 min-w-0">
-              <img
-                src={contributorProfile.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100"}
-                alt={contributorProfile.full_name}
-                className="w-8 h-8 rounded-full object-cover border border-border"
-              />
+              <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs uppercase border border-border">
+                {contributorProfile.full_name
+                  ? contributorProfile.full_name.charAt(0)
+                  : user?.email?.charAt(0) || "C"}
+              </div>
               <div className="min-w-0">
                 <p className="text-xs font-semibold truncate text-foreground">
-                  {contributorProfile.full_name}
+                  {contributorProfile.full_name || "Contributor"}
                 </p>
                 <p className="text-[10px] text-muted-foreground truncate">
-                  {contributorProfile.email || "contributor@projectbyai.com"}
+                  {contributorProfile.email || user?.email || ""}
                 </p>
               </div>
             </div>
@@ -1255,7 +1247,7 @@ python app.py # or npm run dev
       {/* MAIN CONTENT AREA */}
       {/* --------------------------------------------------------------------------------- */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* Top Header Bar (Shopify style with search & action buttons) */}
+        {/* Top Header Bar */}
         <header className="h-16 border-b border-border bg-card/60 backdrop-blur px-6 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-4 flex-1 max-w-md">
             <div className="relative w-full">
@@ -1272,7 +1264,7 @@ python app.py # or npm run dev
           <div className="flex items-center gap-3">
             {/* Quick Earnings Pill */}
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span>Net: ₹{contributorProfile.total_earnings.toLocaleString("en-IN")}</span>
             </div>
 
@@ -1345,9 +1337,12 @@ python app.py # or npm run dev
                   <div className="text-2xl font-bold tracking-tight text-foreground">
                     ₹{contributorProfile.total_earnings.toLocaleString("en-IN")}
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-500 mt-2 font-medium">
-                    <TrendingUp className="w-3.5 h-3.5" />
-                    <span>+₹3,450 this week (70% - 90%)</span>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2 font-medium">
+                    <span>
+                      {contributorProfile.total_earnings > 0
+                        ? "Active Royalty Balance"
+                        : "Upload projects to start earning"}
+                    </span>
                   </div>
                 </Card>
 
@@ -1378,7 +1373,9 @@ python app.py # or npm run dev
                     {myProjects.length} listed
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
-                    <span className="text-purple-400 font-medium">1 in 90% Video Bonus Tier</span>
+                    <span className="text-muted-foreground">
+                      {myProjects.length > 0 ? "Published on Marketplace" : "0 active listings"}
+                    </span>
                   </div>
                 </Card>
 
@@ -1390,11 +1387,15 @@ python app.py # or npm run dev
                     </div>
                   </div>
                   <div className="text-2xl font-bold tracking-tight text-foreground">
-                    1,842 views
+                    {totalViewsCount} views
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
                     <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                    <span>★ {contributorProfile.rating} ({contributorProfile.review_count} reviews)</span>
+                    <span>
+                      {contributorProfile.review_count > 0
+                        ? `★ ${contributorProfile.rating} (${contributorProfile.review_count} reviews)`
+                        : "No ratings yet"}
+                    </span>
                   </div>
                 </Card>
               </div>
@@ -1454,67 +1455,15 @@ python app.py # or npm run dev
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      <tr className="hover:bg-muted/20 transition-colors">
-                        <td className="py-3 px-4 font-semibold text-foreground">
-                          Smart Attendance System with Face Recognition
-                        </td>
-                        <td className="py-3 px-4 text-muted-foreground">
-                          Aman V. (VIT Vellore)
-                        </td>
-                        <td className="py-3 px-4">₹1,499</td>
-                        <td className="py-3 px-4 font-bold text-emerald-500">₹1,349</td>
-                        <td className="py-3 px-4">
-                          <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 text-[10px]">
-                            90% Video Bonus
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4 text-muted-foreground">2 hours ago</td>
-                        <td className="py-3 px-4 text-right">
-                          <Badge variant="outline" className="text-emerald-500 border-emerald-500/30 text-[10px]">
-                            Completed
-                          </Badge>
-                        </td>
-                      </tr>
-                      <tr className="hover:bg-muted/20 transition-colors">
-                        <td className="py-3 px-4 font-semibold text-foreground">
-                          AI Medical Disease Predictor & Diagnostic Assistant
-                        </td>
-                        <td className="py-3 px-4 text-muted-foreground">
-                          Priya M. (SRM Chennai)
-                        </td>
-                        <td className="py-3 px-4">₹1,999</td>
-                        <td className="py-3 px-4 font-bold text-emerald-500">₹1,399</td>
-                        <td className="py-3 px-4">
-                          <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[10px]">
-                            70% Standard
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4 text-muted-foreground">Yesterday</td>
-                        <td className="py-3 px-4 text-right">
-                          <Badge variant="outline" className="text-emerald-500 border-emerald-500/30 text-[10px]">
-                            Completed
-                          </Badge>
-                        </td>
-                      </tr>
-                      <tr className="hover:bg-muted/20 transition-colors">
-                        <td className="py-3 px-4 font-semibold text-foreground">
-                          Decentralized Voting System using Ethereum & Solidity
-                        </td>
-                        <td className="py-3 px-4 text-muted-foreground">
-                          Sameer K. (IIT Delhi)
-                        </td>
-                        <td className="py-3 px-4">₹2,499</td>
-                        <td className="py-3 px-4 font-bold text-emerald-500">₹1,749</td>
-                        <td className="py-3 px-4">
-                          <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[10px]">
-                            70% Standard
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4 text-muted-foreground">3 days ago</td>
-                        <td className="py-3 px-4 text-right">
-                          <Badge variant="outline" className="text-emerald-500 border-emerald-500/30 text-[10px]">
-                            Completed
-                          </Badge>
+                      <tr>
+                        <td colSpan={7} className="py-12 text-center text-muted-foreground">
+                          <div className="flex flex-col items-center justify-center space-y-2">
+                            <ShoppingBag className="w-8 h-8 text-muted-foreground/40" />
+                            <p className="font-medium text-foreground text-sm">No sales yet</p>
+                            <p className="text-xs text-muted-foreground max-w-sm">
+                              Once students purchase your uploaded projects, their orders, royalty payouts, and completion status will appear here in real time.
+                            </p>
+                          </div>
                         </td>
                       </tr>
                     </tbody>
@@ -1591,13 +1540,27 @@ python app.py # or npm run dev
                     <tbody className="divide-y divide-border">
                       {filteredProjects.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="py-8 text-center text-muted-foreground">
-                            No projects found matching your search.
+                          <td colSpan={8} className="py-12 text-center text-muted-foreground">
+                            <div className="flex flex-col items-center justify-center space-y-2">
+                              <Package className="w-8 h-8 text-muted-foreground/40" />
+                              <p className="font-medium text-foreground text-sm">No projects uploaded yet</p>
+                              <p className="text-xs text-muted-foreground max-w-sm">
+                                You haven't listed any student projects yet. Click "Add Project" to publish your code and documentation.
+                              </p>
+                              <Button
+                                size="sm"
+                                onClick={() => setActiveTab("upload")}
+                                className="text-xs mt-2"
+                              >
+                                <Plus className="w-3.5 h-3.5 mr-1" />
+                                Add Your First Project
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ) : (
                         filteredProjects.map((p, idx) => {
-                          const hasVideo = !!p.tutorial_video_url || idx === 0;
+                          const hasVideo = !!p.tutorial_video_url;
                           const earnRate = hasVideo ? 0.9 : 0.7;
                           const cut = Math.round((p.price || 1499) * earnRate);
 
@@ -1637,11 +1600,11 @@ python app.py # or npm run dev
                               </td>
 
                               <td className="py-3.5 px-4 text-foreground">
-                                {p.sales_count || (idx === 0 ? 14 : idx === 1 ? 7 : 3)}
+                                {p.sales_count || 0}
                               </td>
 
                               <td className="py-3.5 px-4 text-muted-foreground">
-                                {p.views_count || 120 + idx * 45}
+                                {p.views_count || 0}
                               </td>
 
                               <td className="py-3.5 px-4">
@@ -2005,7 +1968,7 @@ python app.py # or npm run dev
                 </div>
               </div>
 
-              {/* Ask / Post a Question Box (Available to all students & users) */}
+              {/* Ask / Post a Question Box */}
               <Card className="p-5 border-border shadow-xs space-y-3">
                 <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-primary" />
@@ -2044,92 +2007,104 @@ python app.py # or npm run dev
 
               {/* Discussion Threads List */}
               <div className="space-y-4">
-                {communityMessages.map((thread) => (
-                  <Card key={thread.id} className="p-5 border-border shadow-xs space-y-4">
-                    {/* Thread Header */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm text-foreground">
-                            {thread.user_name}
-                          </span>
-                          {thread.user_college && (
-                            <span className="text-xs text-muted-foreground">
-                              • {thread.user_college}
+                {communityMessages.length === 0 ? (
+                  <div className="py-12 text-center text-muted-foreground border border-dashed border-border rounded-xl">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <MessageSquare className="w-8 h-8 text-muted-foreground/40" />
+                      <p className="font-medium text-foreground text-sm">No community questions yet</p>
+                      <p className="text-xs text-muted-foreground max-w-sm">
+                        When students or buyers ask questions about your project architecture and setup, the threads will appear here.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  communityMessages.map((thread) => (
+                    <Card key={thread.id} className="p-5 border-border shadow-xs space-y-4">
+                      {/* Thread Header */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm text-foreground">
+                              {thread.user_name}
                             </span>
-                          )}
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                            {thread.user_role}
-                          </Badge>
-                        </div>
-                        <p className="text-xs font-medium text-primary">
-                          Re: {thread.project_title}
-                        </p>
-                      </div>
-
-                      <span className="text-[11px] text-muted-foreground shrink-0">
-                        {thread.created_at}
-                      </span>
-                    </div>
-
-                    {/* Question Body */}
-                    <p className="text-sm text-foreground/90 leading-relaxed">
-                      {thread.message}
-                    </p>
-
-                    {/* Replies List */}
-                    {thread.replies && thread.replies.length > 0 && (
-                      <div className="space-y-2.5 pl-4 border-l-2 border-border/70 mt-3 pt-2">
-                        {thread.replies.map((reply: any) => (
-                          <div key={reply.id} className="p-3 rounded-lg bg-muted/40 space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="font-bold text-foreground flex items-center gap-1.5">
-                                {reply.user_name}
-                                <Badge className="bg-primary/20 text-primary border-primary/30 text-[9px] px-1 py-0">
-                                  {reply.user_role}
-                                </Badge>
+                            {thread.user_college && (
+                              <span className="text-xs text-muted-foreground">
+                                • {thread.user_college}
                               </span>
-                              <span className="text-[10px] text-muted-foreground">
-                                {reply.created_at}
-                              </span>
-                            </div>
-                            <p className="text-xs text-foreground/80 leading-normal">
-                              {reply.message}
-                            </p>
+                            )}
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                              {thread.user_role || "Student"}
+                            </Badge>
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          <p className="text-xs font-medium text-primary">
+                            Re: {thread.project_title}
+                          </p>
+                        </div>
 
-                    {/* Reply Input */}
-                    <div className="flex items-center gap-2 pt-2">
-                      <Input
-                        placeholder="Write a helpful answer or tip as contributor..."
-                        value={replyInputMap[thread.id] || ""}
-                        onChange={(e) =>
-                          setReplyInputMap({
-                            ...replyInputMap,
-                            [thread.id]: e.target.value,
-                          })
-                        }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleReplySubmit(thread.id);
+                        <span className="text-[11px] text-muted-foreground shrink-0">
+                          {thread.created_at}
+                        </span>
+                      </div>
+
+                      {/* Question Body */}
+                      <p className="text-sm text-foreground/90 leading-relaxed">
+                        {thread.message}
+                      </p>
+
+                      {/* Replies List */}
+                      {thread.replies && thread.replies.length > 0 && (
+                        <div className="space-y-2.5 pl-4 border-l-2 border-border/70 mt-3 pt-2">
+                          {thread.replies.map((reply: any) => (
+                            <div key={reply.id} className="p-3 rounded-lg bg-muted/40 space-y-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-foreground flex items-center gap-1.5">
+                                  {reply.user_name}
+                                  <Badge className="bg-primary/20 text-primary border-primary/30 text-[9px] px-1 py-0">
+                                    {reply.user_role}
+                                  </Badge>
+                                </span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {reply.created_at}
+                                </span>
+                              </div>
+                              <p className="text-xs text-foreground/80 leading-normal">
+                                {reply.message}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Reply Input */}
+                      <div className="flex items-center gap-2 pt-2">
+                        <Input
+                          placeholder="Write a helpful answer or tip as contributor..."
+                          value={replyInputMap[thread.id] || ""}
+                          onChange={(e) =>
+                            setReplyInputMap({
+                              ...replyInputMap,
+                              [thread.id]: e.target.value,
+                            })
                           }
-                        }}
-                        className="h-8 text-xs bg-muted/30"
-                      />
-                      <Button
-                        size="sm"
-                        onClick={() => handleReplySubmit(thread.id)}
-                        className="h-8 text-xs shrink-0"
-                      >
-                        Reply
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleReplySubmit(thread.id);
+                            }
+                          }}
+                          className="h-8 text-xs bg-muted/30"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => handleReplySubmit(thread.id)}
+                          className="h-8 text-xs shrink-0"
+                        >
+                          Reply
+                        </Button>
+                      </div>
+                    </Card>
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -2267,39 +2242,46 @@ python app.py # or npm run dev
                   </h4>
                 </div>
                 <div className="divide-y divide-border">
-                  {tutorialRequests.map((tr) => (
-                    <div key={tr.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-foreground">{tr.project_title}</span>
-                          <span className="text-muted-foreground">({tr.duration})</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate max-w-md">
-                          {tr.notes}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <Badge
-                          className={
-                            tr.status === "approved"
-                              ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                              : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                          }
-                        >
-                          {tr.status === "approved" ? "90% Tier Active" : "Under Admin Review"}
-                        </Badge>
-                        <a
-                          href={tr.video_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs text-primary hover:underline flex items-center gap-1"
-                        >
-                          View Video <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
+                  {tutorialRequests.length === 0 ? (
+                    <div className="py-8 text-center text-muted-foreground">
+                      <p className="text-sm">No tutorial video requests submitted yet.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Submit your project walkthrough video above to unlock the 90% commission tier.</p>
                     </div>
-                  ))}
+                  ) : (
+                    tutorialRequests.map((tr) => (
+                      <div key={tr.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-foreground">{tr.project_title}</span>
+                            <span className="text-muted-foreground">({tr.duration})</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate max-w-md">
+                            {tr.notes}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <Badge
+                            className={
+                              tr.status === "approved"
+                                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                            }
+                          >
+                            {tr.status === "approved" ? "90% Tier Active" : "Under Admin Review"}
+                          </Badge>
+                          <a
+                            href={tr.video_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs text-primary hover:underline flex items-center gap-1"
+                          >
+                            View Video <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </Card>
             </div>
@@ -2321,20 +2303,22 @@ python app.py # or npm run dev
 
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border">
                   <span className="text-3xl font-extrabold text-amber-500">
-                    {contributorProfile.rating}
+                    {contributorProfile.rating > 0 ? contributorProfile.rating : "—"}
                   </span>
                   <div className="leading-tight">
                     <div className="flex text-amber-500 text-xs">
-                      {"★".repeat(5)}
+                      {contributorProfile.rating > 0 ? "★".repeat(Math.round(contributorProfile.rating)) : "☆☆☆☆☆"}
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      Based on {contributorProfile.review_count} ratings
+                      {contributorProfile.review_count > 0
+                        ? `Based on ${contributorProfile.review_count} ratings`
+                        : "No reviews yet"}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Submit a Review Form (For Students & Evaluators) */}
+              {/* Submit a Review Form */}
               <Card className="p-5 border-border shadow-xs space-y-3">
                 <h3 className="font-semibold text-sm text-foreground flex items-center gap-1.5">
                   <Star className="w-4 h-4 text-amber-500" />
@@ -2344,14 +2328,14 @@ python app.py # or npm run dev
                 <form onSubmit={handleReviewSubmit} className="space-y-3">
                   <div className="grid sm:grid-cols-3 gap-3">
                     <Input
-                      placeholder="Your Name (e.g. Pooja Hegde)"
+                      placeholder="Your Name"
                       value={newReviewName}
                       onChange={(e) => setNewReviewName(e.target.value)}
                       required
                       className="h-9 text-xs"
                     />
                     <Input
-                      placeholder="Your College (e.g. BMS Bangalore)"
+                      placeholder="Your College"
                       value={newReviewCollege}
                       onChange={(e) => setNewReviewCollege(e.target.value)}
                       required
@@ -2386,32 +2370,44 @@ python app.py # or npm run dev
 
               {/* Reviews List */}
               <div className="space-y-4">
-                {reviewsList.map((rev) => (
-                  <Card key={rev.id} className="p-5 border-border shadow-xs space-y-2.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <div>
-                        <span className="font-bold text-foreground mr-2">
-                          {rev.reviewer_name}
+                {reviewsList.length === 0 ? (
+                  <div className="py-12 text-center text-muted-foreground border border-dashed border-border rounded-xl">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <Star className="w-8 h-8 text-muted-foreground/40" />
+                      <p className="font-medium text-foreground text-sm">No reviews yet</p>
+                      <p className="text-xs text-muted-foreground max-w-sm">
+                        Reviews from students who download your project will appear here.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  reviewsList.map((rev) => (
+                    <Card key={rev.id} className="p-5 border-border shadow-xs space-y-2.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <div>
+                          <span className="font-bold text-foreground mr-2">
+                            {rev.reviewer_name}
+                          </span>
+                          <span className="text-muted-foreground">{rev.college}</span>
+                        </div>
+                        <span className="text-muted-foreground">{rev.created_at}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <div className="flex text-amber-500 text-xs">
+                          {"★".repeat(Math.round(rev.rating))}
+                        </div>
+                        <span className="text-xs font-semibold text-primary">
+                          {rev.project_title}
                         </span>
-                        <span className="text-muted-foreground">{rev.college}</span>
                       </div>
-                      <span className="text-muted-foreground">{rev.created_at}</span>
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                      <div className="flex text-amber-500 text-xs">
-                        {"★".repeat(Math.round(rev.rating))}
-                      </div>
-                      <span className="text-xs font-semibold text-primary">
-                        {rev.project_title}
-                      </span>
-                    </div>
-
-                    <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed">
-                      "{rev.comment}"
-                    </p>
-                  </Card>
-                ))}
+                      <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed">
+                        "{rev.comment}"
+                      </p>
+                    </Card>
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -2436,24 +2432,24 @@ python app.py # or npm run dev
                   <p className="text-2xl font-bold text-foreground mt-2">
                     ₹{contributorProfile.total_earnings.toLocaleString("en-IN")}
                   </p>
-                  <p className="text-xs text-emerald-500 mt-1 font-medium">100% Verified Payouts</p>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">100% Transparent Tracking</p>
                 </Card>
 
                 <Card className="p-5 border-border shadow-xs">
                   <span className="text-xs font-semibold text-muted-foreground uppercase">Available for Withdrawal</span>
                   <p className="text-2xl font-bold text-emerald-500 mt-2">
-                    ₹{Math.round(contributorProfile.total_earnings * 0.42).toLocaleString("en-IN")}
+                    ₹{Math.round(contributorProfile.total_earnings * 0.7).toLocaleString("en-IN")}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">Processed every Monday</p>
+                  <p className="text-xs text-muted-foreground mt-1">Processed weekly</p>
                 </Card>
 
                 <Card className="p-5 border-border shadow-xs">
                   <span className="text-xs font-semibold text-muted-foreground uppercase">Active Payout Method</span>
                   <p className="text-base font-bold text-foreground mt-2 flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    UPI ({contributorProfile.upi_id})
+                    {contributorProfile.upi_id ? `UPI (${contributorProfile.upi_id})` : "Not configured yet"}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">Instant Transfer to PhonePe/GPay</p>
+                  <p className="text-xs text-muted-foreground mt-1">Direct Transfer to UPI or Bank</p>
                 </Card>
               </div>
 
@@ -2505,7 +2501,7 @@ python app.py # or npm run dev
                       <div className="space-y-1.5">
                         <label className="text-xs text-muted-foreground">Account Number</label>
                         <Input
-                          placeholder="••••••••••••"
+                          placeholder="Bank Account Number"
                           value={settingAccount}
                           onChange={(e) => setSettingAccount(e.target.value)}
                           className="h-9 text-xs font-mono"
@@ -2574,6 +2570,7 @@ python app.py # or npm run dev
                     <Input
                       value={settingAvatar}
                       onChange={(e) => setSettingAvatar(e.target.value)}
+                      placeholder="https://..."
                       className="h-9 text-xs"
                     />
                   </div>
@@ -2584,6 +2581,7 @@ python app.py # or npm run dev
                       value={settingBio}
                       onChange={(e) => setSettingBio(e.target.value)}
                       rows={3}
+                      placeholder="Tell students about your technical background and projects..."
                       className="text-xs"
                     />
                   </div>

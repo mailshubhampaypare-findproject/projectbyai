@@ -40,7 +40,7 @@ function LandingPage() {
         <nav className="flex items-center gap-4">
           <Link to="/blog" className="text-sm font-medium hover:text-primary transition-colors hidden sm:inline-block">Blog</Link>
           <Link to="/projects" className="text-sm font-medium hover:text-primary transition-colors">Project Library</Link>
-          <Link to="/contributor" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors hidden sm:inline-block">Contributor Hub (Earn 70%–90%)</Link>
+          <Link to="/contributor" className="text-sm font-medium hover:text-primary transition-colors hidden sm:inline-block">Contributor Hub</Link>
           {loggedIn ? (
             <Button asChild className="bg-gradient-primary shadow-elegant">
               <Link to="/contributor">Contributor Hub</Link>
@@ -73,7 +73,7 @@ function LandingPage() {
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <Link to="/contributor">Upload Project & Earn (70%–90%)</Link>
+            <Link to="/contributor">Upload Project as Contributor</Link>
           </Button>
         </div>
       </section>
