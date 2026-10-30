@@ -60,7 +60,11 @@ import {
   BarChart3,
   Clock,
   CheckCheck,
-  Inbox
+  Inbox,
+  UploadCloud,
+  FileArchive,
+  Trash2,
+  ImagePlus
 } from "lucide-react";
 
 export const Route = createFileRoute("/contributor")({
@@ -160,6 +164,36 @@ function ContributorDashboardPage() {
   const [uploadTutorialVideoUrl, setUploadTutorialVideoUrl] = useState("");
   const [uploadTechStack, setUploadTechStack] = useState<string[]>(["Python", "FastAPI", "React"]);
   const [techInput, setTechInput] = useState("");
+
+  // Media upload state (drag-and-drop & files)
+  const [uploadScreenshots, setUploadScreenshots] = useState<string[]>([]);
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [uploadingScreenshots, setUploadingScreenshots] = useState(false);
+  const [uploadingZip, setUploadingZip] = useState(false);
+  const [zipFileName, setZipFileName] = useState("");
+  const [zipFileSize, setZipFileSize] = useState("");
+  const [screenshotInputUrl, setScreenshotInputUrl] = useState("");
+
+  // Categories list & create category state
+  const [categoryList, setCategoryList] = useState<string[]>([
+    "AI & Machine Learning",
+    "Web & Full Stack",
+    "Mobile App (Flutter/React Native)",
+    "Blockchain & Web3",
+    "Cybersecurity & Cloud",
+    "IoT & Embedded Systems",
+    "Data Science & Analytics",
+    "DevOps & Automation",
+  ]);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  // Pricing & Commission Request State
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [pricingRequested, setPricingRequested] = useState(false);
+  const [requestedPrice, setRequestedPrice] = useState<number>(1499);
+  const [requestedTier, setRequestedTier] = useState<"standard_70" | "video_90">("standard_70");
+  const [pricingRequestNotes, setPricingRequestNotes] = useState("");
   const [uploadReadme, setUploadReadme] = useState(`## Project Overview
 A production-ready full-stack application built for academic submission and real-world deployment.
 
@@ -516,6 +550,135 @@ python app.py # or npm run dev
     setUploadTechStack(uploadTechStack.filter((t) => t !== tag));
   };
 
+  // Helper for uploading image and zip files to Supabase storage with FileReader fallback
+  const uploadFileToStorage = async (file: File, folder: string): Promise<string> => {
+    try {
+      const fileExt = file.name.split(".").pop();
+      const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const filePath = `${folder}/${Date.now()}_${cleanName}`;
+
+      const { data, error } = await supabase.storage
+        .from("uploads")
+        .upload(filePath, file, { cacheControl: "3600", upsert: true });
+
+      if (error) {
+        console.warn("Supabase storage upload note:", error.message);
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("uploads")
+        .getPublicUrl(filePath);
+
+      return urlData.publicUrl;
+    } catch (err: any) {
+      console.warn("Storage upload exception, fallback to Data URL:", err);
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  // Upload Thumbnail Handler (Drag & Drop or Click)
+  const handleThumbnailUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file (PNG, JPG, WEBP).");
+      return;
+    }
+    setUploadingThumbnail(true);
+    try {
+      const url = await uploadFileToStorage(file, "project-thumbnails");
+      setUploadThumbnailUrl(url);
+      toast.success("Thumbnail cover image uploaded!");
+    } catch (err: any) {
+      toast.error("Failed to upload thumbnail.");
+    } finally {
+      setUploadingThumbnail(false);
+    }
+  };
+
+  // Upload Multiple Screenshots Handler
+  const handleScreenshotsUpload = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (fileArray.length === 0) {
+      toast.error("Please select valid image files (PNG, JPG, WEBP).");
+      return;
+    }
+    setUploadingScreenshots(true);
+    try {
+      const newUrls: string[] = [];
+      for (const file of fileArray) {
+        const url = await uploadFileToStorage(file, "project-screenshots");
+        newUrls.push(url);
+      }
+      setUploadScreenshots((prev) => [...prev, ...newUrls]);
+      toast.success(`${fileArray.length} screenshot${fileArray.length > 1 ? "s" : ""} added!`);
+    } catch (err: any) {
+      toast.error("Failed to upload screenshots.");
+    } finally {
+      setUploadingScreenshots(false);
+    }
+  };
+
+  // Upload ZIP File Handler
+  const handleZipUpload = async (file: File) => {
+    const validExts = [".zip", ".rar", ".7z", ".tar", ".gz"];
+    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+    if (!validExts.includes(ext) && !file.type.includes("zip") && !file.type.includes("compressed")) {
+      toast.error("Please upload a ZIP archive (.zip, .rar, .7z, .tar.gz).");
+      return;
+    }
+
+    setUploadingZip(true);
+    setZipFileName(file.name);
+    const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
+    setZipFileSize(`${sizeInMB} MB`);
+
+    try {
+      const url = await uploadFileToStorage(file, "project-zips");
+      setUploadZipUrl(url);
+      toast.success("Project ZIP file uploaded successfully!");
+    } catch (err: any) {
+      toast.error("Failed to upload ZIP file.");
+    } finally {
+      setUploadingZip(false);
+    }
+  };
+
+  // Add Custom Category Handler
+  const handleAddCategory = () => {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) {
+      toast.error("Please enter a category name.");
+      return;
+    }
+    if (!categoryList.includes(trimmed)) {
+      setCategoryList([...categoryList, trimmed]);
+    }
+    setUploadCategory(trimmed);
+    setNewCategoryName("");
+    setShowNewCategoryInput(false);
+    toast.success(`Category "${trimmed}" created and selected!`);
+  };
+
+  // Pricing Request Handler
+  const handlePricingRequestSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPricingRequested(true);
+    setShowPricingModal(false);
+    toast.success(
+      `Pricing request submitted for ₹${requestedPrice} (${
+        requestedTier === "video_90" ? "90% Video Tutorial Tier" : "70% Standard Tier"
+      }). Admin will review upon project submission.`
+    );
+  };
+
   // Upload Project Submit
   const handleProjectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -527,11 +690,12 @@ python app.py # or npm run dev
     setUploadingProject(true);
 
     try {
+      const finalPrice = pricingRequested ? requestedPrice : (uploadPrice || 1499);
       const newProj = {
         title: uploadTitle,
         slug: uploadSlug,
         category: uploadCategory,
-        price: uploadPrice,
+        price: finalPrice,
         description: uploadDescription,
         readme: uploadReadme,
         detailed_description: uploadDetailedDescription,
@@ -541,11 +705,15 @@ python app.py # or npm run dev
         thumbnail_url:
           uploadThumbnailUrl ||
           "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=80",
+        screenshots: uploadScreenshots,
         tech_stack: uploadTechStack,
         contributor_id: user?.id,
         contributor_name: contributorProfile.full_name || user?.user_metadata?.full_name || "Contributor",
-        commission_rate: uploadTutorialVideoUrl ? 90 : 70,
+        commission_rate: pricingRequested && requestedTier === "video_90" ? 90 : (uploadTutorialVideoUrl ? 90 : 70),
         tutorial_video_url: uploadTutorialVideoUrl,
+        pricing_requested: pricingRequested,
+        requested_price: requestedPrice,
+        requested_tier: requestedTier,
         views_count: 0,
         sales_count: 0,
         created_at: new Date().toISOString(),
@@ -559,9 +727,9 @@ python app.py # or npm run dev
 
       setMyProjects([newProj, ...myProjects]);
       toast.success(
-        uploadTutorialVideoUrl
-          ? "Project published with Step-by-Step Video! Submitted for 90% Commission."
-          : "Project published successfully! You will earn 70% on each sale."
+        uploadTutorialVideoUrl || (pricingRequested && requestedTier === "video_90")
+          ? "Project submitted with Tutorial Video for 90% Commission!"
+          : "Project published successfully! You will earn royalties on each sale."
       );
 
       // Reset form
@@ -572,7 +740,12 @@ python app.py # or npm run dev
       setUploadDemoUrl("");
       setUploadZipUrl("");
       setUploadThumbnailUrl("");
+      setUploadScreenshots([]);
+      setZipFileName("");
+      setZipFileSize("");
       setUploadTutorialVideoUrl("");
+      setPricingRequested(false);
+      setPricingRequestNotes("");
       setActiveTab("projects");
     } catch (err: any) {
       toast.error(err.message || "Failed to publish project.");
@@ -1803,47 +1976,363 @@ python app.py # or npm run dev
                   </div>
 
                   {/* Card: Media & Assets */}
-                  <Card className="p-5 border-border shadow-xs space-y-4">
-                    <h3 className="font-semibold text-sm text-foreground">
-                      Media, Code ZIP & Live Demo Links
-                    </h3>
+                  <Card className="p-5 border-border shadow-xs space-y-5">
+                    <div>
+                      <h3 className="font-semibold text-sm text-foreground">
+                        Media, Code ZIP & Live Demo Links
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Upload your project cover image, multiple screenshots, and project source code ZIP file.
+                      </p>
+                    </div>
 
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-muted-foreground">
-                          Thumbnail Cover Image URL
+                    {/* Section 1: Thumbnail Cover Image (Drag & Drop + Upload) */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                          <ImageIcon className="w-3.5 h-3.5 text-primary" />
+                          Thumbnail Cover Image *
                         </label>
-                        <Input
-                          placeholder="https://images.unsplash.com/photo-..."
-                          value={uploadThumbnailUrl}
-                          onChange={(e) => setUploadThumbnailUrl(e.target.value)}
-                        />
+                        <span className="text-[11px] text-muted-foreground">
+                          Recommended: 1200x675 (16:9)
+                        </span>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-muted-foreground">
-                          Live Interactive Demo URL (Optional)
-                        </label>
+                      {uploadThumbnailUrl ? (
+                        <div className="relative rounded-lg border border-border p-2 bg-muted/30 flex items-center gap-4">
+                          <img
+                            src={uploadThumbnailUrl}
+                            alt="Cover thumbnail"
+                            className="w-28 h-18 object-cover rounded-md border border-border bg-background"
+                          />
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <p className="text-xs font-medium text-foreground truncate">
+                              Cover image selected
+                            </p>
+                            <p className="text-[11px] text-emerald-500 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" /> Ready for display
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 pr-2">
+                            <label className="cursor-pointer inline-flex items-center gap-1 text-xs border border-border hover:bg-muted px-2.5 py-1.5 rounded-md font-medium text-foreground transition-colors">
+                              <UploadCloud className="w-3.5 h-3.5" />
+                              <span>Replace</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  if (e.target.files?.[0]) handleThumbnailUpload(e.target.files[0]);
+                                }}
+                              />
+                            </label>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setUploadThumbnailUrl("")}
+                              className="text-muted-foreground hover:text-destructive h-8 px-2"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (e.dataTransfer.files?.[0]) {
+                              handleThumbnailUpload(e.dataTransfer.files[0]);
+                            }
+                          }}
+                          className="border-2 border-dashed border-border hover:border-primary/50 transition-colors rounded-xl p-5 text-center flex flex-col items-center justify-center gap-2 bg-muted/20 hover:bg-muted/40 cursor-pointer"
+                          onClick={() => document.getElementById("thumbnail-file-input")?.click()}
+                        >
+                          <input
+                            id="thumbnail-file-input"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files?.[0]) handleThumbnailUpload(e.target.files[0]);
+                            }}
+                          />
+                          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                            <UploadCloud className="w-5 h-5" />
+                          </div>
+                          <div className="space-y-0.5">
+                            <p className="text-xs font-semibold text-foreground">
+                              {uploadingThumbnail ? "Uploading cover image..." : "Drag and drop your thumbnail cover image here, or browse"}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              Supports PNG, JPG, JPEG, WEBP up to 10MB
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Direct URL Fallback input */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <span className="text-[11px] text-muted-foreground">Or image URL:</span>
                         <Input
-                          placeholder="https://my-project-demo.vercel.app"
-                          value={uploadDemoUrl}
-                          onChange={(e) => setUploadDemoUrl(e.target.value)}
+                          placeholder="https://images.unsplash.com/... or cloud image URL"
+                          value={uploadThumbnailUrl}
+                          onChange={(e) => setUploadThumbnailUrl(e.target.value)}
+                          className="h-7 text-xs flex-1"
                         />
                       </div>
                     </div>
 
+                    <div className="h-px bg-border my-2" />
+
+                    {/* Section 2: Project Screenshots (Multiple) */}
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                            <ImagePlus className="w-3.5 h-3.5 text-primary" />
+                            Project Screenshots (Multiple)
+                          </label>
+                          <p className="text-[11px] text-muted-foreground">
+                            Upload multiple screenshots of UI pages, architecture diagrams, database schema, or terminal outputs.
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px]">
+                          {uploadScreenshots.length} {uploadScreenshots.length === 1 ? "Screenshot" : "Screenshots"}
+                        </Badge>
+                      </div>
+
+                      {/* Dropzone for multiple screenshots */}
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                            handleScreenshotsUpload(e.dataTransfer.files);
+                          }
+                        }}
+                        className="border-2 border-dashed border-border hover:border-primary/50 transition-colors rounded-xl p-4 text-center flex flex-col items-center justify-center gap-2 bg-muted/15 hover:bg-muted/30 cursor-pointer"
+                        onClick={() => document.getElementById("screenshots-file-input")?.click()}
+                      >
+                        <input
+                          id="screenshots-file-input"
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files) {
+                              handleScreenshotsUpload(e.target.files);
+                            }
+                          }}
+                        />
+                        <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                          <ImagePlus className="w-4 h-4" />
+                        </div>
+                        <p className="text-xs font-medium text-foreground">
+                          {uploadingScreenshots ? "Uploading screenshots..." : "Drag and drop multiple screenshots here, or click to browse"}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Select multiple images at once (PNG, JPG, WEBP)
+                        </p>
+                      </div>
+
+                      {/* Screenshots Gallery / Grid */}
+                      {uploadScreenshots.length > 0 && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 pt-2">
+                          {uploadScreenshots.map((url, idx) => (
+                            <div
+                              key={idx}
+                              className="group relative rounded-lg border border-border overflow-hidden bg-card aspect-video flex items-center justify-center shadow-xs"
+                            >
+                              <img
+                                src={url}
+                                alt={`Screenshot ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute top-1 left-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded font-mono">
+                                #{idx + 1}
+                              </div>
+                              <button
+                                type="button"
+                                title="Remove screenshot"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setUploadScreenshots(uploadScreenshots.filter((_, i) => i !== idx));
+                                }}
+                                className="absolute top-1 right-1 w-6 h-6 rounded bg-red-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700 shadow"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Manual Screenshot URL Add */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <Input
+                          placeholder="Or paste screenshot image URL (https://...)"
+                          value={screenshotInputUrl}
+                          onChange={(e) => setScreenshotInputUrl(e.target.value)}
+                          className="h-7 text-xs flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (screenshotInputUrl.trim()) {
+                              setUploadScreenshots([...uploadScreenshots, screenshotInputUrl.trim()]);
+                              setScreenshotInputUrl("");
+                            }
+                          }}
+                          className="h-7 text-xs"
+                        >
+                          <Plus className="w-3 h-3 mr-1" /> Add URL
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="h-px bg-border my-2" />
+
+                    {/* Section 3: Upload project zip file */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                          <FileArchive className="w-3.5 h-3.5 text-primary" />
+                          Upload project zip file *
+                        </label>
+                        <span className="text-[11px] text-muted-foreground">
+                          Accepts .zip, .rar, .tar.gz (Max 100MB)
+                        </span>
+                      </div>
+
+                      {uploadZipUrl ? (
+                        <div className="rounded-lg border border-border p-3.5 bg-muted/30 flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                              <FileArchive className="w-5 h-5" />
+                            </div>
+                            <div className="min-w-0 space-y-0.5">
+                              <p className="text-xs font-semibold text-foreground truncate">
+                                {zipFileName || "Project Source Code Archive.zip"}
+                              </p>
+                              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                {zipFileSize && <span>{zipFileSize} •</span>}
+                                <span className="text-emerald-500 flex items-center gap-1 font-medium">
+                                  <Check className="w-3 h-3" /> Ready for student download
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <label className="cursor-pointer inline-flex items-center gap-1 text-xs border border-border hover:bg-muted px-2.5 py-1.5 rounded-md font-medium text-foreground transition-colors">
+                              <UploadCloud className="w-3.5 h-3.5" />
+                              <span>Replace ZIP</span>
+                              <input
+                                type="file"
+                                accept=".zip,.rar,.tar,.gz,.7z"
+                                className="hidden"
+                                onChange={(e) => {
+                                  if (e.target.files?.[0]) handleZipUpload(e.target.files[0]);
+                                }}
+                              />
+                            </label>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setUploadZipUrl("");
+                                setZipFileName("");
+                                setZipFileSize("");
+                              }}
+                              className="text-muted-foreground hover:text-destructive h-8 px-2"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (e.dataTransfer.files?.[0]) {
+                              handleZipUpload(e.dataTransfer.files[0]);
+                            }
+                          }}
+                          className="border-2 border-dashed border-border hover:border-primary/50 transition-colors rounded-xl p-5 text-center flex flex-col items-center justify-center gap-2 bg-muted/20 hover:bg-muted/40 cursor-pointer"
+                          onClick={() => document.getElementById("zip-file-input")?.click()}
+                        >
+                          <input
+                            id="zip-file-input"
+                            type="file"
+                            accept=".zip,.rar,.tar,.gz,.7z"
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files?.[0]) handleZipUpload(e.target.files[0]);
+                            }}
+                          />
+                          <div className="w-10 h-10 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                            <FileArchive className="w-5 h-5" />
+                          </div>
+                          <div className="space-y-0.5">
+                            <p className="text-xs font-semibold text-foreground">
+                              {uploadingZip ? "Uploading ZIP archive..." : "Drag and drop your project ZIP file here, or browse"}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              Contains full source code, database script, setup instructions, and viva documentation
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Cloud Link Fallback option */}
+                      <div className="space-y-1 pt-1">
+                        <label className="text-[11px] text-muted-foreground">
+                          Or cloud download link (Google Drive / GitHub / OneDrive / S3):
+                        </label>
+                        <Input
+                          placeholder="https://drive.google.com/uc?id=... or direct cloud download URL"
+                          value={uploadZipUrl}
+                          onChange={(e) => setUploadZipUrl(e.target.value)}
+                          className="h-8 text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="h-px bg-border my-2" />
+
+                    {/* Section 4: Live Interactive Demo Link (Optional) */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-muted-foreground">
-                        Source Code ZIP Download URL (Google Drive / GitHub / S3) *
+                      <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                        <ExternalLink className="w-3.5 h-3.5 text-primary" />
+                        Live Interactive Demo URL (Optional)
                       </label>
                       <Input
-                        placeholder="https://drive.google.com/uc?id=... or direct link"
-                        value={uploadZipUrl}
-                        onChange={(e) => setUploadZipUrl(e.target.value)}
-                        required
+                        placeholder="https://my-project-demo.vercel.app"
+                        value={uploadDemoUrl}
+                        onChange={(e) => setUploadDemoUrl(e.target.value)}
+                        className="text-xs"
                       />
                       <p className="text-[11px] text-muted-foreground">
-                        Students receive access to this download URL instantly upon successful checkout.
+                        Allow students to test drive the live deployment before purchasing.
                       </p>
                     </div>
                   </Card>
@@ -1851,94 +2340,158 @@ python app.py # or npm run dev
 
                 {/* Right Column (1/3 width): Pricing, Commission & Taxonomy */}
                 <div className="lg:col-span-4 space-y-6">
-                  {/* Card: Pricing & Interactive Commission Calculator */}
+                  {/* Card: Pricing & Commission Request */}
                   <Card className="p-5 border-border shadow-xs space-y-4">
-                    <h3 className="font-semibold text-sm text-foreground flex items-center justify-between">
-                      <span>Pricing & Commission</span>
-                      <Badge variant="outline" className="text-emerald-500 border-emerald-500/20 text-[10px]">
-                        70% Standard
-                      </Badge>
-                    </h3>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs text-muted-foreground">Selling Price in INR (₹)</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">
-                          ₹
-                        </span>
-                        <Input
-                          type="number"
-                          value={uploadPrice}
-                          onChange={(e) => setUploadPrice(Number(e.target.value))}
-                          className="pl-7 font-bold text-base"
-                          min={299}
-                          max={29999}
-                        />
-                      </div>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-emerald-500" />
+                        <span>Pricing & Commission</span>
+                      </h3>
+                      {pricingRequested ? (
+                        <Badge variant="outline" className="text-emerald-500 border-emerald-500/20 text-[10px] bg-emerald-500/10">
+                          Request Submitted
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground text-[10px]">
+                          Pending Request
+                        </Badge>
+                      )}
                     </div>
 
-                    {/* Breakdown Box */}
-                    <div className="p-3.5 rounded-lg bg-muted/60 space-y-2 text-xs">
-                      <div className="flex items-center justify-between text-muted-foreground">
-                        <span>Student pays:</span>
-                        <span className="font-semibold text-foreground">₹{parsedPrice}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-emerald-500 font-bold">
-                        <span>Your Payout (70%):</span>
-                        <span>₹{contributorEarn70}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-muted-foreground text-[11px]">
-                        <span>Platform fee & handling (30%):</span>
-                        <span>₹{platformFee30}</span>
-                      </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Pricing and commission tiers are assigned through quality review to maintain marketplace standards and ensure fair earnings for creators.
+                    </p>
 
-                      <div className="pt-2 border-t border-border mt-2 space-y-1">
-                        <div className="flex items-center justify-between text-purple-400 font-bold">
-                          <span>With 90% Tutorial Video:</span>
-                          <span>₹{contributorEarn90}</span>
+                    {pricingRequested ? (
+                      <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 space-y-2 text-xs">
+                        <div className="flex items-center justify-between font-semibold text-foreground">
+                          <span>Requested Price:</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">₹{requestedPrice}</span>
                         </div>
-                        <p className="text-[10px] text-muted-foreground">
-                          You make an extra <strong className="text-foreground">+₹{contributorEarn90 - contributorEarn70}</strong> per sale!
-                        </p>
+                        <div className="flex items-center justify-between text-muted-foreground">
+                          <span>Requested Commission:</span>
+                          <span className="font-medium text-foreground">
+                            {requestedTier === "video_90" ? "90% (Video Tutorial Tier)" : "70% (Standard Tier)"}
+                          </span>
+                        </div>
+                        {pricingRequestNotes && (
+                          <div className="text-[11px] text-muted-foreground pt-1 border-t border-emerald-500/10">
+                            <em>"{pricingRequestNotes}"</em>
+                          </div>
+                        )}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowPricingModal(true)}
+                          className="w-full text-xs h-7 mt-2"
+                        >
+                          Modify Pricing Request
+                        </Button>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="p-3 rounded-lg bg-muted/50 border border-border text-xs space-y-1.5">
+                          <div className="flex items-center justify-between text-muted-foreground">
+                            <span>Standard Contributor Tier:</span>
+                            <span className="font-semibold text-foreground">70% Royalty</span>
+                          </div>
+                          <div className="flex items-center justify-between text-purple-400">
+                            <span>With Step-by-Step Video:</span>
+                            <span className="font-semibold">90% Royalty</span>
+                          </div>
+                        </div>
 
-                    {/* Step-by-Step Tutorial Video Input for 90% */}
-                    <div className="space-y-1.5 pt-1">
-                      <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                        <Video className="w-3.5 h-3.5 text-purple-400" />
-                        Tutorial Video URL (for 90% Commission)
-                      </label>
-                      <Input
-                        placeholder="https://youtu.be/... (Unlisted or Public)"
-                        value={uploadTutorialVideoUrl}
-                        onChange={(e) => setUploadTutorialVideoUrl(e.target.value)}
-                        className="text-xs border-purple-500/30"
-                      />
-                      <p className="text-[10px] text-muted-foreground">
-                        If provided, our admin team reviews your video to immediately approve your 90% commission tier.
-                      </p>
-                    </div>
+                        <Button
+                          type="button"
+                          onClick={() => setShowPricingModal(true)}
+                          className="w-full text-xs font-semibold flex items-center justify-center gap-2 h-9"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                          Request Pricing & Commission
+                        </Button>
+                      </div>
+                    )}
                   </Card>
 
                   {/* Card: Organization & Taxonomy */}
                   <Card className="p-5 border-border shadow-xs space-y-4">
-                    <h3 className="font-semibold text-sm text-foreground">Project Category</h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-sm text-foreground">Project Category</h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowNewCategoryInput(!showNewCategoryInput)}
+                        className="text-xs text-primary hover:underline font-medium flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Create New Category</span>
+                      </button>
+                    </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       <label className="text-xs text-muted-foreground">Category Domain</label>
                       <select
                         value={uploadCategory}
-                        onChange={(e) => setUploadCategory(e.target.value)}
+                        onChange={(e) => {
+                          if (e.target.value === "__create_new__") {
+                            setShowNewCategoryInput(true);
+                          } else {
+                            setUploadCategory(e.target.value);
+                          }
+                        }}
                         className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs text-foreground focus:outline-none"
                       >
-                        <option value="AI & Machine Learning">AI & Machine Learning</option>
-                        <option value="Web & Full Stack">Web & Full Stack</option>
-                        <option value="Mobile App (Flutter/React Native)">Mobile App (Flutter/React Native)</option>
-                        <option value="Blockchain & Web3">Blockchain & Web3</option>
-                        <option value="Cybersecurity & Cloud">Cybersecurity & Cloud</option>
-                        <option value="IoT & Embedded Systems">IoT & Embedded Systems</option>
+                        {categoryList.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                        <option value="__create_new__">+ Create New Category...</option>
                       </select>
+
+                      {/* Inline Create New Category Input */}
+                      {showNewCategoryInput && (
+                        <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-2 mt-2">
+                          <label className="text-xs font-semibold text-foreground">
+                            Create New Category Name
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              placeholder="e.g. AR/VR & Gaming, Robotics..."
+                              value={newCategoryName}
+                              onChange={(e) => setNewCategoryName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  handleAddCategory();
+                                }
+                              }}
+                              className="h-8 text-xs bg-background"
+                              autoFocus
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={handleAddCategory}
+                              className="h-8 text-xs font-medium shrink-0"
+                            >
+                              Add
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setShowNewCategoryInput(false);
+                                setNewCategoryName("");
+                              }}
+                              className="h-8 text-xs shrink-0"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Tech Stack Tags */}
@@ -1996,6 +2549,197 @@ python app.py # or npm run dev
                 </div>
               </div>
             </form>
+          )}
+
+          {/* --------------------------------------------------------------------------------- */}
+          {/* PRICING & COMMISSION REQUEST MODAL */}
+          {/* --------------------------------------------------------------------------------- */}
+          {showPricingModal && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+              <div className="bg-card border border-border rounded-xl p-6 w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                      <DollarSign className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sm text-foreground">
+                        Request Pricing & Commission Review
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        Propose your project's student selling price and commission tier
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPricingModal(false)}
+                    className="text-muted-foreground hover:text-foreground text-sm p-1 rounded hover:bg-muted"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handlePricingRequestSubmit} className="space-y-4">
+                  {/* Requested Price */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-foreground">
+                      Suggested Student Price (INR ₹) *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">
+                        ₹
+                      </span>
+                      <Input
+                        type="number"
+                        value={requestedPrice}
+                        onChange={(e) => setRequestedPrice(Number(e.target.value))}
+                        min={299}
+                        max={29999}
+                        className="pl-7 font-bold text-base h-10"
+                        required
+                      />
+                    </div>
+                    {/* Price Presets */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[11px] text-muted-foreground">Popular presets:</span>
+                      {[999, 1499, 1999, 2499, 3499].map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setRequestedPrice(p)}
+                          className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
+                            requestedPrice === p
+                              ? "bg-primary text-primary-foreground border-primary font-semibold"
+                              : "border-border hover:bg-muted text-foreground"
+                          }`}
+                        >
+                          ₹{p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Commission Tier Choice */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-foreground">
+                      Select Requested Commission Tier
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div
+                        onClick={() => setRequestedTier("standard_70")}
+                        className={`cursor-pointer p-3 rounded-lg border transition-all ${
+                          requestedTier === "standard_70"
+                            ? "border-emerald-500 bg-emerald-500/10 shadow-xs"
+                            : "border-border hover:bg-muted/40"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-xs text-foreground">70% Standard</span>
+                          <Badge variant="outline" className="text-[10px] text-emerald-500 border-emerald-500/20">
+                            Default
+                          </Badge>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          Includes verified source code, README setup guide & viva defense questions.
+                        </p>
+                        <p className="text-xs font-bold text-emerald-500 mt-2">
+                          You earn ₹{Math.round(requestedPrice * 0.7)} per sale
+                        </p>
+                      </div>
+
+                      <div
+                        onClick={() => setRequestedTier("video_90")}
+                        className={`cursor-pointer p-3 rounded-lg border transition-all ${
+                          requestedTier === "video_90"
+                            ? "border-purple-500 bg-purple-500/10 shadow-xs"
+                            : "border-border hover:bg-muted/40"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-xs text-foreground">90% Video Bonus</span>
+                          <Badge variant="outline" className="text-[10px] text-purple-400 border-purple-500/20 bg-purple-500/10">
+                            +20% Extra
+                          </Badge>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          Provide a complete step-by-step video explaining project building from scratch.
+                        </p>
+                        <p className="text-xs font-bold text-purple-400 mt-2">
+                          You earn ₹{Math.round(requestedPrice * 0.9)} per sale
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step-by-Step Tutorial Video Input (if 90% tier) */}
+                  {requestedTier === "video_90" && (
+                    <div className="space-y-1.5 p-3 rounded-lg bg-purple-500/5 border border-purple-500/20">
+                      <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                        <Video className="w-3.5 h-3.5 text-purple-400" />
+                        Step-by-Step Tutorial Video Link *
+                      </label>
+                      <Input
+                        placeholder="https://youtu.be/... (Unlisted or Public video URL)"
+                        value={uploadTutorialVideoUrl}
+                        onChange={(e) => setUploadTutorialVideoUrl(e.target.value)}
+                        required
+                        className="h-8 text-xs bg-background"
+                      />
+                      <p className="text-[10px] text-muted-foreground">
+                        Video must walk students step-by-step through project creation and architecture.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Justification / Notes for Admin */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">
+                      Notes for Reviewers (Optional)
+                    </label>
+                    <Textarea
+                      placeholder="Share details about unique features, dataset size, frameworks, or viva tips that support this pricing..."
+                      value={pricingRequestNotes}
+                      onChange={(e) => setPricingRequestNotes(e.target.value)}
+                      rows={2}
+                      className="text-xs"
+                    />
+                  </div>
+
+                  {/* Payout Breakdown preview */}
+                  <div className="rounded-lg bg-muted/60 p-3 text-xs space-y-1">
+                    <div className="flex items-center justify-between text-muted-foreground">
+                      <span>Student Checkout Price:</span>
+                      <span className="font-semibold text-foreground">₹{requestedPrice}</span>
+                    </div>
+                    <div className="flex items-center justify-between font-bold text-emerald-500">
+                      <span>Your Payout ({requestedTier === "video_90" ? "90%" : "70%"}):</span>
+                      <span>₹{Math.round(requestedPrice * (requestedTier === "video_90" ? 0.9 : 0.7))}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>Platform Fee & Gateway Handling:</span>
+                      <span>₹{Math.round(requestedPrice * (requestedTier === "video_90" ? 0.1 : 0.3))}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowPricingModal(false)}
+                      className="text-xs h-8"
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" size="sm" className="text-xs h-8 font-semibold">
+                      <Sparkles className="w-3.5 h-3.5 mr-1 text-amber-300" />
+                      Submit Pricing Request
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
           )}
 
           {/* =============================================================================== */}
