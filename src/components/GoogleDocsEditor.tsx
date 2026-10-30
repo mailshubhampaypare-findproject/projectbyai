@@ -18,18 +18,14 @@ import {
   Link as LinkIcon,
   Unlink,
   Highlighter,
-  Baseline,
-  RemoveFormatting,
-  Type,
-  Palette,
   Minus,
   Plus,
   ChevronDown,
-  ExternalLink,
   Check,
+  RemoveFormatting,
+  Rows,
   FileText,
-  Sparkles,
-  Rows
+  BookOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,12 +54,12 @@ const FONT_FAMILIES = [
 const PRESET_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72, 90];
 
 const HEADINGS = [
-  { label: "Normal text", tag: "p", style: "text-sm" },
-  { label: "Title / Heading 1", tag: "h1", style: "text-2xl font-bold" },
-  { label: "Heading 2", tag: "h2", style: "text-xl font-bold" },
-  { label: "Heading 3", tag: "h3", style: "text-lg font-semibold" },
-  { label: "Heading 4", tag: "h4", style: "text-base font-semibold" },
-  { label: "Heading 5", tag: "h5", style: "text-sm font-semibold" },
+  { label: "Normal text", tag: "p", style: "text-sm font-normal" },
+  { label: "Title / Heading 1", tag: "h1", style: "text-xl font-bold" },
+  { label: "Heading 2", tag: "h2", style: "text-lg font-bold" },
+  { label: "Heading 3", tag: "h3", style: "text-base font-semibold" },
+  { label: "Heading 4", tag: "h4", style: "text-sm font-semibold" },
+  { label: "Heading 5", tag: "h5", style: "text-xs font-semibold" },
 ];
 
 const TEXT_COLORS = [
@@ -90,6 +86,8 @@ export function GoogleDocsEditor({
   minHeight = "480px",
 }: GoogleDocsEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
+  const savedRangeRef = useRef<Range | null>(null);
+
   const [currentFont, setCurrentFont] = useState("Arial");
   const [currentHeading, setCurrentHeading] = useState("Normal text");
   const [fontSize, setFontSize] = useState<number>(14);
@@ -116,6 +114,24 @@ export function GoogleDocsEditor({
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [isEmpty, setIsEmpty] = useState(!value || value.trim() === "");
+
+  // Capture current selection in editor before dropdown opens
+  const saveSelection = () => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && editorRef.current && editorRef.current.contains(sel.anchorNode)) {
+      savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+    }
+  };
+
+  // Restore saved selection
+  const restoreSelection = () => {
+    if (!savedRangeRef.current) return;
+    const sel = window.getSelection();
+    if (sel) {
+      sel.removeAllRanges();
+      sel.addRange(savedRangeRef.current);
+    }
+  };
 
   // Sync initial content once
   useEffect(() => {
@@ -147,6 +163,426 @@ export function GoogleDocsEditor({
     setIsEmpty(textContent.length === 0);
   };
 
+  // Close all popover menus
+  const closeAllMenus = () => {
+    setShowFontMenu(false);
+    setShowHeadingMenu(false);
+    setShowSizeMenu(false);
+    setShowTextColorMenu(false);
+    setShowHighlightMenu(false);
+    setShowSpacingMenu(false);
+  };
+
+  // Safe command runner that prevents blur
+  const execCmd = (cmd: string, val: string | undefined = undefined) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    restoreSelection();
+    document.execCommand(cmd, false, val);
+    saveSelection();
+    triggerChange();
+    updateToolbarState();
+  };
+
+  // Update active state of buttons and detect active heading/font based on cursor position
+  const updateToolbarState = () => {
+    try {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+
+      if (editorRef.current && editorRef.current.contains(sel.anchorNode)) {
+        savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+      }
+
+      setActiveFormats({
+        bold: document.queryCommandState("bold"),
+        italic: document.queryCommandState("italic"),
+        underline: document.queryCommandState("underline"),
+        strike: document.queryCommandState("strikethrough"),
+        align: document.queryCommandState("justifyCenter")
+          ? "center"
+          : document.queryCommandState("justifyRight")
+          ? "right"
+          : document.queryCommandState("justifyFull")
+          ? "justify"
+          : "left",
+      });
+
+      // Detect active heading tag at cursor position
+      let node: Node | null = sel.anchorNode;
+      let detectedHeading = "Normal text";
+      let detectedSize = fontSize;
+
+      while (node && node !== editorRef.current) {
+        if (node instanceof HTMLElement) {
+          const tag = node.tagName.toLowerCase();
+          if (tag === "h1") detectedHeading = "Title / Heading 1";
+          else if (tag === "h2") detectedHeading = "Heading 2";
+          else if (tag === "h3") detectedHeading = "Heading 3";
+          else if (tag === "h4") detectedHeading = "Heading 4";
+          else if (tag === "h5") detectedHeading = "Heading 5";
+          else if (tag === "p") detectedHeading = "Normal text";
+
+          if (node.style.fontSize) {
+            const parsed = parseInt(node.style.fontSize);
+            if (!isNaN(parsed)) detectedSize = parsed;
+          }
+        }
+        node = node.parentNode;
+      }
+
+      setCurrentHeading(detectedHeading);
+      if (detectedSize && detectedSize !== fontSize) {
+        setFontSize(detectedSize);
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  // Apply custom font size from 1 to 90
+  const applyFontSize = (sizeVal: number) => {
+    const clamped = Math.max(1, Math.min(90, Math.round(sizeVal)));
+    setFontSize(clamped);
+    setShowSizeMenu(false);
+
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    restoreSelection();
+
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+
+    if (range.collapsed) {
+      // Create span with cursor inside
+      const span = document.createElement("span");
+      span.style.fontSize = `${clamped}px`;
+      span.style.lineHeight = "1.35";
+      span.innerHTML = "&#8203;";
+      range.insertNode(span);
+      range.setStart(span.firstChild!, 1);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      savedRangeRef.current = range.cloneRange();
+    } else {
+      const fragment = range.extractContents();
+      const span = document.createElement("span");
+      span.style.fontSize = `${clamped}px`;
+      span.style.lineHeight = "1.35";
+      span.appendChild(fragment);
+      range.insertNode(span);
+
+      const newRange = document.createRange();
+      newRange.selectNodeContents(span);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+      savedRangeRef.current = newRange.cloneRange();
+    }
+
+    triggerChange();
+    updateToolbarState();
+  };
+
+  // Apply Font Family
+  const applyFontFamily = (familyValue: string, fontName: string) => {
+    setCurrentFont(fontName);
+    setShowFontMenu(false);
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    restoreSelection();
+
+    const sel = window.getSelection();
+    if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      const fragment = range.extractContents();
+      const span = document.createElement("span");
+      span.style.fontFamily = familyValue;
+      span.appendChild(fragment);
+      range.insertNode(span);
+      const newRange = document.createRange();
+      newRange.selectNodeContents(span);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+      savedRangeRef.current = newRange.cloneRange();
+    } else {
+      document.execCommand("fontName", false, familyValue);
+    }
+    triggerChange();
+    updateToolbarState();
+  };
+
+  // Apply Heading (Google Docs style H1, H2, H3, H4, H5, Normal text P)
+  const applyHeading = (tag: string, label: string) => {
+    setCurrentHeading(label);
+    setShowHeadingMenu(false);
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    restoreSelection();
+
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+
+    const targetTag = tag.toLowerCase();
+
+    // 1. Try standard formatBlock
+    try {
+      const formatted = document.execCommand("formatBlock", false, `<${targetTag}>`);
+      if (!formatted) {
+        document.execCommand("formatBlock", false, targetTag);
+      }
+    } catch (e) {
+      // fallback to direct DOM node replacement below
+    }
+
+    // 2. DOM block transformation for 100% guarantee across all browsers
+    let node: Node | null = sel.anchorNode;
+    while (node && node !== editorRef.current) {
+      if (
+        node instanceof HTMLElement &&
+        ["P", "DIV", "H1", "H2", "H3", "H4", "H5", "H6"].includes(node.tagName)
+      ) {
+        if (node.tagName.toLowerCase() !== targetTag) {
+          const replacement = document.createElement(targetTag);
+          replacement.innerHTML = node.innerHTML;
+          node.parentNode?.replaceChild(replacement, node);
+          const newRange = document.createRange();
+          newRange.selectNodeContents(replacement);
+          newRange.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(newRange);
+          savedRangeRef.current = newRange.cloneRange();
+        }
+        break;
+      }
+      node = node.parentNode;
+    }
+
+    triggerChange();
+    updateToolbarState();
+  };
+
+  // Apply Line Spacing
+  const applyLineSpacing = (spacing: string) => {
+    setShowSpacingMenu(false);
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    restoreSelection();
+
+    const sel = window.getSelection();
+    if (sel && sel.anchorNode) {
+      let node: Node | null = sel.anchorNode;
+      while (node && node !== editorRef.current) {
+        if (
+          node instanceof HTMLElement &&
+          ["P", "DIV", "H1", "H2", "H3", "H4", "H5", "LI"].includes(node.tagName)
+        ) {
+          node.style.lineHeight = spacing;
+          break;
+        }
+        node = node.parentNode;
+      }
+    }
+    triggerChange();
+  };
+
+  // Add paragraph spacing
+  const addParagraphSpacing = (direction: "before" | "after") => {
+    setShowSpacingMenu(false);
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    restoreSelection();
+
+    const sel = window.getSelection();
+    if (sel && sel.anchorNode) {
+      let node: Node | null = sel.anchorNode;
+      while (node && node !== editorRef.current) {
+        if (
+          node instanceof HTMLElement &&
+          ["P", "DIV", "H1", "H2", "H3", "H4", "H5"].includes(node.tagName)
+        ) {
+          if (direction === "before") {
+            node.style.marginTop = "16px";
+          } else {
+            node.style.marginBottom = "16px";
+          }
+          break;
+        }
+        node = node.parentNode;
+      }
+    }
+    triggerChange();
+  };
+
+  // Insert Checklist
+  const insertChecklist = () => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    restoreSelection();
+
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+
+    const checkDiv = document.createElement("div");
+    checkDiv.className = "checklist-item";
+    checkDiv.style.display = "flex";
+    checkDiv.style.alignItems = "flex-start";
+    checkDiv.style.gap = "8px";
+    checkDiv.style.margin = "6px 0";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.style.marginTop = "4px";
+    checkbox.style.cursor = "pointer";
+    checkbox.style.width = "16px";
+    checkbox.style.height = "16px";
+    checkbox.style.accentColor = "#2563eb";
+
+    const labelSpan = document.createElement("span");
+    labelSpan.contentEditable = "true";
+    labelSpan.innerHTML = range.toString() || "Task item...";
+
+    checkDiv.appendChild(checkbox);
+    checkDiv.appendChild(labelSpan);
+
+    range.deleteContents();
+    range.insertNode(checkDiv);
+
+    const newRange = document.createRange();
+    newRange.selectNodeContents(labelSpan);
+    newRange.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    savedRangeRef.current = newRange.cloneRange();
+
+    triggerChange();
+  };
+
+  // Insert Hyperlink Modal Trigger (preserves selection range)
+  const handleOpenLinkModal = () => {
+    saveSelection();
+    const sel = window.getSelection();
+    const selected = sel ? sel.toString() : "";
+    setLinkText(selected);
+    setLinkUrl("");
+    setShowLinkModal(true);
+  };
+
+  // Apply Hyperlink without parent form submission or redirect
+  const handleApplyLink = (e?: React.SyntheticEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!linkUrl.trim()) return;
+
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+
+    let finalUrl = linkUrl.trim();
+    if (!/^https?:\/\//i.test(finalUrl)) {
+      finalUrl = "https://" + finalUrl;
+    }
+
+    const sel = window.getSelection();
+    let range: Range | null = null;
+    if (savedRangeRef.current) {
+      range = savedRangeRef.current;
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    } else if (sel && sel.rangeCount > 0) {
+      range = sel.getRangeAt(0);
+    }
+
+    if (range) {
+      if (!range.collapsed) {
+        document.execCommand("createLink", false, finalUrl);
+      } else {
+        const a = document.createElement("a");
+        a.href = finalUrl;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.style.color = "#1a73e8";
+        a.style.textDecoration = "underline";
+        a.style.fontWeight = "500";
+        a.innerText = linkText.trim() || finalUrl;
+        range.insertNode(a);
+        range.setStartAfter(a);
+        range.collapse(true);
+        if (sel) {
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      }
+    }
+
+    setShowLinkModal(false);
+    setLinkUrl("");
+    setLinkText("");
+    savedRangeRef.current = null;
+    triggerChange();
+  };
+
+  // Clear format
+  const handleClearFormat = () => {
+    execCmd("removeFormat");
+    const sel = window.getSelection();
+    if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      const fragment = range.extractContents();
+      const div = document.createElement("div");
+      div.appendChild(fragment);
+      const styledElements = div.querySelectorAll("[style]");
+      styledElements.forEach((el) => el.removeAttribute("style"));
+      range.insertNode(div.firstChild || document.createTextNode(div.innerText));
+    }
+    triggerChange();
+  };
+
+  // Template 1: Sample Blog Article
+  const insertSampleBlogArticle = () => {
+    const blogHtml = `<h1>How We Built an Enterprise HR Management System</h1>
+<p><em>Published on ProjectByAI • A complete case study and architectural breakdown for college viva and engineering presentations.</em></p>
+
+<h2>1. Introduction & Executive Summary</h2>
+<p>The <strong>HR Management System</strong> is a centralized web-based platform designed to simplify and automate essential Human Resource activities within modern organizations. It helps HR administrators efficiently manage employee information, departmental skills, project assignments, attendance logs, payroll calculations, and grievance workflows from a unified interface.</p>
+
+<h2>2. Key Architectural Deliverables</h2>
+<p>Here are the primary components and engineering highlights of this project:</p>
+<ul>
+  <li><strong>Role-Based Access Control (RBAC):</strong> Granular permissions separating Super Admins, HR Managers, Team Leads, and Employees.</li>
+  <li><strong>Automated Payroll Calculation:</strong> Dynamic salary slips generated using tax brackets, deductions, and attendance percentages.</li>
+  <li><strong>Real-Time Attendance Tracker:</strong> Biometric and web check-in sync with geo-fencing validation.</li>
+  <li><strong>Grievance & Feedback Portal:</strong> Confidential ticketing workflow with automated escalation SLAs.</li>
+</ul>
+
+<h2>3. Step-by-Step System Workflow</h2>
+<ol>
+  <li><strong>Employee Onboarding:</strong> HR manager inputs new joiner credentials and assigns departmental role.</li>
+  <li><strong>Asset & Skill Mapping:</strong> System assigns work laptops, project repositories, and technical mentors.</li>
+  <li><strong>Monthly Evaluation:</strong> Performance ratings calculate automated bonus projections.</li>
+</ol>
+
+<h2>4. Live Demo & Resources</h2>
+<p>You can test the interactive deployment directly via our <a href="https://example.com/demo" target="_blank" rel="noopener noreferrer">Live HR System Demo</a> or inspect the documentation on the official portal.</p>
+
+<blockquote>"This system reduced HR onboarding administrative overhead by over 65% across 4 departments."</blockquote>
+
+<h2>5. Viva Examination Talking Points</h2>
+<p>When presenting to external college examiners, emphasize the database schema normalization (3NF) and JWT token invalidation upon role revocation.</p>`;
+
+    if (editorRef.current) {
+      editorRef.current.innerHTML = blogHtml;
+      triggerChange();
+      editorRef.current.focus();
+    }
+  };
+
+  // Template 2: Project Documentation Guide
   const insertGuideTemplate = () => {
     const templateHtml = `<h2>1. Project Abstract & Objective</h2>
 <p>Provide a comprehensive overview of the application, problem statement, and key deliverables.</p>
@@ -174,296 +610,146 @@ export function GoogleDocsEditor({
     }
   };
 
-  // Close all popover menus
-  const closeAllMenus = () => {
-    setShowFontMenu(false);
-    setShowHeadingMenu(false);
-    setShowSizeMenu(false);
-    setShowTextColorMenu(false);
-    setShowHighlightMenu(false);
-    setShowSpacingMenu(false);
-  };
-
-  // Safe command runner that prevents blur
-  const execCmd = (cmd: string, val: string | undefined = undefined) => {
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-    document.execCommand(cmd, false, val);
-    triggerChange();
-    updateToolbarState();
-  };
-
-  // Update active state of buttons based on current selection
-  const updateToolbarState = () => {
-    try {
-      setActiveFormats({
-        bold: document.queryCommandState("bold"),
-        italic: document.queryCommandState("italic"),
-        underline: document.queryCommandState("underline"),
-        strike: document.queryCommandState("strikethrough"),
-        align: document.queryCommandState("justifyCenter")
-          ? "center"
-          : document.queryCommandState("justifyRight")
-          ? "right"
-          : document.queryCommandState("justifyFull")
-          ? "justify"
-          : "left",
-      });
-    } catch (e) {
-      // ignore
-    }
-  };
-
-  // Apply custom font size from 1 to 90
-  const applyFontSize = (sizeVal: number) => {
-    const clamped = Math.max(1, Math.min(90, Math.round(sizeVal)));
-    setFontSize(clamped);
-    setShowSizeMenu(false);
-
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return;
-    const range = sel.getRangeAt(0);
-
-    if (range.collapsed) {
-      // Create span with cursor inside
-      const span = document.createElement("span");
-      span.style.fontSize = `${clamped}px`;
-      span.style.lineHeight = "1.3";
-      span.innerHTML = "&#8203;";
-      range.insertNode(span);
-      range.setStart(span.firstChild!, 1);
-      range.collapse(true);
-      sel.removeAllRanges();
-      sel.addRange(range);
-    } else {
-      const fragment = range.extractContents();
-      const span = document.createElement("span");
-      span.style.fontSize = `${clamped}px`;
-      span.style.lineHeight = "1.3";
-      span.appendChild(fragment);
-      range.insertNode(span);
-
-      const newRange = document.createRange();
-      newRange.selectNodeContents(span);
-      sel.removeAllRanges();
-      sel.addRange(newRange);
-    }
-    triggerChange();
-  };
-
-  // Apply font family
-  const applyFontFamily = (familyValue: string, displayName: string) => {
-    setCurrentFont(displayName);
-    setShowFontMenu(false);
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-
-    const sel = window.getSelection();
-    if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
-      const range = sel.getRangeAt(0);
-      const fragment = range.extractContents();
-      const span = document.createElement("span");
-      span.style.fontFamily = familyValue;
-      span.appendChild(fragment);
-      range.insertNode(span);
-      const newRange = document.createRange();
-      newRange.selectNodeContents(span);
-      sel.removeAllRanges();
-      sel.addRange(newRange);
-    } else {
-      document.execCommand("fontName", false, familyValue);
-    }
-    triggerChange();
-  };
-
-  // Apply Heading
-  const applyHeading = (tag: string, label: string) => {
-    setCurrentHeading(label);
-    setShowHeadingMenu(false);
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-    document.execCommand("formatBlock", false, `<${tag}>`);
-    triggerChange();
-  };
-
-  // Apply Line Spacing
-  const applyLineSpacing = (spacing: string) => {
-    setShowSpacingMenu(false);
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-
-    const sel = window.getSelection();
-    if (sel && sel.anchorNode) {
-      let node: Node | null = sel.anchorNode;
-      while (node && node !== editorRef.current) {
-        if (
-          node instanceof HTMLElement &&
-          ["P", "DIV", "H1", "H2", "H3", "H4", "H5", "LI"].includes(node.tagName)
-        ) {
-          node.style.lineHeight = spacing;
-          break;
-        }
-        node = node.parentNode;
-      }
-    }
-    triggerChange();
-  };
-
-  // Add paragraph spacing
-  const addParagraphSpacing = (direction: "before" | "after") => {
-    setShowSpacingMenu(false);
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-
-    const sel = window.getSelection();
-    if (sel && sel.anchorNode) {
-      let node: Node | null = sel.anchorNode;
-      while (node && node !== editorRef.current) {
-        if (
-          node instanceof HTMLElement &&
-          ["P", "DIV", "H1", "H2", "H3", "H4", "H5"].includes(node.tagName)
-        ) {
-          if (direction === "before") {
-            node.style.marginTop = "16px";
-          } else {
-            node.style.marginBottom = "16px";
-          }
-          break;
-        }
-        node = node.parentNode;
-      }
-    }
-    triggerChange();
-  };
-
-  // Insert Checklist
-  const insertChecklist = () => {
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return;
-    const range = sel.getRangeAt(0);
-
-    const checkDiv = document.createElement("div");
-    checkDiv.className = "checklist-item";
-    checkDiv.style.display = "flex";
-    checkDiv.style.alignItems = "flex-start";
-    checkDiv.style.gap = "8px";
-    checkDiv.style.margin = "6px 0";
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.style.marginTop = "4px";
-    checkbox.style.cursor = "pointer";
-    checkbox.style.width = "16px";
-    checkbox.style.height = "16px";
-    checkbox.style.accentColor = "#2563eb";
-
-    const labelSpan = document.createElement("span");
-    labelSpan.contentEditable = "true";
-    labelSpan.innerHTML = range.toString() || "New task item...";
-
-    checkDiv.appendChild(checkbox);
-    checkDiv.appendChild(labelSpan);
-
-    range.deleteContents();
-    range.insertNode(checkDiv);
-
-    // Position cursor inside span
-    const newRange = document.createRange();
-    newRange.selectNodeContents(labelSpan);
-    newRange.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-
-    triggerChange();
-  };
-
-  // Insert Hyperlink
-  const handleOpenLinkModal = () => {
-    const sel = window.getSelection();
-    const selected = sel ? sel.toString() : "";
-    setLinkText(selected);
-    setLinkUrl("");
-    setShowLinkModal(true);
-  };
-
-  const handleApplyLink = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!linkUrl.trim()) return;
-
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-
-    let finalUrl = linkUrl.trim();
-    if (!/^https?:\/\//i.test(finalUrl)) {
-      finalUrl = "https://" + finalUrl;
-    }
-
-    const sel = window.getSelection();
-    if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
-      document.execCommand("createLink", false, finalUrl);
-    } else {
-      const a = document.createElement("a");
-      a.href = finalUrl;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      a.style.color = "#2563eb";
-      a.style.textDecoration = "underline";
-      a.innerText = linkText.trim() || finalUrl;
-
-      if (sel && sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        range.insertNode(a);
-        range.setStartAfter(a);
-        range.collapse(true);
-      }
-    }
-
-    setShowLinkModal(false);
-    setLinkUrl("");
-    setLinkText("");
-    triggerChange();
-  };
-
-  // Clear format
-  const handleClearFormat = () => {
-    execCmd("removeFormat");
-    // Also remove inline styles if span selected
-    const sel = window.getSelection();
-    if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
-      const range = sel.getRangeAt(0);
-      const fragment = range.extractContents();
-      const div = document.createElement("div");
-      div.appendChild(fragment);
-      // strip style attributes
-      const styledElements = div.querySelectorAll("[style]");
-      styledElements.forEach((el) => el.removeAttribute("style"));
-      range.insertNode(div.firstChild || document.createTextNode(div.innerText));
-    }
-    triggerChange();
-  };
-
   return (
-    <div className="rounded-xl border border-border shadow-xs overflow-hidden bg-card transition-all">
+    <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden">
+      {/* Scoped CSS for authentic Google Docs typography */}
+      <style>{`
+        .gdocs-canvas-sheet {
+          font-family: Arial, Roboto, 'Plus Jakarta Sans', sans-serif;
+          color: #0f172a;
+          background-color: #ffffff;
+          line-height: 1.65;
+        }
+        .dark .gdocs-canvas-sheet {
+          color: #f1f5f9;
+          background-color: #020617;
+        }
+        .gdocs-canvas-sheet h1 {
+          font-size: 26px !important;
+          font-weight: 700 !important;
+          line-height: 1.25 !important;
+          margin-top: 20px !important;
+          margin-bottom: 8px !important;
+          color: #0f172a !important;
+          letter-spacing: -0.02em !important;
+        }
+        .dark .gdocs-canvas-sheet h1 {
+          color: #f8fafc !important;
+        }
+        .gdocs-canvas-sheet h2 {
+          font-size: 20px !important;
+          font-weight: 700 !important;
+          line-height: 1.3 !important;
+          margin-top: 16px !important;
+          margin-bottom: 6px !important;
+          color: #0f172a !important;
+          letter-spacing: -0.01em !important;
+        }
+        .dark .gdocs-canvas-sheet h2 {
+          color: #f8fafc !important;
+        }
+        .gdocs-canvas-sheet h3 {
+          font-size: 16px !important;
+          font-weight: 600 !important;
+          line-height: 1.35 !important;
+          margin-top: 14px !important;
+          margin-bottom: 4px !important;
+          color: #1e293b !important;
+        }
+        .dark .gdocs-canvas-sheet h3 {
+          color: #e2e8f0 !important;
+        }
+        .gdocs-canvas-sheet h4 {
+          font-size: 14px !important;
+          font-weight: 600 !important;
+          line-height: 1.4 !important;
+          margin-top: 12px !important;
+          margin-bottom: 4px !important;
+          color: #334155 !important;
+        }
+        .dark .gdocs-canvas-sheet h4 {
+          color: #cbd5e1 !important;
+        }
+        .gdocs-canvas-sheet h5 {
+          font-size: 13px !important;
+          font-weight: 600 !important;
+          line-height: 1.4 !important;
+          margin-top: 10px !important;
+          margin-bottom: 2px !important;
+          color: #475569 !important;
+        }
+        .dark .gdocs-canvas-sheet h5 {
+          color: #94a3b8 !important;
+        }
+        .gdocs-canvas-sheet p {
+          font-size: 14px;
+          line-height: 1.65;
+          margin-bottom: 12px;
+          color: inherit;
+        }
+        .gdocs-canvas-sheet ul {
+          list-style-type: disc !important;
+          padding-left: 26px !important;
+          margin-top: 4px !important;
+          margin-bottom: 12px !important;
+        }
+        .gdocs-canvas-sheet ol {
+          list-style-type: decimal !important;
+          padding-left: 26px !important;
+          margin-top: 4px !important;
+          margin-bottom: 12px !important;
+        }
+        .gdocs-canvas-sheet li {
+          margin-bottom: 4px !important;
+          line-height: 1.6 !important;
+        }
+        .gdocs-canvas-sheet a {
+          color: #1a73e8 !important;
+          text-decoration: underline !important;
+          cursor: pointer !important;
+          font-weight: 500 !important;
+        }
+        .dark .gdocs-canvas-sheet a {
+          color: #60a5fa !important;
+        }
+        .gdocs-canvas-sheet a:hover {
+          color: #1557b0 !important;
+        }
+        .gdocs-canvas-sheet blockquote {
+          border-left: 3px solid #cbd5e1 !important;
+          padding-left: 14px !important;
+          margin: 12px 0 !important;
+          color: #64748b !important;
+          font-style: italic !important;
+        }
+        .dark .gdocs-canvas-sheet blockquote {
+          border-left-color: #475569 !important;
+          color: #94a3b8 !important;
+        }
+        .gdocs-canvas-sheet hr {
+          border: 0;
+          border-top: 1px solid #e2e8f0;
+          margin: 20px 0;
+        }
+        .dark .gdocs-canvas-sheet hr {
+          border-top-color: #334155;
+        }
+      `}</style>
+
       {/* --------------------------------------------------------------------------------- */}
-      {/* GOOGLE DOCS HEADER RIBBON & TITLE */}
+      {/* GOOGLE DOCS HEADER STRIP */}
       {/* --------------------------------------------------------------------------------- */}
-      <div className="bg-slate-50 dark:bg-slate-900 border-b border-border px-4 py-2.5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-blue-600/10 text-blue-600 flex items-center justify-center font-bold">
+      <div className="bg-slate-50 dark:bg-slate-900 border-b border-border px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
             <FileText className="w-4 h-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-xs text-foreground">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-foreground">
                 Detailed Description Document
               </span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-600 font-medium">
+              <span className="text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 px-1.5 py-0.2 rounded font-medium">
                 Google Docs Interface
               </span>
             </div>
@@ -473,17 +759,17 @@ export function GoogleDocsEditor({
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1 font-mono text-[11px]">
-            {wordCount} words • {charCount} characters
-          </span>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground font-mono">
+          <span>{wordCount} words</span>
+          <span>•</span>
+          <span>{charCount} characters</span>
         </div>
       </div>
 
       {/* --------------------------------------------------------------------------------- */}
-      {/* GOOGLE DOCS COMPLETE EDITING TOOLBAR */}
+      {/* GOOGLE DOCS COMPREHENSIVE TOOLBAR */}
       {/* --------------------------------------------------------------------------------- */}
-      <div className="bg-slate-100/90 dark:bg-slate-800/80 border-b border-border px-3 py-1.5 flex flex-wrap items-center gap-1 sticky top-0 z-20 backdrop-blur">
+      <div className="bg-slate-100/90 dark:bg-slate-900/90 border-b border-border p-1.5 flex flex-wrap items-center gap-1 text-xs select-none">
         {/* GROUP 1: Undo / Redo / Clear Format */}
         <button
           type="button"
@@ -528,6 +814,10 @@ export function GoogleDocsEditor({
           <button
             type="button"
             title="Styles (Normal text, H1 to H5)"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              saveSelection();
+            }}
             onClick={() => {
               const next = !showHeadingMenu;
               closeAllMenus();
@@ -545,7 +835,10 @@ export function GoogleDocsEditor({
                 <button
                   key={h.tag}
                   type="button"
-                  onClick={() => applyHeading(h.tag, h.label)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    applyHeading(h.tag, h.label);
+                  }}
                   className={`w-full text-left px-3 py-1.5 hover:bg-muted transition-colors flex items-center justify-between ${
                     currentHeading === h.label ? "text-primary font-bold bg-muted/50" : ""
                   }`}
@@ -565,6 +858,10 @@ export function GoogleDocsEditor({
           <button
             type="button"
             title="Font style"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              saveSelection();
+            }}
             onClick={() => {
               const next = !showFontMenu;
               closeAllMenus();
@@ -582,7 +879,10 @@ export function GoogleDocsEditor({
                 <button
                   key={f.name}
                   type="button"
-                  onClick={() => applyFontFamily(f.value, f.name)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    applyFontFamily(f.value, f.name);
+                  }}
                   className={`w-full text-left px-3 py-1.5 hover:bg-muted transition-colors flex items-center justify-between ${
                     currentFont === f.name ? "text-primary font-bold bg-muted/50" : ""
                   }`}
@@ -618,6 +918,7 @@ export function GoogleDocsEditor({
             min={1}
             max={90}
             value={fontSize}
+            onFocus={saveSelection}
             onChange={(e) => {
               const val = parseInt(e.target.value);
               if (!isNaN(val)) applyFontSize(val);
@@ -643,6 +944,10 @@ export function GoogleDocsEditor({
             <button
               type="button"
               title="Select preset size"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                saveSelection();
+              }}
               onClick={() => {
                 const next = !showSizeMenu;
                 closeAllMenus();
@@ -659,7 +964,10 @@ export function GoogleDocsEditor({
                   <button
                     key={sz}
                     type="button"
-                    onClick={() => applyFontSize(sz)}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      applyFontSize(sz);
+                    }}
                     className={`w-full text-center py-1 hover:bg-muted font-mono ${
                       fontSize === sz ? "text-primary font-bold bg-muted/60" : ""
                     }`}
@@ -674,7 +982,7 @@ export function GoogleDocsEditor({
 
         <div className="w-px h-5 bg-border mx-1" />
 
-        {/* GROUP 5: Bold, Italic, Underline */}
+        {/* GROUP 5: Bold, Italic, Underline, Strikethrough */}
         <button
           type="button"
           title="Bold (Ctrl+B)"
@@ -723,11 +1031,31 @@ export function GoogleDocsEditor({
           <Underline className="w-4 h-4" />
         </button>
 
+        <button
+          type="button"
+          title="Strikethrough"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            execCmd("strikeThrough");
+          }}
+          className={`p-1.5 rounded transition-colors ${
+            activeFormats.strike
+              ? "bg-slate-300 dark:bg-slate-600 text-foreground"
+              : "hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
+          }`}
+        >
+          <Strikethrough className="w-4 h-4" />
+        </button>
+
         {/* Text Color Popover */}
         <div className="relative">
           <button
             type="button"
             title="Text color"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              saveSelection();
+            }}
             onClick={() => {
               const next = !showTextColorMenu;
               closeAllMenus();
@@ -752,7 +1080,8 @@ export function GoogleDocsEditor({
                   <button
                     key={i}
                     type="button"
-                    onClick={() => {
+                    onMouseDown={(e) => {
+                      e.preventDefault();
                       setTextColor(c);
                       execCmd("foreColor", c);
                       setShowTextColorMenu(false);
@@ -784,6 +1113,10 @@ export function GoogleDocsEditor({
           <button
             type="button"
             title="Highlight color"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              saveSelection();
+            }}
             onClick={() => {
               const next = !showHighlightMenu;
               closeAllMenus();
@@ -810,7 +1143,8 @@ export function GoogleDocsEditor({
                   <button
                     key={i}
                     type="button"
-                    onClick={() => {
+                    onMouseDown={(e) => {
+                      e.preventDefault();
                       setHighlightColor(c);
                       execCmd(c === "transparent" ? "removeFormat" : "hiliteColor", c);
                       setShowHighlightMenu(false);
@@ -833,10 +1167,13 @@ export function GoogleDocsEditor({
         <button
           type="button"
           title="Insert link (Ctrl+K)"
-          onClick={handleOpenLinkModal}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            handleOpenLinkModal();
+          }}
           className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
         >
-          <LinkIcon className="w-4 h-4" />
+          <LinkIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
         </button>
 
         <button
@@ -923,6 +1260,10 @@ export function GoogleDocsEditor({
           <button
             type="button"
             title="Line & paragraph spacing"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              saveSelection();
+            }}
             onClick={() => {
               const next = !showSpacingMenu;
               closeAllMenus();
@@ -938,28 +1279,40 @@ export function GoogleDocsEditor({
             <div className="absolute left-0 top-full mt-1 w-52 rounded-md border border-border bg-card shadow-lg py-1 z-50 text-xs">
               <button
                 type="button"
-                onClick={() => applyLineSpacing("1")}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  applyLineSpacing("1");
+                }}
                 className="w-full text-left px-3 py-1.5 hover:bg-muted transition-colors flex items-center justify-between"
               >
                 <span>Single (1.0)</span>
               </button>
               <button
                 type="button"
-                onClick={() => applyLineSpacing("1.15")}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  applyLineSpacing("1.15");
+                }}
                 className="w-full text-left px-3 py-1.5 hover:bg-muted transition-colors flex items-center justify-between font-semibold"
               >
                 <span>1.15 (Default)</span>
               </button>
               <button
                 type="button"
-                onClick={() => applyLineSpacing("1.5")}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  applyLineSpacing("1.5");
+                }}
                 className="w-full text-left px-3 py-1.5 hover:bg-muted transition-colors flex items-center justify-between"
               >
                 <span>1.5</span>
               </button>
               <button
                 type="button"
-                onClick={() => applyLineSpacing("2")}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  applyLineSpacing("2");
+                }}
                 className="w-full text-left px-3 py-1.5 hover:bg-muted transition-colors flex items-center justify-between"
               >
                 <span>Double (2.0)</span>
@@ -967,14 +1320,20 @@ export function GoogleDocsEditor({
               <div className="h-px bg-border my-1" />
               <button
                 type="button"
-                onClick={() => addParagraphSpacing("before")}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  addParagraphSpacing("before");
+                }}
                 className="w-full text-left px-3 py-1.5 hover:bg-muted transition-colors"
               >
                 <span>Add space before paragraph</span>
               </button>
               <button
                 type="button"
-                onClick={() => addParagraphSpacing("after")}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  addParagraphSpacing("after");
+                }}
                 className="w-full text-left px-3 py-1.5 hover:bg-muted transition-colors"
               >
                 <span>Add space after paragraph</span>
@@ -1068,8 +1427,9 @@ export function GoogleDocsEditor({
             onInput={triggerChange}
             onKeyUp={updateToolbarState}
             onMouseUp={updateToolbarState}
+            onSelect={updateToolbarState}
             style={{ minHeight }}
-            className="w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-8 sm:p-14 rounded shadow-[0_4px_25px_rgba(0,0,0,0.07)] border border-slate-300/80 dark:border-slate-800 focus:outline-none leading-relaxed transition-all prose dark:prose-invert max-w-none text-sm relative z-10"
+            className="w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-8 sm:p-14 rounded shadow-[0_4px_25px_rgba(0,0,0,0.07)] border border-slate-300/80 dark:border-slate-800 focus:outline-none transition-all max-w-none text-sm relative z-10 gdocs-canvas-sheet"
           />
 
           {/* Faint Guide Template (Small & light in color - only visible when empty) */}
@@ -1132,38 +1492,75 @@ export function GoogleDocsEditor({
       {/* --------------------------------------------------------------------------------- */}
       {/* DOCUMENT STATUS & HELPER BAR */}
       {/* --------------------------------------------------------------------------------- */}
-      <div className="bg-slate-50 dark:bg-slate-900 border-t border-border px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
+      <div className="bg-slate-50 dark:bg-slate-900 border-t border-border px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
             <Check className="w-3.5 h-3.5" />
             Live formatting applied
           </span>
           <span>•</span>
-          <span className="text-[11px]">Font sizes 1 to 90</span>
+          <span className="text-[11px]">Headings H1–H5 & Sizes 1–90</span>
         </div>
 
         <div className="flex items-center gap-3">
-          {isEmpty && (
-            <button
-              type="button"
-              onClick={insertGuideTemplate}
-              className="text-[11px] text-primary/70 hover:text-primary transition-colors hover:underline"
-            >
-              + Use Guide Template
-            </button>
+          <button
+            type="button"
+            onClick={insertSampleBlogArticle}
+            className="inline-flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            title="Load a complete blog article with H1, H2, lists, bold text, and hyperlinks to test"
+          >
+            <BookOpen className="w-3 h-3" />
+            + Insert Sample Blog Article
+          </button>
+          <span>•</span>
+          <button
+            type="button"
+            onClick={insertGuideTemplate}
+            className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-medium"
+            title="Load standard academic project documentation template"
+          >
+            <FileText className="w-3 h-3" />
+            + Insert Project Guide
+          </button>
+          {!isEmpty && (
+            <>
+              <span>•</span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (editorRef.current) {
+                    editorRef.current.innerHTML = "";
+                    triggerChange();
+                  }
+                }}
+                className="text-[11px] text-muted-foreground hover:text-destructive transition-colors"
+                title="Clear content back to clean page"
+              >
+                Clear
+              </button>
+            </>
           )}
-          <span className="text-[11px] text-muted-foreground/60 hidden sm:inline">
-            Select text to format
-          </span>
         </div>
       </div>
 
       {/* --------------------------------------------------------------------------------- */}
-      {/* LINK INSERTION MODAL */}
+      {/* LINK INSERTION MODAL (No nested form - prevents page redirect) */}
       {/* --------------------------------------------------------------------------------- */}
       {showLinkModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-card border border-border rounded-xl p-5 w-full max-w-md shadow-2xl space-y-4">
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowLinkModal(false);
+            }
+          }}
+        >
+          <div
+            className="bg-card border border-border rounded-xl p-5 w-full max-w-md shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between">
               <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
                 <LinkIcon className="w-4 h-4 text-blue-600" />
@@ -1171,20 +1568,33 @@ export function GoogleDocsEditor({
               </h4>
               <button
                 type="button"
-                onClick={() => setShowLinkModal(false)}
-                className="text-muted-foreground hover:text-foreground text-sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowLinkModal(false);
+                }}
+                className="text-muted-foreground hover:text-foreground text-sm p-1"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleApplyLink} className="space-y-3">
+            <div
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleApplyLink(e);
+                }
+              }}
+              className="space-y-3"
+            >
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-muted-foreground">Text to display</label>
                 <Input
                   value={linkText}
                   onChange={(e) => setLinkText(e.target.value)}
-                  placeholder="e.g. GitHub Repository, Project Demo, or Research Paper"
+                  placeholder="e.g. Live Project Demo, GitHub Repository, or Documentation"
                   className="h-8 text-xs"
                 />
               </div>
@@ -1194,7 +1604,7 @@ export function GoogleDocsEditor({
                 <Input
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="https://example.com/..."
+                  placeholder="https://example.com/demo"
                   required
                   autoFocus
                   className="h-8 text-xs"
@@ -1206,16 +1616,29 @@ export function GoogleDocsEditor({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowLinkModal(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowLinkModal(false);
+                  }}
                   className="text-xs h-8"
                 >
                   Cancel
                 </Button>
-                <Button type="submit" size="sm" className="text-xs h-8">
+                <Button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleApplyLink(e);
+                  }}
+                  size="sm"
+                  className="text-xs h-8"
+                >
                   Apply Link
                 </Button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
