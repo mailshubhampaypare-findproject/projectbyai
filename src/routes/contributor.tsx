@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { GoogleDocsEditor } from "@/components/GoogleDocsEditor";
 import {
   LayoutDashboard,
   Package,
@@ -188,6 +189,24 @@ python app.py # or npm run dev
 - Backend: RESTful API server
 - Database: Structured relational database schema
 `);
+  const [uploadDetailedDescription, setUploadDetailedDescription] = useState(`<h2>1. Project Abstract & Objective</h2>
+<p>Provide a comprehensive overview of the application, problem statement, and key deliverables.</p>
+
+<h2>2. Technical Architecture & Component Breakdown</h2>
+<p>Explain the interaction between the frontend client, backend REST services, and database.</p>
+
+<h3>Core Technology Stack</h3>
+<ul>
+  <li><strong>Frontend:</strong> React / Next.js with responsive Tailwind CSS components</li>
+  <li><strong>Backend:</strong> Python / Node.js with secure token authentication</li>
+  <li><strong>Database:</strong> PostgreSQL / Supabase / MongoDB relational data modeling</li>
+</ul>
+
+<h2>3. Key Engineering Features & Capabilities</h2>
+<p>Detail the unique selling points, algorithms, and workflows.</p>
+
+<h2>4. Viva Presentation FAQs & Examiner Talking Points</h2>
+<p>Prepare students to defend this project during their college viva examinations.</p>`);
   const [uploadingProject, setUploadingProject] = useState(false);
 
   // Settings & Payout State
@@ -515,6 +534,8 @@ python app.py # or npm run dev
         price: uploadPrice,
         description: uploadDescription,
         readme: uploadReadme,
+        detailed_description: uploadDetailedDescription,
+        long_description: uploadDetailedDescription,
         demo_url: uploadDemoUrl,
         download_url: uploadZipUrl,
         thumbnail_url:
@@ -547,6 +568,7 @@ python app.py # or npm run dev
       setUploadTitle("");
       setUploadSlug("");
       setUploadDescription("");
+      setUploadDetailedDescription("");
       setUploadDemoUrl("");
       setUploadZipUrl("");
       setUploadThumbnailUrl("");
@@ -1756,6 +1778,29 @@ python app.py # or npm run dev
                       className="font-mono text-xs leading-relaxed"
                     />
                   </Card>
+
+                  {/* Card: Detailed Description (Google Docs Interface) */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between px-1">
+                      <div>
+                        <h3 className="font-semibold text-sm text-foreground">
+                          Detailed Description & Full Project Documentation
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          Rich document formatting with Google Docs controls: custom font sizes 1–90, headings H1–H5, colors, alignment, lists, spacing, and hyperlinks.
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="text-[10px] bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-800">
+                        Google Docs Editor
+                      </Badge>
+                    </div>
+
+                    <GoogleDocsEditor
+                      value={uploadDetailedDescription}
+                      onChange={setUploadDetailedDescription}
+                      placeholder="Write your detailed project overview, architecture diagram explanation, database schema, API documentation, step-by-step workflow, and college viva questions..."
+                    />
+                  </div>
 
                   {/* Card: Media & Assets */}
                   <Card className="p-5 border-border shadow-xs space-y-4">
