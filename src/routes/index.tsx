@@ -46,12 +46,9 @@ function LandingPage() {
               <Link to="/contributor">Contributor Hub</Link>
             </Button>
           ) : (
-            <>
-              <Button variant="ghost" asChild><Link to="/auth">Sign in</Link></Button>
-              <Button asChild className="bg-gradient-primary shadow-elegant">
-                <Link to="/contributor">Become a Contributor</Link>
-              </Button>
-            </>
+            <Button asChild className="bg-gradient-primary shadow-elegant">
+              <Link to="/auth">Sign in</Link>
+            </Button>
           )}
         </nav>
       </header>
