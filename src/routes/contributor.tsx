@@ -162,7 +162,7 @@ function ContributorDashboardPage() {
   const [uploadZipUrl, setUploadZipUrl] = useState("");
   const [uploadThumbnailUrl, setUploadThumbnailUrl] = useState("");
   const [uploadTutorialVideoUrl, setUploadTutorialVideoUrl] = useState("");
-  const [uploadTechStack, setUploadTechStack] = useState<string[]>(["Python", "FastAPI", "React"]);
+  const [uploadTechStack, setUploadTechStack] = useState<string[]>([]);
   const [techInput, setTechInput] = useState("");
 
   // Media upload state (drag-and-drop & files)
@@ -186,53 +186,41 @@ function ContributorDashboardPage() {
   ]);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [uploadReadme, setUploadReadme] = useState(`## Project Overview
-A production-ready full-stack application built for academic submission and real-world deployment.
+
+  const README_SAMPLE_GUIDE = `## Project Overview
+Briefly explain the real-world problem statement, core purpose, and key deliverables.
 
 ### Key Features
-- Clean modular architecture with complete separation of concerns.
+- Clean modular structure with clear separation of concerns.
 - Comprehensive database schema with automated migration scripts.
-- Secure authentication and role-based access control.
-- Detailed step-by-step setup guide with viva defense FAQs.
+- Secure token-based authentication and role permissions.
+- Step-by-step setup guide with viva defense FAQs.
 
 ### Installation & Run Instructions
-1. Clone or extract the project ZIP.
+1. Clone or extract the project ZIP archive.
 2. Install dependencies:
 \`\`\`bash
 pip install -r requirements.txt # or npm install
 \`\`\`
-3. Run migrations and seed data:
+3. Run migrations and seed sample data:
 \`\`\`bash
 python manage.py migrate # or npx prisma db push
 \`\`\`
-4. Start the application:
+4. Start the development server:
 \`\`\`bash
 python app.py # or npm run dev
 \`\`\`
 
 ### System Architecture
-- Frontend: Responsive UI with clean components
-- Backend: RESTful API server
-- Database: Structured relational database schema
-`);
-  const [uploadDetailedDescription, setUploadDetailedDescription] = useState(`<h2>1. Project Abstract & Objective</h2>
-<p>Provide a comprehensive overview of the application, problem statement, and key deliverables.</p>
+- Frontend: Responsive UI with clean reusable components
+- Backend: RESTful API server with endpoint controllers
+- Database: Structured relational database entities
 
-<h2>2. Technical Architecture & Component Breakdown</h2>
-<p>Explain the interaction between the frontend client, backend REST services, and database.</p>
+### Viva Defense FAQs
+- Common examiner questions & how to answer during college viva`;
 
-<h3>Core Technology Stack</h3>
-<ul>
-  <li><strong>Frontend:</strong> React / Next.js with responsive Tailwind CSS components</li>
-  <li><strong>Backend:</strong> Python / Node.js with secure token authentication</li>
-  <li><strong>Database:</strong> PostgreSQL / Supabase / MongoDB relational data modeling</li>
-</ul>
-
-<h2>3. Key Engineering Features & Capabilities</h2>
-<p>Detail the unique selling points, algorithms, and workflows.</p>
-
-<h2>4. Viva Presentation FAQs & Examiner Talking Points</h2>
-<p>Prepare students to defend this project during their college viva examinations.</p>`);
+  const [uploadReadme, setUploadReadme] = useState("");
+  const [uploadDetailedDescription, setUploadDetailedDescription] = useState("");
   const [uploadingProject, setUploadingProject] = useState(false);
 
   // Settings & Payout State
@@ -1860,16 +1848,22 @@ python app.py # or npm run dev
                   {/* Card: Title & Summary */}
                   <Card className="p-5 border-border shadow-xs space-y-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Project Title *
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Project Title *
+                        </label>
+                        <span className="text-[10px] text-muted-foreground/40 font-normal">Academic standard title</span>
+                      </div>
                       <Input
                         placeholder="e.g. AI-Powered Hospital Bed & Oxygen Allocation System"
                         value={uploadTitle}
                         onChange={(e) => handleTitleChange(e.target.value)}
                         required
-                        className="text-base font-medium"
+                        className="text-sm font-medium placeholder:text-xs placeholder:text-muted-foreground/35 placeholder:font-normal"
                       />
+                      <p className="text-[10px] text-muted-foreground/50">
+                        Guide: Clearly mention the application purpose and primary framework or core algorithm.
+                      </p>
                     </div>
 
                     <div className="space-y-1.5">
@@ -1877,28 +1871,35 @@ python app.py # or npm run dev
                         URL Slug *
                       </label>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">projectbyai.com/projects/</span>
+                        <span className="text-xs text-muted-foreground/50">projectbyai.com/projects/</span>
                         <Input
-                          placeholder="hospital-bed-allocation"
+                          placeholder="e.g. hospital-bed-allocation"
                           value={uploadSlug}
                           onChange={(e) => setUploadSlug(e.target.value)}
                           required
-                          className="text-xs"
+                          className="text-xs placeholder:text-[11px] placeholder:text-muted-foreground/35"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Short Summary Description *
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Short Summary Description *
+                        </label>
+                        <span className="text-[10px] text-muted-foreground/40 font-normal">2–3 sentences</span>
+                      </div>
                       <Textarea
                         placeholder="Explain what problem this project solves, main algorithms used, and how students can present it in their college viva..."
                         value={uploadDescription}
                         onChange={(e) => setUploadDescription(e.target.value)}
                         rows={3}
                         required
+                        className="text-xs placeholder:text-[11px] placeholder:text-muted-foreground/35 placeholder:font-normal leading-relaxed"
                       />
+                      <p className="text-[10px] text-muted-foreground/50">
+                        Guide: Keep it concise (2–3 sentences) summarizing project purpose, algorithms, and viva talking points.
+                      </p>
                     </div>
                   </Card>
 
@@ -1913,17 +1914,32 @@ python app.py # or npm run dev
                           Rendered on the project page. Include architecture, step-by-step setup commands, and viva talking points.
                         </p>
                       </div>
-                      <Badge variant="outline" className="text-[10px]">
-                        Markdown Supported
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        {!uploadReadme && (
+                          <button
+                            type="button"
+                            onClick={() => setUploadReadme(README_SAMPLE_GUIDE)}
+                            className="text-[11px] text-primary/70 hover:text-primary transition-colors hover:underline"
+                          >
+                            + Use Sample Template
+                          </button>
+                        )}
+                        <Badge variant="outline" className="text-[10px]">
+                          Markdown Supported
+                        </Badge>
+                      </div>
                     </div>
 
                     <Textarea
+                      placeholder={README_SAMPLE_GUIDE}
                       value={uploadReadme}
                       onChange={(e) => setUploadReadme(e.target.value)}
                       rows={12}
-                      className="font-mono text-xs leading-relaxed"
+                      className="font-mono text-xs leading-relaxed placeholder:text-[11px] placeholder:text-muted-foreground/35 placeholder:font-mono placeholder:leading-relaxed"
                     />
+                    <p className="text-[10px] text-muted-foreground/50">
+                      Guide: Markdown structure for project overview, key features, step-by-step run commands, and examiner viva FAQs.
+                    </p>
                   </Card>
 
                   {/* Card: Detailed Description (Google Docs Interface) */}
@@ -1947,6 +1963,9 @@ python app.py # or npm run dev
                       onChange={setUploadDetailedDescription}
                       placeholder="Write your detailed project overview, architecture diagram explanation, database schema, API documentation, step-by-step workflow, and college viva questions..."
                     />
+                    <p className="text-[10px] text-muted-foreground/50 px-1">
+                      Guide: Comprehensive academic documentation covering abstract, architecture, tech stack, and viva defense answers.
+                    </p>
                   </div>
 
                   {/* Card: Media & Assets */}
@@ -2041,10 +2060,10 @@ python app.py # or npm run dev
                           </div>
                           <div className="space-y-0.5">
                             <p className="text-xs font-semibold text-foreground">
-                              {uploadingThumbnail ? "Uploading cover image..." : "Drag and drop your thumbnail cover image here, or browse"}
+                              {uploadingThumbnail ? "Uploading cover image..." : "Upload thumbnail cover image"}
                             </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              Supports PNG, JPG, JPEG, WEBP up to 10MB
+                            <p className="text-[10px] text-muted-foreground/50">
+                              Guide: Drag & drop 16:9 image (PNG, JPG, WEBP up to 10MB)
                             </p>
                           </div>
                         </div>
@@ -2061,8 +2080,8 @@ python app.py # or npm run dev
                             <ImagePlus className="w-3.5 h-3.5 text-primary" />
                             Project Screenshots (Multiple)
                           </label>
-                          <p className="text-[11px] text-muted-foreground">
-                            Upload multiple screenshots of UI pages, architecture diagrams, database schema, or terminal outputs.
+                          <p className="text-[10px] text-muted-foreground/50">
+                            Upload screenshots of UI pages, architecture diagrams, database schema, or terminal outputs.
                           </p>
                         </div>
                         <Badge variant="outline" className="text-[10px]">
@@ -2104,8 +2123,8 @@ python app.py # or npm run dev
                         <p className="text-xs font-medium text-foreground">
                           {uploadingScreenshots ? "Uploading screenshots..." : "Drag and drop multiple screenshots here, or click to browse"}
                         </p>
-                        <p className="text-[11px] text-muted-foreground">
-                          Select multiple images at once (PNG, JPG, WEBP)
+                        <p className="text-[10px] text-muted-foreground/50">
+                          Guide: Select multiple image files at once (PNG, JPG, WEBP)
                         </p>
                       </div>
 
@@ -2151,7 +2170,7 @@ python app.py # or npm run dev
                           <FileArchive className="w-3.5 h-3.5 text-primary" />
                           Upload project zip file *
                         </label>
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-[10px] text-muted-foreground/50">
                           Accepts .zip, .rar, .tar.gz (Max 100MB)
                         </span>
                       </div>
@@ -2235,8 +2254,8 @@ python app.py # or npm run dev
                             <p className="text-xs font-semibold text-foreground">
                               {uploadingZip ? "Uploading ZIP archive..." : "Drag and drop your project ZIP file here, or browse"}
                             </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              Contains full source code, database script, setup instructions, and viva documentation
+                            <p className="text-[10px] text-muted-foreground/50">
+                              Guide: Contains full source code, database script, setup instructions, and viva documentation
                             </p>
                           </div>
                         </div>
@@ -2255,10 +2274,10 @@ python app.py # or npm run dev
                         placeholder="https://my-project-demo.vercel.app"
                         value={uploadDemoUrl}
                         onChange={(e) => setUploadDemoUrl(e.target.value)}
-                        className="text-xs"
+                        className="text-xs placeholder:text-[11px] placeholder:text-muted-foreground/35"
                       />
-                      <p className="text-[11px] text-muted-foreground">
-                        Allow students to test drive the live deployment before purchasing.
+                      <p className="text-[10px] text-muted-foreground/50">
+                        Guide: Allow students to test drive the live deployment before purchasing.
                       </p>
                     </div>
                   </Card>
@@ -2371,7 +2390,7 @@ python app.py # or npm run dev
                                   handleAddCategory();
                                 }
                               }}
-                              className="h-8 text-xs bg-background"
+                              className="h-8 text-xs bg-background placeholder:text-[11px] placeholder:text-muted-foreground/35"
                               autoFocus
                             />
                             <Button
@@ -2404,7 +2423,7 @@ python app.py # or npm run dev
                       <label className="text-xs text-muted-foreground">Tech Stack Tags</label>
                       <div className="flex items-center gap-2">
                         <Input
-                          placeholder="e.g. Next.js, PyTorch..."
+                          placeholder="e.g. Next.js, PyTorch, MongoDB..."
                           value={techInput}
                           onChange={(e) => setTechInput(e.target.value)}
                           onKeyDown={(e) => {
@@ -2413,7 +2432,7 @@ python app.py # or npm run dev
                               handleAddTech();
                             }
                           }}
-                          className="h-8 text-xs"
+                          className="h-8 text-xs placeholder:text-[11px] placeholder:text-muted-foreground/35"
                         />
                         <Button
                           type="button"
@@ -2425,6 +2444,9 @@ python app.py # or npm run dev
                           Add
                         </Button>
                       </div>
+                      <p className="text-[10px] text-muted-foreground/50">
+                        Guide: Type framework or language name and click Add or press Enter.
+                      </p>
 
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         {uploadTechStack.map((tech) => (

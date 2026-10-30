@@ -115,6 +115,7 @@ export function GoogleDocsEditor({
   const [linkText, setLinkText] = useState("");
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
+  const [isEmpty, setIsEmpty] = useState(!value || value.trim() === "");
 
   // Sync initial content once
   useEffect(() => {
@@ -123,8 +124,10 @@ export function GoogleDocsEditor({
         editorRef.current.innerHTML = value || "";
         updateStats();
       }
+    } else {
+      updateStats();
     }
-  }, []);
+  }, [value]);
 
   const triggerChange = () => {
     if (editorRef.current) {
@@ -140,6 +143,35 @@ export function GoogleDocsEditor({
     setCharCount(text.length);
     const words = text.trim().split(/\s+/).filter(Boolean);
     setWordCount(words.length);
+    const textContent = text.replace(/[\s\r\n]+/g, "").trim();
+    setIsEmpty(textContent.length === 0);
+  };
+
+  const insertGuideTemplate = () => {
+    const templateHtml = `<h2>1. Project Abstract & Objective</h2>
+<p>Provide a comprehensive overview of the application, problem statement, and key deliverables.</p>
+
+<h2>2. Technical Architecture & Component Breakdown</h2>
+<p>Explain the interaction between the frontend client, backend REST services, and database.</p>
+
+<h3>Core Technology Stack</h3>
+<ul>
+  <li><strong>Frontend:</strong> React / Next.js with responsive Tailwind CSS components</li>
+  <li><strong>Backend:</strong> Python / Node.js with secure token authentication</li>
+  <li><strong>Database:</strong> PostgreSQL / Supabase / MongoDB relational data modeling</li>
+</ul>
+
+<h2>3. Key Engineering Features & Capabilities</h2>
+<p>Detail the unique selling points, algorithms, and workflows.</p>
+
+<h2>4. Viva Presentation FAQs & Examiner Talking Points</h2>
+<p>Prepare students to defend this project during their college viva examinations.</p>`;
+
+    if (editorRef.current) {
+      editorRef.current.innerHTML = templateHtml;
+      triggerChange();
+      editorRef.current.focus();
+    }
   };
 
   // Close all popover menus
@@ -1027,17 +1059,74 @@ export function GoogleDocsEditor({
           }
         }}
       >
-        {/* White Document Page */}
-        <div
-          ref={editorRef}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={triggerChange}
-          onKeyUp={updateToolbarState}
-          onMouseUp={updateToolbarState}
-          style={{ minHeight }}
-          className="w-full max-w-[820px] bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-8 sm:p-14 rounded shadow-[0_4px_25px_rgba(0,0,0,0.07)] border border-slate-300/80 dark:border-slate-800 focus:outline-none leading-relaxed transition-all prose dark:prose-invert max-w-none text-sm"
-        />
+        <div className="relative w-full max-w-[820px]">
+          {/* White Document Page */}
+          <div
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            onInput={triggerChange}
+            onKeyUp={updateToolbarState}
+            onMouseUp={updateToolbarState}
+            style={{ minHeight }}
+            className="w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-8 sm:p-14 rounded shadow-[0_4px_25px_rgba(0,0,0,0.07)] border border-slate-300/80 dark:border-slate-800 focus:outline-none leading-relaxed transition-all prose dark:prose-invert max-w-none text-sm relative z-10"
+          />
+
+          {/* Faint Guide Template (Small & light in color - only visible when empty) */}
+          {isEmpty && (
+            <div
+              onClick={() => editorRef.current?.focus()}
+              className="absolute top-0 left-0 right-0 p-8 sm:p-14 pointer-events-none select-none z-20 space-y-4 text-slate-400/40 dark:text-slate-500/40 font-normal"
+            >
+              <div className="flex items-center justify-between border-b border-slate-200/40 dark:border-slate-800/40 pb-2">
+                <span className="text-[10px] uppercase font-semibold tracking-wider text-slate-400/50">
+                  Guide / Example Structure (Start typing anywhere)
+                </span>
+                <span className="text-[10px] text-slate-400/50">
+                  Documentation Reference
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="text-xs font-semibold text-slate-400/60 dark:text-slate-500/60">
+                  1. Project Abstract & Objective
+                </h4>
+                <p className="text-[11px] leading-relaxed text-slate-400/40 dark:text-slate-500/40">
+                  Provide a clear summary of the application, problem statement, key deliverables, and target users.
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="text-xs font-semibold text-slate-400/60 dark:text-slate-500/60">
+                  2. Technical Architecture & Component Breakdown
+                </h4>
+                <p className="text-[11px] leading-relaxed text-slate-400/40 dark:text-slate-500/40">
+                  Explain the workflow between frontend client, backend REST services, middleware, and database schema.
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="text-xs font-semibold text-slate-400/60 dark:text-slate-500/60">
+                  3. Core Technology Stack
+                </h4>
+                <p className="text-[11px] leading-relaxed text-slate-400/40 dark:text-slate-500/40">
+                  • Frontend: React / Next.js with responsive Tailwind CSS components<br/>
+                  • Backend: Python / Node.js with secure token authentication<br/>
+                  • Database: PostgreSQL / Supabase / MongoDB relational data modeling
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="text-xs font-semibold text-slate-400/60 dark:text-slate-500/60">
+                  4. Key Engineering Features & Viva Questions
+                </h4>
+                <p className="text-[11px] leading-relaxed text-slate-400/40 dark:text-slate-500/40">
+                  Detail unique selling points, core algorithms, and examiner FAQs to help students defend their project during viva.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* --------------------------------------------------------------------------------- */}
@@ -1050,11 +1139,22 @@ export function GoogleDocsEditor({
             Live formatting applied
           </span>
           <span>•</span>
-          <span>Font sizes 1 to 90 supported</span>
+          <span className="text-[11px]">Font sizes 1 to 90</span>
         </div>
 
-        <div className="text-[11px] text-muted-foreground hidden sm:block">
-          Select any text to apply size, color, or headings
+        <div className="flex items-center gap-3">
+          {isEmpty && (
+            <button
+              type="button"
+              onClick={insertGuideTemplate}
+              className="text-[11px] text-primary/70 hover:text-primary transition-colors hover:underline"
+            >
+              + Use Guide Template
+            </button>
+          )}
+          <span className="text-[11px] text-muted-foreground/60 hidden sm:inline">
+            Select text to format
+          </span>
         </div>
       </div>
 
