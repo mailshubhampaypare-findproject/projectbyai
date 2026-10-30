@@ -40,10 +40,9 @@ function LandingPage() {
         <nav className="flex items-center gap-4">
           <Link to="/blog" className="text-sm font-medium hover:text-primary transition-colors hidden sm:inline-block">Blog</Link>
           <Link to="/projects" className="text-sm font-medium hover:text-primary transition-colors">Project Library</Link>
-          <Link to="/contributor" className="text-sm font-medium hover:text-primary transition-colors hidden sm:inline-block">Contributor Hub</Link>
           {loggedIn ? (
             <Button asChild className="bg-gradient-primary shadow-elegant">
-              <Link to="/contributor">Contributor Hub</Link>
+              <Link to="/dashboard">Dashboard</Link>
             </Button>
           ) : (
             <Button asChild className="bg-gradient-primary shadow-elegant">
