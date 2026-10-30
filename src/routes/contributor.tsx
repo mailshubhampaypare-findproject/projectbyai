@@ -1944,18 +1944,10 @@ python app.py # or npm run dev
 
                   {/* Card: Detailed Description (Google Docs Interface) */}
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between px-1">
-                      <div>
-                        <h3 className="font-semibold text-sm text-foreground">
-                          Detailed Description & Full Project Documentation
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          Rich document formatting with Google Docs controls: custom font sizes 1–90, headings H1–H5, colors, alignment, lists, spacing, and hyperlinks.
-                        </p>
-                      </div>
-                      <Badge variant="secondary" className="text-[10px] bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-800">
-                        Google Docs Editor
-                      </Badge>
+                    <div className="px-1">
+                      <h3 className="font-semibold text-sm text-foreground">
+                        Detailed Description & Full Project Documentation
+                      </h3>
                     </div>
 
                     <GoogleDocsEditor
@@ -1963,9 +1955,6 @@ python app.py # or npm run dev
                       onChange={setUploadDetailedDescription}
                       placeholder="Write your detailed project overview, architecture diagram explanation, database schema, API documentation, step-by-step workflow, and college viva questions..."
                     />
-                    <p className="text-[10px] text-muted-foreground/50 px-1">
-                      Guide: Comprehensive academic documentation covering abstract, architecture, tech stack, and viva defense answers.
-                    </p>
                   </div>
 
                   {/* Card: Media & Assets */}

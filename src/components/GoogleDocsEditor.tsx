@@ -24,8 +24,7 @@ import {
   Check,
   RemoveFormatting,
   Rows,
-  FileText,
-  BookOpen
+  FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -541,73 +540,6 @@ export function GoogleDocsEditor({
       range.insertNode(div.firstChild || document.createTextNode(div.innerText));
     }
     triggerChange();
-  };
-
-  // Template 1: Sample Blog Article
-  const insertSampleBlogArticle = () => {
-    const blogHtml = `<h1>How We Built an Enterprise HR Management System</h1>
-<p><em>Published on ProjectByAI • A complete case study and architectural breakdown for college viva and engineering presentations.</em></p>
-
-<h2>1. Introduction & Executive Summary</h2>
-<p>The <strong>HR Management System</strong> is a centralized web-based platform designed to simplify and automate essential Human Resource activities within modern organizations. It helps HR administrators efficiently manage employee information, departmental skills, project assignments, attendance logs, payroll calculations, and grievance workflows from a unified interface.</p>
-
-<h2>2. Key Architectural Deliverables</h2>
-<p>Here are the primary components and engineering highlights of this project:</p>
-<ul>
-  <li><strong>Role-Based Access Control (RBAC):</strong> Granular permissions separating Super Admins, HR Managers, Team Leads, and Employees.</li>
-  <li><strong>Automated Payroll Calculation:</strong> Dynamic salary slips generated using tax brackets, deductions, and attendance percentages.</li>
-  <li><strong>Real-Time Attendance Tracker:</strong> Biometric and web check-in sync with geo-fencing validation.</li>
-  <li><strong>Grievance & Feedback Portal:</strong> Confidential ticketing workflow with automated escalation SLAs.</li>
-</ul>
-
-<h2>3. Step-by-Step System Workflow</h2>
-<ol>
-  <li><strong>Employee Onboarding:</strong> HR manager inputs new joiner credentials and assigns departmental role.</li>
-  <li><strong>Asset & Skill Mapping:</strong> System assigns work laptops, project repositories, and technical mentors.</li>
-  <li><strong>Monthly Evaluation:</strong> Performance ratings calculate automated bonus projections.</li>
-</ol>
-
-<h2>4. Live Demo & Resources</h2>
-<p>You can test the interactive deployment directly via our <a href="https://example.com/demo" target="_blank" rel="noopener noreferrer">Live HR System Demo</a> or inspect the documentation on the official portal.</p>
-
-<blockquote>"This system reduced HR onboarding administrative overhead by over 65% across 4 departments."</blockquote>
-
-<h2>5. Viva Examination Talking Points</h2>
-<p>When presenting to external college examiners, emphasize the database schema normalization (3NF) and JWT token invalidation upon role revocation.</p>`;
-
-    if (editorRef.current) {
-      editorRef.current.innerHTML = blogHtml;
-      triggerChange();
-      editorRef.current.focus();
-    }
-  };
-
-  // Template 2: Project Documentation Guide
-  const insertGuideTemplate = () => {
-    const templateHtml = `<h2>1. Project Abstract & Objective</h2>
-<p>Provide a comprehensive overview of the application, problem statement, and key deliverables.</p>
-
-<h2>2. Technical Architecture & Component Breakdown</h2>
-<p>Explain the interaction between the frontend client, backend REST services, and database.</p>
-
-<h3>Core Technology Stack</h3>
-<ul>
-  <li><strong>Frontend:</strong> React / Next.js with responsive Tailwind CSS components</li>
-  <li><strong>Backend:</strong> Python / Node.js with secure token authentication</li>
-  <li><strong>Database:</strong> PostgreSQL / Supabase / MongoDB relational data modeling</li>
-</ul>
-
-<h2>3. Key Engineering Features & Capabilities</h2>
-<p>Detail the unique selling points, algorithms, and workflows.</p>
-
-<h2>4. Viva Presentation FAQs & Examiner Talking Points</h2>
-<p>Prepare students to defend this project during their college viva examinations.</p>`;
-
-    if (editorRef.current) {
-      editorRef.current.innerHTML = templateHtml;
-      triggerChange();
-      editorRef.current.focus();
-    }
   };
 
   return (
@@ -1490,57 +1422,22 @@ export function GoogleDocsEditor({
       </div>
 
       {/* --------------------------------------------------------------------------------- */}
-      {/* DOCUMENT STATUS & HELPER BAR */}
+      {/* DOCUMENT BOTTOM BAR (Only Clear Option) */}
       {/* --------------------------------------------------------------------------------- */}
-      <div className="bg-slate-50 dark:bg-slate-900 border-t border-border px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-            <Check className="w-3.5 h-3.5" />
-            Live formatting applied
-          </span>
-          <span>•</span>
-          <span className="text-[11px]">Headings H1–H5 & Sizes 1–90</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={insertSampleBlogArticle}
-            className="inline-flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-medium"
-            title="Load a complete blog article with H1, H2, lists, bold text, and hyperlinks to test"
-          >
-            <BookOpen className="w-3 h-3" />
-            + Insert Sample Blog Article
-          </button>
-          <span>•</span>
-          <button
-            type="button"
-            onClick={insertGuideTemplate}
-            className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-medium"
-            title="Load standard academic project documentation template"
-          >
-            <FileText className="w-3 h-3" />
-            + Insert Project Guide
-          </button>
-          {!isEmpty && (
-            <>
-              <span>•</span>
-              <button
-                type="button"
-                onClick={() => {
-                  if (editorRef.current) {
-                    editorRef.current.innerHTML = "";
-                    triggerChange();
-                  }
-                }}
-                className="text-[11px] text-muted-foreground hover:text-destructive transition-colors"
-                title="Clear content back to clean page"
-              >
-                Clear
-              </button>
-            </>
-          )}
-        </div>
+      <div className="bg-slate-50 dark:bg-slate-900 border-t border-border px-4 py-2 flex items-center justify-end text-xs text-muted-foreground">
+        <button
+          type="button"
+          onClick={() => {
+            if (editorRef.current) {
+              editorRef.current.innerHTML = "";
+              triggerChange();
+            }
+          }}
+          className="text-xs text-muted-foreground hover:text-destructive transition-colors font-medium px-2 py-0.5 rounded hover:bg-muted"
+          title="Clear content back to clean page"
+        >
+          Clear
+        </button>
       </div>
 
       {/* --------------------------------------------------------------------------------- */}
