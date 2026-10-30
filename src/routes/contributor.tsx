@@ -172,7 +172,6 @@ function ContributorDashboardPage() {
   const [uploadingZip, setUploadingZip] = useState(false);
   const [zipFileName, setZipFileName] = useState("");
   const [zipFileSize, setZipFileSize] = useState("");
-  const [screenshotInputUrl, setScreenshotInputUrl] = useState("");
 
   // Categories list & create category state
   const [categoryList, setCategoryList] = useState<string[]>([
@@ -2050,17 +2049,6 @@ python app.py # or npm run dev
                           </div>
                         </div>
                       )}
-
-                      {/* Direct URL Fallback input */}
-                      <div className="flex items-center gap-2 pt-1">
-                        <span className="text-[11px] text-muted-foreground">Or image URL:</span>
-                        <Input
-                          placeholder="https://images.unsplash.com/... or cloud image URL"
-                          value={uploadThumbnailUrl}
-                          onChange={(e) => setUploadThumbnailUrl(e.target.value)}
-                          className="h-7 text-xs flex-1"
-                        />
-                      </div>
                     </div>
 
                     <div className="h-px bg-border my-2" />
@@ -2152,30 +2140,6 @@ python app.py # or npm run dev
                           ))}
                         </div>
                       )}
-
-                      {/* Manual Screenshot URL Add */}
-                      <div className="flex items-center gap-2 pt-1">
-                        <Input
-                          placeholder="Or paste screenshot image URL (https://...)"
-                          value={screenshotInputUrl}
-                          onChange={(e) => setScreenshotInputUrl(e.target.value)}
-                          className="h-7 text-xs flex-1"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            if (screenshotInputUrl.trim()) {
-                              setUploadScreenshots([...uploadScreenshots, screenshotInputUrl.trim()]);
-                              setScreenshotInputUrl("");
-                            }
-                          }}
-                          className="h-7 text-xs"
-                        >
-                          <Plus className="w-3 h-3 mr-1" /> Add URL
-                        </Button>
-                      </div>
                     </div>
 
                     <div className="h-px bg-border my-2" />
@@ -2277,19 +2241,6 @@ python app.py # or npm run dev
                           </div>
                         </div>
                       )}
-
-                      {/* Cloud Link Fallback option */}
-                      <div className="space-y-1 pt-1">
-                        <label className="text-[11px] text-muted-foreground">
-                          Or cloud download link (Google Drive / GitHub / OneDrive / S3):
-                        </label>
-                        <Input
-                          placeholder="https://drive.google.com/uc?id=... or direct cloud download URL"
-                          value={uploadZipUrl}
-                          onChange={(e) => setUploadZipUrl(e.target.value)}
-                          className="h-8 text-xs font-mono"
-                        />
-                      </div>
                     </div>
 
                     <div className="h-px bg-border my-2" />
