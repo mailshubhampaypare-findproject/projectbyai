@@ -187,13 +187,6 @@ function ContributorDashboardPage() {
   ]);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-
-  // Pricing & Commission Request State
-  const [showPricingModal, setShowPricingModal] = useState(false);
-  const [pricingRequested, setPricingRequested] = useState(false);
-  const [requestedPrice, setRequestedPrice] = useState<number>(1499);
-  const [requestedTier, setRequestedTier] = useState<"standard_70" | "video_90">("standard_70");
-  const [pricingRequestNotes, setPricingRequestNotes] = useState("");
   const [uploadReadme, setUploadReadme] = useState(`## Project Overview
 A production-ready full-stack application built for academic submission and real-world deployment.
 
@@ -667,18 +660,6 @@ python app.py # or npm run dev
     toast.success(`Category "${trimmed}" created and selected!`);
   };
 
-  // Pricing Request Handler
-  const handlePricingRequestSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPricingRequested(true);
-    setShowPricingModal(false);
-    toast.success(
-      `Pricing request submitted for ₹${requestedPrice} (${
-        requestedTier === "video_90" ? "90% Video Tutorial Tier" : "70% Standard Tier"
-      }). Admin will review upon project submission.`
-    );
-  };
-
   // Upload Project Submit
   const handleProjectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -690,12 +671,11 @@ python app.py # or npm run dev
     setUploadingProject(true);
 
     try {
-      const finalPrice = pricingRequested ? requestedPrice : (uploadPrice || 1499);
       const newProj = {
         title: uploadTitle,
         slug: uploadSlug,
         category: uploadCategory,
-        price: finalPrice,
+        price: uploadPrice,
         description: uploadDescription,
         readme: uploadReadme,
         detailed_description: uploadDetailedDescription,
@@ -709,11 +689,8 @@ python app.py # or npm run dev
         tech_stack: uploadTechStack,
         contributor_id: user?.id,
         contributor_name: contributorProfile.full_name || user?.user_metadata?.full_name || "Contributor",
-        commission_rate: pricingRequested && requestedTier === "video_90" ? 90 : (uploadTutorialVideoUrl ? 90 : 70),
+        commission_rate: uploadTutorialVideoUrl ? 90 : 70,
         tutorial_video_url: uploadTutorialVideoUrl,
-        pricing_requested: pricingRequested,
-        requested_price: requestedPrice,
-        requested_tier: requestedTier,
         views_count: 0,
         sales_count: 0,
         created_at: new Date().toISOString(),
@@ -727,9 +704,9 @@ python app.py # or npm run dev
 
       setMyProjects([newProj, ...myProjects]);
       toast.success(
-        uploadTutorialVideoUrl || (pricingRequested && requestedTier === "video_90")
-          ? "Project submitted with Tutorial Video for 90% Commission!"
-          : "Project published successfully! You will earn royalties on each sale."
+        uploadTutorialVideoUrl
+          ? "Project published with Step-by-Step Video! Submitted for 90% Commission."
+          : "Project published successfully! You will earn 70% on each sale."
       );
 
       // Reset form
@@ -744,8 +721,6 @@ python app.py # or npm run dev
       setZipFileName("");
       setZipFileSize("");
       setUploadTutorialVideoUrl("");
-      setPricingRequested(false);
-      setPricingRequestNotes("");
       setActiveTab("projects");
     } catch (err: any) {
       toast.error(err.message || "Failed to publish project.");
@@ -2340,78 +2315,74 @@ python app.py # or npm run dev
 
                 {/* Right Column (1/3 width): Pricing, Commission & Taxonomy */}
                 <div className="lg:col-span-4 space-y-6">
-                  {/* Card: Pricing & Commission Request */}
+                  {/* Card: Pricing & Interactive Commission Calculator */}
                   <Card className="p-5 border-border shadow-xs space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-emerald-500" />
-                        <span>Pricing & Commission</span>
-                      </h3>
-                      {pricingRequested ? (
-                        <Badge variant="outline" className="text-emerald-500 border-emerald-500/20 text-[10px] bg-emerald-500/10">
-                          Request Submitted
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-muted-foreground text-[10px]">
-                          Pending Request
-                        </Badge>
-                      )}
+                    <h3 className="font-semibold text-sm text-foreground flex items-center justify-between">
+                      <span>Pricing & Commission</span>
+                      <Badge variant="outline" className="text-emerald-500 border-emerald-500/20 text-[10px]">
+                        70% Standard
+                      </Badge>
+                    </h3>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-muted-foreground">Selling Price in INR (₹)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">
+                          ₹
+                        </span>
+                        <Input
+                          type="number"
+                          value={uploadPrice}
+                          onChange={(e) => setUploadPrice(Number(e.target.value))}
+                          className="pl-7 font-bold text-base"
+                          min={299}
+                          max={29999}
+                        />
+                      </div>
                     </div>
 
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Pricing and commission tiers are assigned through quality review to maintain marketplace standards and ensure fair earnings for creators.
-                    </p>
-
-                    {pricingRequested ? (
-                      <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 space-y-2 text-xs">
-                        <div className="flex items-center justify-between font-semibold text-foreground">
-                          <span>Requested Price:</span>
-                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">₹{requestedPrice}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-muted-foreground">
-                          <span>Requested Commission:</span>
-                          <span className="font-medium text-foreground">
-                            {requestedTier === "video_90" ? "90% (Video Tutorial Tier)" : "70% (Standard Tier)"}
-                          </span>
-                        </div>
-                        {pricingRequestNotes && (
-                          <div className="text-[11px] text-muted-foreground pt-1 border-t border-emerald-500/10">
-                            <em>"{pricingRequestNotes}"</em>
-                          </div>
-                        )}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowPricingModal(true)}
-                          className="w-full text-xs h-7 mt-2"
-                        >
-                          Modify Pricing Request
-                        </Button>
+                    {/* Breakdown Box */}
+                    <div className="p-3.5 rounded-lg bg-muted/60 space-y-2 text-xs">
+                      <div className="flex items-center justify-between text-muted-foreground">
+                        <span>Student pays:</span>
+                        <span className="font-semibold text-foreground">₹{parsedPrice}</span>
                       </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="p-3 rounded-lg bg-muted/50 border border-border text-xs space-y-1.5">
-                          <div className="flex items-center justify-between text-muted-foreground">
-                            <span>Standard Contributor Tier:</span>
-                            <span className="font-semibold text-foreground">70% Royalty</span>
-                          </div>
-                          <div className="flex items-center justify-between text-purple-400">
-                            <span>With Step-by-Step Video:</span>
-                            <span className="font-semibold">90% Royalty</span>
-                          </div>
-                        </div>
-
-                        <Button
-                          type="button"
-                          onClick={() => setShowPricingModal(true)}
-                          className="w-full text-xs font-semibold flex items-center justify-center gap-2 h-9"
-                        >
-                          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                          Request Pricing & Commission
-                        </Button>
+                      <div className="flex items-center justify-between text-emerald-500 font-bold">
+                        <span>Your Payout (70%):</span>
+                        <span>₹{contributorEarn70}</span>
                       </div>
-                    )}
+                      <div className="flex items-center justify-between text-muted-foreground text-[11px]">
+                        <span>Platform fee & handling (30%):</span>
+                        <span>₹{platformFee30}</span>
+                      </div>
+
+                      <div className="pt-2 border-t border-border mt-2 space-y-1">
+                        <div className="flex items-center justify-between text-purple-400 font-bold">
+                          <span>With 90% Tutorial Video:</span>
+                          <span>₹{contributorEarn90}</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">
+                          You make an extra <strong className="text-foreground">+₹{contributorEarn90 - contributorEarn70}</strong> per sale!
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Step-by-Step Tutorial Video Input for 90% */}
+                    <div className="space-y-1.5 pt-1">
+                      <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                        <Video className="w-3.5 h-3.5 text-purple-400" />
+                        Tutorial Video URL (for 90% Commission)
+                      </label>
+                      <Input
+                        placeholder="https://youtu.be/... (Unlisted or Public)"
+                        value={uploadTutorialVideoUrl}
+                        onChange={(e) => setUploadTutorialVideoUrl(e.target.value)}
+                        className="text-xs border-purple-500/30"
+                      />
+                      <p className="text-[10px] text-muted-foreground">
+                        If provided, our admin team reviews your video to immediately approve your 90% commission tier.
+                      </p>
+                    </div>
                   </Card>
 
                   {/* Card: Organization & Taxonomy */}
@@ -2549,197 +2520,6 @@ python app.py # or npm run dev
                 </div>
               </div>
             </form>
-          )}
-
-          {/* --------------------------------------------------------------------------------- */}
-          {/* PRICING & COMMISSION REQUEST MODAL */}
-          {/* --------------------------------------------------------------------------------- */}
-          {showPricingModal && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-              <div className="bg-card border border-border rounded-xl p-6 w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between border-b border-border pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                      <DollarSign className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm text-foreground">
-                        Request Pricing & Commission Review
-                      </h4>
-                      <p className="text-[11px] text-muted-foreground">
-                        Propose your project's student selling price and commission tier
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowPricingModal(false)}
-                    className="text-muted-foreground hover:text-foreground text-sm p-1 rounded hover:bg-muted"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <form onSubmit={handlePricingRequestSubmit} className="space-y-4">
-                  {/* Requested Price */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-foreground">
-                      Suggested Student Price (INR ₹) *
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">
-                        ₹
-                      </span>
-                      <Input
-                        type="number"
-                        value={requestedPrice}
-                        onChange={(e) => setRequestedPrice(Number(e.target.value))}
-                        min={299}
-                        max={29999}
-                        className="pl-7 font-bold text-base h-10"
-                        required
-                      />
-                    </div>
-                    {/* Price Presets */}
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[11px] text-muted-foreground">Popular presets:</span>
-                      {[999, 1499, 1999, 2499, 3499].map((p) => (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => setRequestedPrice(p)}
-                          className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
-                            requestedPrice === p
-                              ? "bg-primary text-primary-foreground border-primary font-semibold"
-                              : "border-border hover:bg-muted text-foreground"
-                          }`}
-                        >
-                          ₹{p}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Commission Tier Choice */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-foreground">
-                      Select Requested Commission Tier
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      <div
-                        onClick={() => setRequestedTier("standard_70")}
-                        className={`cursor-pointer p-3 rounded-lg border transition-all ${
-                          requestedTier === "standard_70"
-                            ? "border-emerald-500 bg-emerald-500/10 shadow-xs"
-                            : "border-border hover:bg-muted/40"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-xs text-foreground">70% Standard</span>
-                          <Badge variant="outline" className="text-[10px] text-emerald-500 border-emerald-500/20">
-                            Default
-                          </Badge>
-                        </div>
-                        <p className="text-[11px] text-muted-foreground mt-1">
-                          Includes verified source code, README setup guide & viva defense questions.
-                        </p>
-                        <p className="text-xs font-bold text-emerald-500 mt-2">
-                          You earn ₹{Math.round(requestedPrice * 0.7)} per sale
-                        </p>
-                      </div>
-
-                      <div
-                        onClick={() => setRequestedTier("video_90")}
-                        className={`cursor-pointer p-3 rounded-lg border transition-all ${
-                          requestedTier === "video_90"
-                            ? "border-purple-500 bg-purple-500/10 shadow-xs"
-                            : "border-border hover:bg-muted/40"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-xs text-foreground">90% Video Bonus</span>
-                          <Badge variant="outline" className="text-[10px] text-purple-400 border-purple-500/20 bg-purple-500/10">
-                            +20% Extra
-                          </Badge>
-                        </div>
-                        <p className="text-[11px] text-muted-foreground mt-1">
-                          Provide a complete step-by-step video explaining project building from scratch.
-                        </p>
-                        <p className="text-xs font-bold text-purple-400 mt-2">
-                          You earn ₹{Math.round(requestedPrice * 0.9)} per sale
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Step-by-Step Tutorial Video Input (if 90% tier) */}
-                  {requestedTier === "video_90" && (
-                    <div className="space-y-1.5 p-3 rounded-lg bg-purple-500/5 border border-purple-500/20">
-                      <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                        <Video className="w-3.5 h-3.5 text-purple-400" />
-                        Step-by-Step Tutorial Video Link *
-                      </label>
-                      <Input
-                        placeholder="https://youtu.be/... (Unlisted or Public video URL)"
-                        value={uploadTutorialVideoUrl}
-                        onChange={(e) => setUploadTutorialVideoUrl(e.target.value)}
-                        required
-                        className="h-8 text-xs bg-background"
-                      />
-                      <p className="text-[10px] text-muted-foreground">
-                        Video must walk students step-by-step through project creation and architecture.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Justification / Notes for Admin */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-foreground">
-                      Notes for Reviewers (Optional)
-                    </label>
-                    <Textarea
-                      placeholder="Share details about unique features, dataset size, frameworks, or viva tips that support this pricing..."
-                      value={pricingRequestNotes}
-                      onChange={(e) => setPricingRequestNotes(e.target.value)}
-                      rows={2}
-                      className="text-xs"
-                    />
-                  </div>
-
-                  {/* Payout Breakdown preview */}
-                  <div className="rounded-lg bg-muted/60 p-3 text-xs space-y-1">
-                    <div className="flex items-center justify-between text-muted-foreground">
-                      <span>Student Checkout Price:</span>
-                      <span className="font-semibold text-foreground">₹{requestedPrice}</span>
-                    </div>
-                    <div className="flex items-center justify-between font-bold text-emerald-500">
-                      <span>Your Payout ({requestedTier === "video_90" ? "90%" : "70%"}):</span>
-                      <span>₹{Math.round(requestedPrice * (requestedTier === "video_90" ? 0.9 : 0.7))}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>Platform Fee & Gateway Handling:</span>
-                      <span>₹{Math.round(requestedPrice * (requestedTier === "video_90" ? 0.1 : 0.3))}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowPricingModal(false)}
-                      className="text-xs h-8"
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit" size="sm" className="text-xs h-8 font-semibold">
-                      <Sparkles className="w-3.5 h-3.5 mr-1 text-amber-300" />
-                      Submit Pricing Request
-                    </Button>
-                  </div>
-                </form>
-              </div>
-            </div>
           )}
 
           {/* =============================================================================== */}
