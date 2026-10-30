@@ -2366,23 +2366,6 @@ python app.py # or npm run dev
                         </p>
                       </div>
                     </div>
-
-                    {/* Step-by-Step Tutorial Video Input for 90% */}
-                    <div className="space-y-1.5 pt-1">
-                      <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                        <Video className="w-3.5 h-3.5 text-purple-400" />
-                        Tutorial Video URL (for 90% Commission)
-                      </label>
-                      <Input
-                        placeholder="https://youtu.be/... (Unlisted or Public)"
-                        value={uploadTutorialVideoUrl}
-                        onChange={(e) => setUploadTutorialVideoUrl(e.target.value)}
-                        className="text-xs border-purple-500/30"
-                      />
-                      <p className="text-[10px] text-muted-foreground">
-                        If provided, our admin team reviews your video to immediately approve your 90% commission tier.
-                      </p>
-                    </div>
                   </Card>
 
                   {/* Card: Organization & Taxonomy */}
