@@ -64,7 +64,9 @@ import {
   UploadCloud,
   FileArchive,
   Trash2,
-  ImagePlus
+  ImagePlus,
+  Loader2,
+  Camera
 } from "lucide-react";
 
 export const Route = createFileRoute("/contributor")({
@@ -228,6 +230,8 @@ python app.py # or npm run dev
   const [settingCollege, setSettingCollege] = useState("");
   const [settingBio, setSettingBio] = useState("");
   const [settingAvatar, setSettingAvatar] = useState("");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [isAvatarDragging, setIsAvatarDragging] = useState(false);
   const [settingUpi, setSettingUpi] = useState("");
   const [settingBankName, setSettingBankName] = useState("");
   const [settingAccount, setSettingAccount] = useState("");
@@ -628,6 +632,28 @@ python app.py # or npm run dev
       toast.error("Failed to upload ZIP file.");
     } finally {
       setUploadingZip(false);
+    }
+  };
+
+  // Profile Photo Upload Handler (Drag & Drop or Browse)
+  const handleAvatarUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file (PNG, JPG, WEBP).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB.");
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const url = await uploadFileToStorage(file, "contributor-avatars");
+      setSettingAvatar(url);
+      toast.success("Profile photo uploaded!");
+    } catch (err: any) {
+      toast.error("Failed to upload profile photo.");
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -1373,11 +1399,19 @@ python app.py # or npm run dev
         >
           <div className="flex items-center justify-between p-2 rounded-lg bg-muted/60">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs uppercase border border-border">
-                {contributorProfile.full_name
-                  ? contributorProfile.full_name.charAt(0)
-                  : user?.email?.charAt(0) || "C"}
-              </div>
+              {contributorProfile.avatar_url ? (
+                <img
+                  src={contributorProfile.avatar_url}
+                  alt={contributorProfile.full_name || "Contributor"}
+                  className="w-8 h-8 rounded-full object-cover border border-border"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs uppercase border border-border">
+                  {contributorProfile.full_name
+                    ? contributorProfile.full_name.charAt(0)
+                    : user?.email?.charAt(0) || "C"}
+                </div>
+              )}
               <div className="min-w-0">
                 <p className="text-xs font-semibold truncate text-foreground">
                   {contributorProfile.full_name || "Contributor"}
@@ -3079,14 +3113,153 @@ python app.py # or npm run dev
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground">Profile Photo URL</label>
-                    <Input
-                      value={settingAvatar}
-                      onChange={(e) => setSettingAvatar(e.target.value)}
-                      placeholder="https://..."
-                      className="h-9 text-xs"
-                    />
+                  {/* Profile Photo (Drag & Drop + Upload) */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                        <Camera className="w-3.5 h-3.5 text-primary" />
+                        Profile Photo
+                      </label>
+                      <span className="text-[11px] text-muted-foreground">
+                        Recommended: Square 1:1 (Max 5MB)
+                      </span>
+                    </div>
+
+                    {settingAvatar ? (
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsAvatarDragging(true);
+                        }}
+                        onDragLeave={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsAvatarDragging(false);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsAvatarDragging(false);
+                          if (e.dataTransfer.files?.[0]) {
+                            handleAvatarUpload(e.dataTransfer.files[0]);
+                          }
+                        }}
+                        className={`relative rounded-xl border p-3.5 flex flex-wrap items-center justify-between gap-4 transition-colors ${
+                          isAvatarDragging
+                            ? "border-primary bg-primary/10 ring-2 ring-primary/20"
+                            : "border-border bg-muted/20"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3.5">
+                          <div className="relative">
+                            <img
+                              src={settingAvatar}
+                              alt="Profile Preview"
+                              className="w-14 h-14 rounded-full object-cover border-2 border-background shadow-xs ring-1 ring-border"
+                            />
+                            {uploadingAvatar && (
+                              <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center text-white">
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="space-y-0.5">
+                            <p className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                              Profile photo selected
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              Drag and drop a new photo here to replace, or click Replace
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <label className="cursor-pointer inline-flex items-center gap-1.5 text-xs border border-border bg-background hover:bg-muted px-3 py-1.5 rounded-md font-medium text-foreground transition-colors shadow-2xs">
+                            <UploadCloud className="w-3.5 h-3.5 text-primary" />
+                            <span>Replace</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                if (e.target.files?.[0]) handleAvatarUpload(e.target.files[0]);
+                              }}
+                            />
+                          </label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSettingAvatar("")}
+                            className="text-muted-foreground hover:text-destructive h-8 px-2.5"
+                            title="Remove profile photo"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 mr-1" />
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsAvatarDragging(true);
+                        }}
+                        onDragLeave={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsAvatarDragging(false);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsAvatarDragging(false);
+                          if (e.dataTransfer.files?.[0]) {
+                            handleAvatarUpload(e.dataTransfer.files[0]);
+                          }
+                        }}
+                        onClick={() => document.getElementById("avatar-file-input")?.click()}
+                        className={`border-2 border-dashed transition-all rounded-xl p-5 text-center flex flex-col items-center justify-center gap-2 cursor-pointer ${
+                          isAvatarDragging
+                            ? "border-primary bg-primary/10 ring-2 ring-primary/20 scale-[0.99]"
+                            : "border-border hover:border-primary/50 bg-muted/20 hover:bg-muted/40"
+                        }`}
+                      >
+                        <input
+                          id="avatar-file-input"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) handleAvatarUpload(e.target.files[0]);
+                          }}
+                        />
+                        {uploadingAvatar ? (
+                          <div className="flex flex-col items-center gap-2 py-2">
+                            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                            <p className="text-xs font-medium text-foreground">Uploading profile photo...</p>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                              <UploadCloud className="w-5 h-5" />
+                            </div>
+                            <div className="space-y-0.5">
+                              <p className="text-xs font-medium text-foreground">
+                                Drag and drop your photo here, or{" "}
+                                <span className="text-primary font-semibold underline underline-offset-2">browse</span>
+                              </p>
+                              <p className="text-[11px] text-muted-foreground">
+                                Supports PNG, JPG, WEBP (Square recommended, max 5MB)
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-1.5">
