@@ -15,6 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ContributorRouteImport } from './routes/contributor'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as LinkedinExtensionRouteImport } from './routes/linkedin-extension'
 import { Route as LinkedinExtensionPrivacyRouteImport } from './routes/linkedin-extension-privacy'
 import { Route as LinkedinExtensionTermsRouteImport } from './routes/linkedin-extension-terms'
@@ -64,6 +65,11 @@ const ContactRoute = ContactRouteImport.update({
 const ContributorRoute = ContributorRouteImport.update({
   id: '/contributor',
   path: '/contributor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LinkedinExtensionRoute = LinkedinExtensionRouteImport.update({
@@ -188,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/contributor': typeof ContributorRoute
+  '/demo': typeof DemoRoute
   '/linkedin-extension': typeof LinkedinExtensionRoute
   '/linkedin-extension-privacy': typeof LinkedinExtensionPrivacyRoute
   '/linkedin-extension-terms': typeof LinkedinExtensionTermsRoute
@@ -216,6 +223,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/contributor': typeof ContributorRoute
+  '/demo': typeof DemoRoute
   '/linkedin-extension': typeof LinkedinExtensionRoute
   '/linkedin-extension-privacy': typeof LinkedinExtensionPrivacyRoute
   '/linkedin-extension-terms': typeof LinkedinExtensionTermsRoute
@@ -244,6 +252,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/contributor': typeof ContributorRoute
+  '/demo': typeof DemoRoute
   '/linkedin-extension': typeof LinkedinExtensionRoute
   '/linkedin-extension-privacy': typeof LinkedinExtensionPrivacyRoute
   '/linkedin-extension-terms': typeof LinkedinExtensionTermsRoute
@@ -274,6 +283,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/contact'
     | '/contributor'
+    | '/demo'
     | '/linkedin-extension'
     | '/linkedin-extension-privacy'
     | '/linkedin-extension-terms'
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/contact'
     | '/contributor'
+    | '/demo'
     | '/linkedin-extension'
     | '/linkedin-extension-privacy'
     | '/linkedin-extension-terms'
@@ -329,6 +340,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/contact'
     | '/contributor'
+    | '/demo'
     | '/linkedin-extension'
     | '/linkedin-extension-privacy'
     | '/linkedin-extension-terms'
@@ -359,6 +371,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
   ContributorRoute: typeof ContributorRoute
+  DemoRoute: typeof DemoRoute
   LinkedinExtensionRoute: typeof LinkedinExtensionRoute
   LinkedinExtensionPrivacyRoute: typeof LinkedinExtensionPrivacyRoute
   LinkedinExtensionTermsRoute: typeof LinkedinExtensionTermsRoute
@@ -414,6 +427,13 @@ declare module '@tanstack/react-router' {
       path: '/contributor'
       fullPath: '/contributor'
       preLoaderRoute: typeof ContributorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/linkedin-extension': {
@@ -631,6 +651,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
   ContributorRoute: ContributorRoute,
+  DemoRoute: DemoRoute,
   LinkedinExtensionRoute: LinkedinExtensionRoute,
   LinkedinExtensionPrivacyRoute: LinkedinExtensionPrivacyRoute,
   LinkedinExtensionTermsRoute: LinkedinExtensionTermsRoute,
