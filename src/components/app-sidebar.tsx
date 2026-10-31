@@ -11,7 +11,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { ShoppingBag, FolderKanban, User, LogOut } from "lucide-react";
+import { ShoppingBag, FolderKanban, MessageSquare, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
@@ -19,6 +19,7 @@ import { useNavigate } from "@tanstack/react-router";
 const items = [
   { title: "Project Library", url: "/dashboard/prebuilt", icon: ShoppingBag },
   { title: "My Projects", url: "/dashboard/my-projects", icon: FolderKanban },
+  { title: "Community Q&A", url: "/dashboard/community", icon: MessageSquare },
   { title: "Profile", url: "/dashboard/profile", icon: User },
 ];
 

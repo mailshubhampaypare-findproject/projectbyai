@@ -5,6 +5,7 @@ import {
   Sparkles,
   Library,
   FolderOpen,
+  MessageSquare,
   CreditCard,
   User,
   X,
@@ -21,6 +22,7 @@ interface AppSidebarProps {
 const NAV_ITEMS = [
   { id: "prebuilt", label: "Prebuilt Projects", icon: Library },
   { id: "my-projects", label: "My Projects", icon: FolderOpen },
+  { id: "community", label: "Community Q&A", icon: MessageSquare },
   { id: "profile", label: "Profile", icon: User },
 ];
 

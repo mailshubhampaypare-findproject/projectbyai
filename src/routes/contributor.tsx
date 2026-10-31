@@ -301,12 +301,36 @@ python app.py # or npm run dev
       }
 
       // 3. Load community messages for this contributor
-      const { data: msgs } = await supabase
-        .from("project_community_messages")
-        .select("*")
-        .order("created_at", { ascending: false });
+      try {
+        const { data: msgs } = await supabase
+          .from("project_community_messages")
+          .select("*")
+          .order("created_at", { ascending: false });
 
-      setCommunityMessages(msgs || []);
+        if (msgs && msgs.length > 0) {
+          setCommunityMessages(msgs);
+        } else if (typeof window !== "undefined") {
+          const stored = localStorage.getItem("project_community_discussions_v1");
+          if (stored) {
+            try {
+              setCommunityMessages(JSON.parse(stored));
+            } catch (err) {
+              setCommunityMessages([]);
+            }
+          }
+        }
+      } catch (err) {
+        if (typeof window !== "undefined") {
+          const stored = localStorage.getItem("project_community_discussions_v1");
+          if (stored) {
+            try {
+              setCommunityMessages(JSON.parse(stored));
+            } catch (e) {
+              setCommunityMessages([]);
+            }
+          }
+        }
+      }
 
       // 4. Load tutorial tier requests
       const { data: treqs } = await supabase
@@ -792,7 +816,11 @@ python app.py # or npm run dev
       replies: [],
     };
 
-    setCommunityMessages([newMsg, ...communityMessages]);
+    const updated = [newMsg, ...communityMessages];
+    setCommunityMessages(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("project_community_discussions_v1", JSON.stringify(updated));
+    }
     setNewQuestionText("");
     toast.success("Question posted to the community!");
   };
@@ -802,27 +830,29 @@ python app.py # or npm run dev
     const text = replyInputMap[threadId];
     if (!text || !text.trim()) return;
 
-    setCommunityMessages((prev) =>
-      prev.map((thread) => {
-        if (thread.id === threadId) {
-          return {
-            ...thread,
-            replies: [
-              ...(thread.replies || []),
-              {
-                id: `cr-${Date.now()}`,
-                user_name: contributorProfile.full_name || "Contributor",
-                user_role: "Contributor (Author)",
-                message: text.trim(),
-                created_at: "Just now",
-              },
-            ],
-          };
-        }
-        return thread;
-      })
-    );
+    const updated = communityMessages.map((thread) => {
+      if (thread.id === threadId) {
+        return {
+          ...thread,
+          replies: [
+            ...(thread.replies || []),
+            {
+              id: `cr-${Date.now()}`,
+              user_name: contributorProfile.full_name || "Contributor",
+              user_role: "Contributor (Author)",
+              message: text.trim(),
+              created_at: "Just now",
+            },
+          ],
+        };
+      }
+      return thread;
+    });
 
+    setCommunityMessages(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("project_community_discussions_v1", JSON.stringify(updated));
+    }
     setReplyInputMap((prev) => ({ ...prev, [threadId]: "" }));
     toast.success("Reply posted!");
   };

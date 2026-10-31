@@ -28,6 +28,7 @@ import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
 import { Route as ProjectsSlugRouteImport } from './routes/projects.$slug'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard/index'
+import { Route as AuthenticatedDashboardCommunityRouteImport } from './routes/_authenticated/dashboard/community'
 import { Route as AuthenticatedDashboardMyProjectsRouteImport } from './routes/_authenticated/dashboard/my-projects'
 import { Route as AuthenticatedDashboardPrebuiltRouteImport } from './routes/_authenticated/dashboard/prebuilt'
 import { Route as AuthenticatedDashboardPricingRouteImport } from './routes/_authenticated/dashboard/pricing'
@@ -132,6 +133,12 @@ const AuthenticatedDashboardIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardCommunityRoute =
+  AuthenticatedDashboardCommunityRouteImport.update({
+    id: '/community',
+    path: '/community',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedDashboardMyProjectsRoute =
   AuthenticatedDashboardMyProjectsRouteImport.update({
     id: '/my-projects',
@@ -193,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/projects/$slug': typeof ProjectsSlugRoute
   '/blog/': typeof BlogIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/dashboard/community': typeof AuthenticatedDashboardCommunityRoute
   '/dashboard/my-projects': typeof AuthenticatedDashboardMyProjectsRoute
   '/dashboard/prebuilt': typeof AuthenticatedDashboardPrebuiltRouteWithChildren
   '/dashboard/pricing': typeof AuthenticatedDashboardPricingRoute
@@ -219,6 +227,7 @@ export interface FileRoutesByTo {
   '/projects/$slug': typeof ProjectsSlugRoute
   '/blog': typeof BlogIndexRoute
   '/projects': typeof ProjectsIndexRoute
+  '/dashboard/community': typeof AuthenticatedDashboardCommunityRoute
   '/dashboard/my-projects': typeof AuthenticatedDashboardMyProjectsRoute
   '/dashboard/pricing': typeof AuthenticatedDashboardPricingRoute
   '/dashboard/profile': typeof AuthenticatedDashboardProfileRoute
@@ -247,6 +256,7 @@ export interface FileRoutesById {
   '/projects/$slug': typeof ProjectsSlugRoute
   '/blog/': typeof BlogIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/_authenticated/dashboard/community': typeof AuthenticatedDashboardCommunityRoute
   '/_authenticated/dashboard/my-projects': typeof AuthenticatedDashboardMyProjectsRoute
   '/_authenticated/dashboard/prebuilt': typeof AuthenticatedDashboardPrebuiltRouteWithChildren
   '/_authenticated/dashboard/pricing': typeof AuthenticatedDashboardPricingRoute
@@ -276,6 +286,7 @@ export interface FileRouteTypes {
     | '/projects/$slug'
     | '/blog/'
     | '/projects/'
+    | '/dashboard/community'
     | '/dashboard/my-projects'
     | '/dashboard/prebuilt'
     | '/dashboard/pricing'
@@ -302,6 +313,7 @@ export interface FileRouteTypes {
     | '/projects/$slug'
     | '/blog'
     | '/projects'
+    | '/dashboard/community'
     | '/dashboard/my-projects'
     | '/dashboard/pricing'
     | '/dashboard/profile'
@@ -329,6 +341,7 @@ export interface FileRouteTypes {
     | '/projects/$slug'
     | '/blog/'
     | '/projects/'
+    | '/_authenticated/dashboard/community'
     | '/_authenticated/dashboard/my-projects'
     | '/_authenticated/dashboard/prebuilt'
     | '/_authenticated/dashboard/pricing'
@@ -494,6 +507,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardIndexRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/community': {
+      id: '/_authenticated/dashboard/community'
+      path: '/community'
+      fullPath: '/dashboard/community'
+      preLoaderRoute: typeof AuthenticatedDashboardCommunityRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/dashboard/my-projects': {
       id: '/_authenticated/dashboard/my-projects'
       path: '/my-projects'
@@ -565,6 +585,7 @@ const AuthenticatedDashboardPrebuiltRouteWithChildren =
   )
 
 interface AuthenticatedDashboardRouteChildren {
+  AuthenticatedDashboardCommunityRoute: typeof AuthenticatedDashboardCommunityRoute
   AuthenticatedDashboardMyProjectsRoute: typeof AuthenticatedDashboardMyProjectsRoute
   AuthenticatedDashboardPrebuiltRoute: typeof AuthenticatedDashboardPrebuiltRouteWithChildren
   AuthenticatedDashboardPricingRoute: typeof AuthenticatedDashboardPricingRoute
@@ -575,6 +596,7 @@ interface AuthenticatedDashboardRouteChildren {
 
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
+    AuthenticatedDashboardCommunityRoute: AuthenticatedDashboardCommunityRoute,
     AuthenticatedDashboardMyProjectsRoute:
       AuthenticatedDashboardMyProjectsRoute,
     AuthenticatedDashboardPrebuiltRoute:
