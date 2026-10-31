@@ -19,10 +19,8 @@ interface AppSidebarProps {
 }
 
 const NAV_ITEMS = [
-  { id: "create", label: "Create Project", icon: Sparkles },
   { id: "prebuilt", label: "Prebuilt Projects", icon: Library },
   { id: "my-projects", label: "My Projects", icon: FolderOpen },
-  { id: "pricing", label: "Pricing", icon: CreditCard },
   { id: "profile", label: "Profile", icon: User },
 ];
 

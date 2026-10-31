@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { PRICING_PLANS } from "@/lib/prebuilt-data";
@@ -10,8 +10,11 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/dashboard/pricing")({
+  beforeLoad: () => {
+    throw redirect({ to: "/dashboard/prebuilt" });
+  },
   head: () => ({ meta: [{ title: "Pricing — Scholarly" }] }),
-  component: Pricing,
+  component: () => null,
 });
 
 function Pricing() {

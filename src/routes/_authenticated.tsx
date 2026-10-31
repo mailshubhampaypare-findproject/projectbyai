@@ -48,7 +48,7 @@ function AuthenticatedLayout() {
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 border-b bg-card/50 backdrop-blur flex items-center gap-3 px-4 sticky top-0 z-10">
             <SidebarTrigger />
-            <Link to="/dashboard" className="flex items-center gap-2 font-semibold">
+            <Link to="/dashboard/prebuilt" className="flex items-center gap-2 font-semibold">
               <GraduationCap className="h-5 w-5 text-primary" />
               <span className="text-gradient">Scholarly</span>
             </Link>

@@ -11,16 +11,14 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Sparkles, ShoppingBag, FolderKanban, Zap, User, LogOut } from "lucide-react";
+import { ShoppingBag, FolderKanban, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 
 const items = [
-  { title: "Create with AI", url: "/dashboard", icon: Sparkles, exact: true },
   { title: "Project Library", url: "/dashboard/prebuilt", icon: ShoppingBag },
   { title: "My Projects", url: "/dashboard/my-projects", icon: FolderKanban },
-  { title: "Pricing", url: "/dashboard/pricing", icon: Zap },
   { title: "Profile", url: "/dashboard/profile", icon: User },
 ];
 

@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FolderKanban, Sparkles, Trash2, ArrowRight, Download, Laptop, FileDown } from "lucide-react";
+import { FolderKanban, Sparkles, Trash2, ArrowRight, Download, Laptop, FileDown, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -69,11 +69,11 @@ function MyProjects() {
               <FolderKanban className="h-4 w-4 text-primary" /> Workspace
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight mt-1">My Projects</h1>
-            <p className="text-muted-foreground mt-1">Access projects you built with AI or purchased from our library.</p>
+            <p className="text-muted-foreground mt-1">Access projects you purchased from our library.</p>
           </div>
           <Button asChild className="bg-gradient-primary shadow-elegant">
-            <Link to="/dashboard">
-              <Sparkles className="h-4 w-4 mr-2" /> Create with AI
+            <Link to="/dashboard/prebuilt">
+              <ShoppingBag className="h-4 w-4 mr-2" /> Browse Library
             </Link>
           </Button>
         </div>
@@ -147,27 +147,17 @@ function MyProjects() {
               )}
             </div>
 
-            {/* Section 2: Created with AI */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b">
-                <Laptop className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-bold">Created with AI</h2>
-                <Badge variant="secondary" className="ml-1 bg-primary/10 text-primary border-0">
-                  {createdProjects.length}
-                </Badge>
-              </div>
-              
-              {createdProjects.length === 0 ? (
-                <Card className="p-8 text-center border-dashed bg-card/50">
-                  <FolderKanban className="h-8 w-8 mx-auto mb-3 opacity-40 text-muted-foreground" />
-                  <p className="text-sm font-medium text-muted-foreground">No AI projects created yet.</p>
-                  <Button asChild size="sm" className="mt-4 bg-gradient-primary">
-                    <Link to="/dashboard">
-                      <Sparkles className="h-3.5 w-3.5 mr-2" /> Start building
-                    </Link>
-                  </Button>
-                </Card>
-              ) : (
+            {/* Section 2: Created with AI (shown only if existing projects exist) */}
+            {createdProjects.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b">
+                  <Laptop className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-bold">Created with AI</h2>
+                  <Badge variant="secondary" className="ml-1 bg-primary/10 text-primary border-0">
+                    {createdProjects.length}
+                  </Badge>
+                </div>
+                
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {createdProjects.map((p) => (
                     <Card key={p.id} className="p-5 space-y-4 hover:shadow-elegant transition-all duration-300 group flex flex-col justify-between animate-in fade-in duration-200">
@@ -203,8 +193,8 @@ function MyProjects() {
                     </Card>
                   ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </div>

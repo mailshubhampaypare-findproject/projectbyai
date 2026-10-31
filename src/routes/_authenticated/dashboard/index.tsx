@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,11 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
-  head: () => ({ meta: [{ title: "Create with AI — ScholarBuild" }] }),
-  component: CreateWizard,
+  beforeLoad: () => {
+    throw redirect({ to: "/dashboard/prebuilt" });
+  },
+  head: () => ({ meta: [{ title: "Project Library — projectbyAI" }] }),
+  component: () => null,
 });
 
 // Streams
