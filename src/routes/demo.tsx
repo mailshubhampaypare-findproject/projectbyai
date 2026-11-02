@@ -790,9 +790,9 @@ function DemoHomePage() {
             <Button
               asChild
               size="lg"
-              className="bg-white text-slate-900 hover:bg-slate-100 font-bold text-sm px-8 h-12 rounded-xl shadow-md"
+              className="bg-white text-slate-900 hover:bg-slate-100 font-bold text-sm px-8 h-12 rounded-xl shadow-md border-0"
             >
-              <a href="#project-showcase">
+              <a href="#project-showcase" className="text-slate-900 flex items-center">
                 <span>Browse Verified Projects</span>
                 <ArrowRight className="w-4 h-4 ml-2" />
               </a>
@@ -800,12 +800,11 @@ function DemoHomePage() {
             <Button
               asChild
               size="lg"
-              variant="outline"
-              className="border-white/40 text-white hover:bg-white/10 font-bold text-sm px-6 h-12 rounded-xl"
+              className="bg-white text-black hover:bg-slate-100 font-bold text-sm px-6 h-12 rounded-xl shadow-md border-0"
             >
-              <Link to="/dashboard/community">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Ask in Community Q&A
+              <Link to="/dashboard/community" className="text-black flex items-center">
+                <MessageSquare className="w-4 h-4 mr-2 text-black" />
+                <span>Ask in Community Q&A</span>
               </Link>
             </Button>
           </div>
