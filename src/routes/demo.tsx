@@ -17,7 +17,6 @@ import {
   FileCode,
   Video,
   HelpCircle,
-  GraduationCap,
   ShieldCheck,
   Star,
   Users,
@@ -224,10 +223,7 @@ function DemoHomePage() {
               Community Q&A
             </Link>
             <Link to="/blog" className="hover:text-foreground transition-colors">
-              Viva Guides & Blog
-            </Link>
-            <Link to="/contributor" className="hover:text-amber-700 transition-colors font-semibold text-amber-700/90 dark:text-amber-400">
-              Contributor Hub
+              Blog
             </Link>
           </nav>
 
@@ -253,11 +249,6 @@ function DemoHomePage() {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-amber-200/25 rounded-full blur-3xl pointer-events-none" />
 
         <div className="max-w-5xl mx-auto px-6 text-center space-y-7 relative z-10">
-          {/* Trust Eyebrow */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-100/70 border border-amber-200 text-amber-900 text-xs font-semibold shadow-2xs">
-            <GraduationCap className="h-3.5 w-3.5 text-amber-700" />
-            <span>100% Tested Final-Year Projects • Viva Defense & IEEE Reports Included</span>
-          </div>
 
           {/* Main Headline */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1] text-slate-900 dark:text-white max-w-4xl mx-auto">
