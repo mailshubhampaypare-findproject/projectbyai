@@ -96,16 +96,16 @@ const FAQS = [
     a: "Yes, absolutely! You receive complete uncompiled source code in a ZIP archive with full editing rights. You can easily add your college logo, modify the database schema, add custom API endpoints, or change styling.",
   },
   {
-    q: "Is the project report formatted according to university standards?",
-    a: "Yes. Every project includes a professionally formatted project synopsis and final report (Word .docx and PDF) formatted according to standard university IEEE guidelines, complete with system flowcharts, database normalization (3NF), and literature survey.",
+    q: "Can I use this project for my college submission as well as on my resume for job search?",
+    a: "Yes, absolutely! Every project is built using modern, industry-standard tech stacks (like Python, React, Next.js, Flutter, and PostgreSQL) with clean modular architecture. You can submit it for your college evaluation, upload it to your personal GitHub, feature it on your resume, and confidently explain the system design in software engineering job interviews.",
   },
   {
     q: "What if I get stuck while setting up or running the code locally?",
     a: "You get access to our Student Community Q&A where you can ask questions directly about your project setup. Verified project authors and community contributors actively answer setup questions and provide troubleshooting tips.",
   },
   {
-    q: "Are viva defense questions and presentation slides included?",
-    a: "Yes! Every single project package comes with a dedicated College Viva Defense Cheat Sheet covering the top 20–25 examiner viva questions, plus presentation slides (PPT) to help you present with confidence.",
+    q: "Can I deploy this project live online to showcase a working demo to recruiters and evaluators?",
+    a: "Yes! All projects are designed with cloud-ready architecture, making them simple to deploy on platforms like Vercel, Netlify, Render, or Firebase. Having a live, clickable demo link on your resume, LinkedIn, and college presentation makes your portfolio stand out immediately to hiring managers.",
   },
   {
     q: "How fast do I receive the project after acquisition?",
