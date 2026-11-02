@@ -515,17 +515,9 @@ function DemoHomePage() {
                       )}
 
                       {/* Guaranteed badges */}
-                      <div className="pt-2 border-t border-slate-100 dark:border-border/50 flex items-center justify-between text-[11px] text-muted-foreground">
-                        <span className="flex items-center gap-1 text-emerald-600 font-medium">
-                          <CheckCircle2 className="w-3 h-3" /> Source Code
-                        </span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1 text-blue-600 font-medium">
-                          <FileText className="w-3 h-3" /> 60p Report
-                        </span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1 text-amber-600 font-medium">
-                          <HelpCircle className="w-3 h-3" /> Viva Q&A
+                      <div className="pt-2 border-t border-slate-100 dark:border-border/50 flex items-center text-[11px]">
+                        <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Source Code
                         </span>
                       </div>
                     </div>
@@ -538,7 +530,7 @@ function DemoHomePage() {
                       className="w-full bg-gradient-primary shadow-elegant font-semibold text-xs h-9"
                     >
                       <Link to="/projects/$slug" params={{ slug: p.slug }}>
-                        <span>View Project & Viva Demo</span>
+                        <span>View Project</span>
                         <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                       </Link>
                     </Button>
