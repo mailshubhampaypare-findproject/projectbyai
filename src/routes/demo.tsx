@@ -529,7 +529,7 @@ function DemoHomePage() {
                       asChild
                       className="w-full bg-gradient-primary shadow-elegant font-semibold text-xs h-9"
                     >
-                      <Link to="/projects/$slug" params={{ slug: p.slug }}>
+                      <Link to="/projects/$slug" params={{ slug: p.slug || p.id || "" }}>
                         <span>View Project</span>
                         <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                       </Link>
