@@ -39,11 +39,11 @@ import {
 export const Route = createFileRoute("/demo")({
   head: () => ({
     meta: [
-      { title: "Projectbyai Demo — Verified Final-Year Engineering Projects" },
+      { title: "Projectbyai Demo — Verified Academic & Final-Year Projects" },
       {
         name: "description",
         content:
-          "Explore tested final-year student projects with source code, IEEE reports, viva defense FAQs, and video walkthroughs.",
+          "Explore tested student projects across all streams and domains with source code, reports, viva defense FAQs, and video walkthroughs.",
       },
     ],
   }),
@@ -254,7 +254,7 @@ function DemoHomePage() {
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1] text-slate-900 dark:text-white max-w-4xl mx-auto">
             Skip the Setup Stress. Download{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-amber-700 to-yellow-600">
-              Verified Engineering Projects
+              Verified Academic Projects
             </span>{" "}
             Ready for Viva.
           </h1>
@@ -479,7 +479,7 @@ function DemoHomePage() {
                         loading="lazy"
                       />
                       <Badge className="absolute top-3 left-3 bg-white/90 dark:bg-slate-900/90 text-slate-800 dark:text-slate-100 backdrop-blur-md border border-black/5 text-[10px] font-semibold">
-                        {p.category || "Engineering"}
+                        {p.category || "Academic"}
                       </Badge>
                       <div className="absolute top-3 right-3 bg-amber-500 text-white font-extrabold text-xs px-2.5 py-1 rounded-md shadow-xs">
                         ₹{p.price || 999}
@@ -492,7 +492,7 @@ function DemoHomePage() {
                         {p.title}
                       </h3>
                       <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                        {p.description ? p.description.replace(/<[^>]*>/g, "") : "Comprehensive engineering final-year project package."}
+                        {p.description ? p.description.replace(/<[^>]*>/g, "") : "Comprehensive academic final-year project package."}
                       </p>
 
                       {/* Tech stack pills */}
@@ -654,7 +654,7 @@ function DemoHomePage() {
                 Earn 70% to 90% as a Contributor
               </h3>
               <p className="text-xs text-slate-700 dark:text-muted-foreground leading-relaxed">
-                Built an exceptional engineering project during college? Don't let your code sit idle. Upload your project on Projectbyai and earn royalties every time a student downloads it.
+                Built an exceptional project during college? Don't let your code sit idle. Upload your project on Projectbyai and earn royalties every time a student downloads it.
               </p>
 
               <div className="grid grid-cols-2 gap-3 pt-2">
@@ -689,7 +689,7 @@ function DemoHomePage() {
               Student Reviews
             </Badge>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              Trusted by 5,000+ Engineering Students
+              Trusted by 5,000+ College & University Students
             </h2>
             <p className="text-sm text-muted-foreground">
               Read how final-year students cleared their college oral examinations with top grades using our verified repositories.
