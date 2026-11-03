@@ -30,6 +30,7 @@ import {
   Send,
   ThumbsUp,
   User,
+  Users,
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
