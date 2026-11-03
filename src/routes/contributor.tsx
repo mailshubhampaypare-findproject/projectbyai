@@ -241,6 +241,11 @@ python app.py # or npm run dev
   const [payoutsList, setPayoutsList] = useState<any[]>([]);
   const [newPassword, setNewPassword] = useState("");
 
+  // Contributor Landing Page Interactive State
+  const [calcPrice, setCalcPrice] = useState<number>(999);
+  const [calcSales, setCalcSales] = useState<number>(25);
+  const [landingFaqOpen, setLandingFaqOpen] = useState<number | null>(null);
+
   // Fetch real data for logged-in user
   const loadContributorData = async (userId: string, userEmail: string, userMeta: any) => {
     setLoadingProjects(true);
@@ -1020,7 +1025,7 @@ python app.py # or npm run dev
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
         {/* Simple Top Navigation Header */}
-        <header className="border-b border-border/80 bg-card/60 backdrop-blur sticky top-0 z-30">
+        <header className="border-b border-border/80 bg-card/80 backdrop-blur sticky top-0 z-30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2">
               <BrandLogo />
@@ -1029,261 +1034,711 @@ python app.py # or npm run dev
               </Badge>
             </Link>
 
+            <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-muted-foreground">
+              <a href="#calculator" className="hover:text-foreground transition-colors">
+                70% Calculator
+              </a>
+              <a href="#why-us" className="hover:text-foreground transition-colors">
+                Why Sell With Us
+              </a>
+              <a href="#checklist" className="hover:text-foreground transition-colors">
+                Upload Checklist
+              </a>
+              <a href="#how-it-works" className="hover:text-foreground transition-colors">
+                How It Works
+              </a>
+              <a href="#faqs" className="hover:text-foreground transition-colors">
+                FAQs
+              </a>
+            </nav>
+
             <div className="flex items-center gap-3">
               <Link to="/projects">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground text-xs">
                   Browse Marketplace
                 </Button>
               </Link>
+              <a href="#auth-section">
+                <Button size="sm" className="text-xs font-semibold bg-primary text-primary-foreground shadow-xs">
+                  Join as Contributor
+                </Button>
+              </a>
             </div>
           </div>
         </header>
 
-        {/* Main Split Authentication & Value Landing */}
-        <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-12 lg:py-16 grid lg:grid-cols-12 gap-12 items-center">
-          {/* Left Column: Value Proposition & Program Overview */}
-          <div className="lg:col-span-7 space-y-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary">
-              <Award className="w-4 h-4" />
-              <span>Project Contributor Monetization Program</span>
-            </div>
+        {/* HERO SECTION */}
+        <section className="relative overflow-hidden border-b border-border/60 bg-gradient-to-b from-background via-muted/10 to-background py-12 lg:py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-12 gap-12 items-center">
+            {/* Left: Value Proposition */}
+            <div className="lg:col-span-7 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                <Sparkles className="w-4 h-4 text-emerald-500" />
+                <span>Create a Project & Sell Here • Keep 70% of Every Sale</span>
+              </div>
 
-            <div className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1]">
-                Turn your student projects into{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-primary to-orange-500">
-                  passive income
-                </span>
-                .
-              </h1>
-              <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-                Upload your college, capstone, or final year projects. Help junior students learn and build from scratch, while keeping <strong className="text-foreground">70% to 90% of every sale</strong>.
-              </p>
-            </div>
-
-            {/* 4 Pillars Grid */}
-            <div className="grid sm:grid-cols-2 gap-4 pt-2">
-              <div className="p-4 rounded-xl border border-border/80 bg-card/50 space-y-1.5">
-                <div className="flex items-center gap-2 font-semibold text-foreground">
-                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
-                    <DollarSign className="w-4 h-4" />
-                  </div>
-                  70% Base Royalty
-                </div>
-                <p className="text-xs text-muted-foreground leading-normal">
-                  Earn a clean 70% commission on all project source code, documentation, and viva files.
+              <div className="space-y-4">
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1]">
+                  Turn Your College Projects Into{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-primary to-orange-500">
+                    Weekly Passive Income
+                  </span>
+                  .
+                </h1>
+                <p className="text-base sm:text-lg text-muted-foreground max-w-2xl leading-relaxed">
+                  Stop letting your final-year or semester project collect dust on GitHub. Upload it to ProjectbyAI once — we bring thousands of student buyers, handle 100% of customer support, and deposit your earnings directly to your UPI ID or Bank account every single week.
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-border/80 bg-card/50 space-y-1.5">
-                <div className="flex items-center gap-2 font-semibold text-foreground">
-                  <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-500">
-                    <Video className="w-4 h-4" />
-                  </div>
-                  90% Video Tutorial Bonus
-                </div>
-                <p className="text-xs text-muted-foreground leading-normal">
-                  Add a step-by-step video explaining how you built the project to unlock maximum 90% revenue share.
-                </p>
+              <div className="flex flex-wrap items-center gap-4 pt-2">
+                <a href="#auth-section">
+                  <Button size="lg" className="font-bold text-sm h-12 px-6 shadow-md gap-2">
+                    Start Selling — Free to Join <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </a>
+                <a href="#calculator">
+                  <Button variant="outline" size="lg" className="font-semibold text-sm h-12 px-5 gap-2 border-border">
+                    <DollarSign className="w-4 h-4 text-emerald-500" />
+                    Calculate Your Earnings
+                  </Button>
+                </a>
               </div>
 
-              <div className="p-4 rounded-xl border border-border/80 bg-card/50 space-y-1.5">
-                <div className="flex items-center gap-2 font-semibold text-foreground">
-                  <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500">
-                    <Wallet className="w-4 h-4" />
-                  </div>
-                  Direct UPI & Bank Payouts
+              {/* Trust Badges Strip */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-border/60">
+                <div className="p-3 rounded-lg bg-card border border-border space-y-0.5">
+                  <p className="text-xl font-bold text-foreground">70%</p>
+                  <p className="text-[11px] text-muted-foreground font-medium">Flat Royalty Cut</p>
                 </div>
-                <p className="text-xs text-muted-foreground leading-normal">
-                  Receive your earnings directly into your UPI ID or bank account with complete transparency.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl border border-border/80 bg-card/50 space-y-1.5">
-                <div className="flex items-center gap-2 font-semibold text-foreground">
-                  <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500">
-                    <MessageSquare className="w-4 h-4" />
-                  </div>
-                  Interactive Q&A Hub
+                <div className="p-3 rounded-lg bg-card border border-border space-y-0.5">
+                  <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">₹0</p>
+                  <p className="text-[11px] text-muted-foreground font-medium">No Minimum Payout</p>
                 </div>
-                <p className="text-xs text-muted-foreground leading-normal">
-                  Direct student community where buyers can ask questions and you can build a respected reputation.
-                </p>
+                <div className="p-3 rounded-lg bg-card border border-border space-y-0.5">
+                  <p className="text-xl font-bold text-foreground">Weekly</p>
+                  <p className="text-[11px] text-muted-foreground font-medium">UPI / Bank Payouts</p>
+                </div>
+                <div className="p-3 rounded-lg bg-card border border-border space-y-0.5">
+                  <p className="text-xl font-bold text-foreground">100%</p>
+                  <p className="text-[11px] text-muted-foreground font-medium">Support Handled by Us</p>
+                </div>
               </div>
             </div>
 
-            {/* Transparency Ribbon */}
-            <div className="pt-4 flex flex-wrap items-center gap-8 border-t border-border/60 text-sm">
-              <div>
-                <p className="text-2xl font-bold text-foreground">70% – 90%</p>
-                <p className="text-xs text-muted-foreground">Royalty Rate</p>
-              </div>
-              <div className="w-px h-8 bg-border" />
-              <div>
-                <p className="text-2xl font-bold text-foreground">Instant</p>
-                <p className="text-xs text-muted-foreground">UPI & Bank Settlements</p>
-              </div>
-              <div className="w-px h-8 bg-border" />
-              <div>
-                <p className="text-2xl font-bold text-foreground">100%</p>
-                <p className="text-xs text-muted-foreground">Project Code Ownership</p>
-              </div>
-            </div>
-          </div>
+            {/* Right: Dedicated Auth Card */}
+            <div id="auth-section" className="lg:col-span-5 scroll-mt-24">
+              <Card className="p-6 sm:p-8 shadow-xl border-border bg-card/95 backdrop-blur relative">
+                {/* Tab Selector */}
+                <div className="flex rounded-lg bg-muted p-1 mb-6">
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode("signup")}
+                    className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all ${
+                      authMode === "signup"
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Join as Contributor
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode("signin")}
+                    className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all ${
+                      authMode === "signin"
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Sign In
+                  </button>
+                </div>
 
-          {/* Right Column: Clean Auth Card */}
-          <div className="lg:col-span-5">
-            <Card className="p-6 sm:p-8 shadow-xl border-border/80 bg-card/95 backdrop-blur">
-              {/* Tab Selector */}
-              <div className="flex rounded-lg bg-muted p-1 mb-6">
-                <button
+                <div className="mb-5">
+                  <h2 className="text-2xl font-bold tracking-tight">
+                    {authMode === "signup" ? "Create Contributor Account" : "Welcome Back"}
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {authMode === "signup"
+                      ? "Start monetizing your academic projects with 70% weekly payouts."
+                      : "Sign in to manage your projects, sales, and weekly earnings."}
+                  </p>
+                </div>
+
+                {/* Google OAuth Button */}
+                <Button
                   type="button"
-                  onClick={() => setAuthMode("signin")}
-                  className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all ${
-                    authMode === "signin"
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  variant="outline"
+                  className="w-full flex items-center justify-center gap-2 mb-4 h-11 text-xs font-semibold"
+                  onClick={handleGoogleAuth}
                 >
-                  Sign In
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAuthMode("signup")}
-                  className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-md transition-all ${
-                    authMode === "signup"
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Create Contributor Account
-                </button>
-              </div>
-
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold tracking-tight">
-                  {authMode === "signin" ? "Welcome back" : "Create Contributor Account"}
-                </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {authMode === "signin"
-                    ? "Sign in to access your projects, sales, and payouts."
-                    : "Join as a project contributor and start sharing your knowledge."}
-                </p>
-              </div>
-
-              {/* Google OAuth Button */}
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full flex items-center justify-center gap-2 mb-4 h-11"
-                onClick={handleGoogleAuth}
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.83z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"
-                  />
-                </svg>
-                Continue with Google
-              </Button>
-
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">or with email</span>
-                </div>
-              </div>
-
-              {/* Form */}
-              <form onSubmit={handleAuthSubmit} className="space-y-4">
-                {authMode === "signup" && (
-                  <>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-foreground">Full Name</label>
-                      <Input
-                        placeholder="Your full name"
-                        value={authFullName}
-                        onChange={(e) => setAuthFullName(e.target.value)}
-                        required
-                        className="h-10"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-foreground">College / University</label>
-                      <Input
-                        placeholder="Your college name"
-                        value={authCollege}
-                        onChange={(e) => setAuthCollege(e.target.value)}
-                        required
-                        className="h-10"
-                      />
-                    </div>
-                  </>
-                )}
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-foreground">Email</label>
-                  <Input
-                    type="email"
-                    placeholder="name@example.com"
-                    value={authEmail}
-                    onChange={(e) => setAuthEmail(e.target.value)}
-                    required
-                    className="h-10"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-foreground">Password</label>
-                    {authMode === "signin" && (
-                      <span className="text-[11px] text-primary hover:underline cursor-pointer">
-                        Forgot password?
-                      </span>
-                    )}
-                  </div>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    value={authPassword}
-                    onChange={(e) => setAuthPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    className="h-10"
-                  />
-                </div>
-
-                <Button type="submit" className="w-full h-11 font-semibold" disabled={authLoading}>
-                  {authLoading ? (
-                    "Please wait..."
-                  ) : authMode === "signin" ? (
-                    "Sign In to Dashboard"
-                  ) : (
-                    "Create Contributor Account"
-                  )}
+                  <svg className="h-4 w-4" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.83z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"
+                    />
+                  </svg>
+                  Continue with Google
                 </Button>
-              </form>
 
-              <p className="text-[11px] text-muted-foreground text-center mt-4 leading-tight">
-                By joining, you agree to projectbyAI's Contributor Royalty Agreement and Marketplace Terms of Service.
-              </p>
-            </Card>
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground text-[10px]">or with email</span>
+                  </div>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleAuthSubmit} className="space-y-3.5">
+                  {authMode === "signup" && (
+                    <>
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-foreground">Full Name *</label>
+                        <Input
+                          placeholder="Your full name"
+                          value={authFullName}
+                          onChange={(e) => setAuthFullName(e.target.value)}
+                          required
+                          className="h-10 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-foreground">College / University *</label>
+                        <Input
+                          placeholder="Your college or university name"
+                          value={authCollege}
+                          onChange={(e) => setAuthCollege(e.target.value)}
+                          required
+                          className="h-10 text-xs"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">Email Address *</label>
+                    <Input
+                      type="email"
+                      placeholder="name@example.com"
+                      value={authEmail}
+                      onChange={(e) => setAuthEmail(e.target.value)}
+                      required
+                      className="h-10 text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-foreground">Password *</label>
+                    </div>
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="h-10 text-xs"
+                    />
+                  </div>
+
+                  <Button type="submit" className="w-full h-11 font-bold text-xs" disabled={authLoading}>
+                    {authLoading ? (
+                      "Please wait..."
+                    ) : authMode === "signup" ? (
+                      "Join as Contributor — Start Selling"
+                    ) : (
+                      "Sign In to Contributor Dashboard"
+                    )}
+                  </Button>
+                </form>
+
+                <p className="text-[11px] text-muted-foreground text-center mt-4 leading-tight">
+                  By joining, you agree to ProjectbyAI's Contributor Royalty Agreement and Marketplace Terms of Service.
+                </p>
+              </Card>
+            </div>
           </div>
-        </main>
+        </section>
+
+        {/* SECTION 2: 70% COMMISSION BREAKDOWN & INTERACTIVE CALCULATOR */}
+        <section id="calculator" className="py-16 lg:py-24 border-b border-border/60 bg-muted/20 scroll-mt-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
+            <div className="text-center max-w-3xl mx-auto space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                <DollarSign className="w-3.5 h-3.5" /> 70% Creator Commission
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                You Keep 70% of Every Sale. Here's How the Math Works.
+              </h2>
+              <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+                Zero listing fees, zero monthly subscriptions. You keep a flat 70% royalty on all project purchases. We take 30% to cover payment gateway fees, server storage, student acquisition, and dedicated customer support.
+              </p>
+            </div>
+
+            {/* Interactive Calculator */}
+            <div className="max-w-4xl mx-auto bg-card border border-border shadow-lg rounded-2xl p-6 sm:p-10 space-y-8">
+              <div className="grid md:grid-cols-2 gap-8 items-center">
+                {/* Left Controls */}
+                <div className="space-y-6">
+                  {/* Price Selector */}
+                  <div className="space-y-2.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                      1. Select Your Project Price (₹)
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[499, 999, 1499].map((price) => (
+                        <button
+                          key={price}
+                          type="button"
+                          onClick={() => setCalcPrice(price)}
+                          className={`py-2.5 px-3 rounded-lg text-xs font-bold border transition-all ${
+                            calcPrice === price
+                              ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                              : "bg-background border-border text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          ₹{price}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      {calcPrice <= 499
+                        ? "Mini projects, utility scripts, basic CRUD apps"
+                        : calcPrice <= 999
+                        ? "Standard final-year web, mobile, and IoT projects (Most Popular)"
+                        : "Advanced AI, Deep Learning, Computer Vision, or Enterprise apps"}
+                    </p>
+                  </div>
+
+                  {/* Sales Estimator */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        2. Estimated Sales Per Month
+                      </label>
+                      <span className="text-xs font-bold text-primary">{calcSales} sales</span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[10, 25, 50, 100].map((sales) => (
+                        <button
+                          key={sales}
+                          type="button"
+                          onClick={() => setCalcSales(sales)}
+                          className={`py-2.5 px-2 rounded-lg text-xs font-bold border transition-all ${
+                            calcSales === sales
+                              ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                              : "bg-background border-border text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {sales}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-muted/40 border border-border text-xs text-muted-foreground space-y-1">
+                    <p className="font-semibold text-foreground">💡 Example Breakdown:</p>
+                    <p>
+                      At <strong>₹{calcPrice}</strong> price: Your 70% royalty = <strong>₹{Math.round(calcPrice * 0.7)}</strong> per sale.
+                    </p>
+                    <p>
+                      Platform 30% cut = <strong>₹{Math.round(calcPrice * 0.3)}</strong> (handles payment gateway, student ads, customer support).
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right Big Output */}
+                <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border-2 border-emerald-500/30 text-center space-y-4">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    Your Potential Monthly Take-Home
+                  </span>
+                  <div>
+                    <p className="text-4xl sm:text-5xl font-black text-foreground">
+                      ₹{Math.round(calcPrice * 0.7 * calcSales).toLocaleString("en-IN")}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">per month in passive royalties</p>
+                  </div>
+
+                  <div className="pt-3 border-t border-border/80 text-xs space-y-1.5 text-muted-foreground">
+                    <div className="flex justify-between">
+                      <span>Per Sale Profit (70%):</span>
+                      <strong className="text-foreground">₹{Math.round(calcPrice * 0.7)}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Weekly Direct Payout:</span>
+                      <strong className="text-emerald-600 dark:text-emerald-400 font-bold">
+                        ~₹{Math.round((calcPrice * 0.7 * calcSales) / 4).toLocaleString("en-IN")} / week
+                      </strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Payout Method:</span>
+                      <strong className="text-foreground">Direct UPI / Bank Transfer</strong>
+                    </div>
+                  </div>
+
+                  <a href="#auth-section" className="block pt-2">
+                    <Button className="w-full font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
+                      Upload Your Project & Start Earning
+                    </Button>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* 3 Real-World Tier Cards */}
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="p-6 border-border space-y-3 bg-card">
+                <Badge variant="outline" className="text-xs font-medium">Mini Projects</Badge>
+                <div className="space-y-1">
+                  <p className="text-2xl font-bold text-foreground">₹499 <span className="text-xs text-muted-foreground font-normal">per copy</span></p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">You earn ₹350 per sale</p>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Best for 2nd and 3rd year semester assignments, basic CRUD applications, and Python utilities. <strong>15 sales = ₹5,250/mo.</strong>
+                </p>
+              </Card>
+
+              <Card className="p-6 border-primary shadow-sm space-y-3 bg-card relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-bl">
+                  MOST POPULAR
+                </div>
+                <Badge className="bg-primary/10 text-primary border-primary/20 text-xs font-medium">Final-Year Projects</Badge>
+                <div className="space-y-1">
+                  <p className="text-2xl font-bold text-foreground">₹999 <span className="text-xs text-muted-foreground font-normal">per copy</span></p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">You earn ₹700 per sale</p>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Standard final-year projects: Full-stack web portals, mobile apps (Flutter/React Native), IoT systems. <strong>25 sales = ₹17,500/mo.</strong>
+                </p>
+              </Card>
+
+              <Card className="p-6 border-border space-y-3 bg-card">
+                <Badge variant="outline" className="text-xs font-medium">Advanced / AI Projects</Badge>
+                <div className="space-y-1">
+                  <p className="text-2xl font-bold text-foreground">₹1,499 <span className="text-xs text-muted-foreground font-normal">per copy</span></p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">You earn ₹1,050 per sale</p>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Advanced capstones: Machine Learning, Deep Learning, Computer Vision, Blockchain, and NLP models. <strong>35 sales = ₹36,750/mo.</strong>
+                </p>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 3: WHAT CONTRIBUTOR GETS FROM US (ZERO HEADACHES) */}
+        <section id="why-us" className="py-16 lg:py-24 border-b border-border/60 bg-background scroll-mt-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
+            <div className="text-center max-w-3xl mx-auto space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold text-primary">
+                <ShieldCheck className="w-3.5 h-3.5" /> What You Get From Us
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                Zero Marketing. Zero Support Headaches. Just Pure Royalties.
+              </h2>
+              <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+                Selling projects by yourself on WhatsApp, Telegram, or Instagram is frustrating: you have to run ads, answer continuous student phone calls, and fix setup errors. On ProjectbyAI, we handle all the heavy lifting.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Pillar 1 */}
+              <Card className="p-6 border-border bg-card shadow-xs space-y-3 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="h-11 w-11 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-base text-foreground">Large Built-in Student Audience</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    You don't need to hunt for buyers or spend ₹1 on marketing. Thousands of engineering, BCA, MCA, and Polytechnic students visit ProjectbyAI every week actively looking for verified projects.
+                  </p>
+                </div>
+                <div className="pt-3 border-t border-border/60 text-[11px] font-semibold text-blue-600">
+                  ✓ Free marketplace listing & SEO
+                </div>
+              </Card>
+
+              {/* Pillar 2 */}
+              <Card className="p-6 border-border bg-card shadow-xs space-y-3 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="h-11 w-11 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-base text-foreground">We Handle 100% of Support</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Student has a download confusion, setup error, or installation question? Our in-house academic technical support team handles it. You never deal with student calls or customer tickets.
+                  </p>
+                </div>
+                <div className="pt-3 border-t border-border/60 text-[11px] font-semibold text-emerald-600">
+                  ✓ 24/7 student support handled
+                </div>
+              </Card>
+
+              {/* Pillar 3 */}
+              <Card className="p-6 border-border bg-card shadow-xs space-y-3 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="h-11 w-11 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                    <Wallet className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-base text-foreground">Weekly Payouts to Bank or UPI</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Zero minimum price bond! Whatever money you earn in a week—whether it's ₹500 or ₹25,000—is deposited automatically every week with official bank UTR reference numbers.
+                  </p>
+                </div>
+                <div className="pt-3 border-t border-border/60 text-[11px] font-semibold text-amber-600">
+                  ✓ Direct UPI (GPay/PhonePe) or Bank
+                </div>
+              </Card>
+
+              {/* Pillar 4 */}
+              <Card className="p-6 border-border bg-card shadow-xs space-y-3 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="h-11 w-11 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-base text-foreground">Real-Time Creator Analytics</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Access your private creator portal to track live project page views, units sold, earnings, and an official passbook ledger showing every sale credit and payout debit.
+                  </p>
+                </div>
+                <div className="pt-3 border-t border-border/60 text-[11px] font-semibold text-purple-600">
+                  ✓ 100% transparent live ledger
+                </div>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 4: WHAT CONTRIBUTOR HAS TO UPLOAD (THE 4-STEP CHECKLIST) */}
+        <section id="checklist" className="py-16 lg:py-24 border-b border-border/60 bg-muted/20 scroll-mt-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
+            <div className="text-center max-w-3xl mx-auto space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold text-primary">
+                <FileCode className="w-3.5 h-3.5" /> Simple Submission Requirements
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                What You Need to Upload
+              </h2>
+              <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+                Have an academic or personal project you created? Here is the simple 4-step checklist to get approved and live in the marketplace in under 24 hours.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+              {/* Item 1 */}
+              <Card className="p-6 border-border bg-card space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="h-8 w-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex items-center justify-center shrink-0">
+                    1
+                  </span>
+                  <h3 className="font-bold text-base text-foreground">Project Title & Description</h3>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Provide a clear, engaging project title and explain what the project is about: the real-world problem it solves, key modules, user roles, and the technology stack (e.g. Python, Flutter, React, FastAPI, PostgreSQL).
+                </p>
+                <div className="p-2.5 rounded bg-muted/50 border border-border text-[11px] text-muted-foreground font-mono">
+                  Example: "Smart Hospital & Doctor Appointment System with SMS Notifications"
+                </div>
+              </Card>
+
+              {/* Item 2 */}
+              <Card className="p-6 border-border bg-card space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="h-8 w-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex items-center justify-center shrink-0">
+                    2
+                  </span>
+                  <h3 className="font-bold text-base text-foreground">Working UI Screenshots</h3>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Upload 5 to 8 clean, high-resolution screenshots showing the actual working system: login screen, admin dashboard, main feature views, and database/output screens. Students want to see the UI before buying!
+                </p>
+                <div className="p-2.5 rounded bg-muted/50 border border-border text-[11px] text-muted-foreground font-mono">
+                  Includes: Cover thumbnail + dashboard & feature screenshots
+                </div>
+              </Card>
+
+              {/* Item 3 */}
+              <Card className="p-6 border-border bg-card space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="h-8 w-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex items-center justify-center shrink-0">
+                    3
+                  </span>
+                  <h3 className="font-bold text-base text-foreground">Installation & Run Video</h3>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  A short screen recording (Loom, YouTube, or Google Drive link) where you explain how to install dependencies, run migrations, and launch the project on a local laptop, followed by a quick working walkthrough.
+                </p>
+                <div className="p-2.5 rounded bg-muted/50 border border-border text-[11px] text-muted-foreground font-mono">
+                  Guarantees high buyer confidence and eliminates setup disputes
+                </div>
+              </Card>
+
+              {/* Item 4 */}
+              <Card className="p-6 border-border bg-card space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="h-8 w-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex items-center justify-center shrink-0">
+                    4
+                  </span>
+                  <h3 className="font-bold text-base text-foreground">Clean Code ZIP & README.md</h3>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  A clean ZIP archive containing your working source code (free of secrets, passwords, or personal API keys), accompanied by a formatted README.md detailing software prerequisites, installation commands, and default credentials.
+                </p>
+                <div className="p-2.5 rounded bg-muted/50 border border-border text-[11px] text-muted-foreground font-mono">
+                  Ready-to-run code archive + step-by-step terminal instructions
+                </div>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 5: HOW IT WORKS TIMELINE */}
+        <section id="how-it-works" className="py-16 lg:py-24 border-b border-border/60 bg-background scroll-mt-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
+            <div className="text-center max-w-3xl mx-auto space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold text-primary">
+                <CheckCheck className="w-3.5 h-3.5" /> 4 Simple Steps
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                From Code on Your Laptop to Weekly Bank Deposits
+              </h2>
+              <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+                Here is the exact step-by-step journey of publishing your project on ProjectbyAI.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+              <div className="p-6 rounded-xl border border-border bg-card space-y-3">
+                <span className="text-xs font-bold text-primary">STEP 01</span>
+                <h4 className="font-bold text-base text-foreground">Upload Details (15m)</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Fill in your project title, paste your walkthrough video link, upload working screenshots, and drop your code ZIP archive.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-xl border border-border bg-card space-y-3">
+                <span className="text-xs font-bold text-primary">STEP 02</span>
+                <h4 className="font-bold text-base text-foreground">Admin Verification</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Our technical team reviews your submission within 12–24 hours to verify code validity, README instructions, and video clarity.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-xl border border-border bg-card space-y-3">
+                <span className="text-xs font-bold text-primary">STEP 03</span>
+                <h4 className="font-bold text-base text-foreground">Marketplace Publishing</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Once approved, your project is published live to thousands of visiting students actively searching for academic projects.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">STEP 04</span>
+                <h4 className="font-bold text-base text-foreground">Weekly Payouts (70%)</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Every purchase automatically credits 70% to your ledger. Every week, your total balance is transferred directly to your UPI ID or Bank account!
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 6: CONTRIBUTOR FAQS */}
+        <section id="faqs" className="py-16 lg:py-24 border-b border-border/60 bg-muted/20 scroll-mt-16">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-8">
+            <div className="text-center space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold text-primary">
+                <HelpCircle className="w-3.5 h-3.5" /> Common Questions
+              </div>
+              <h2 className="text-3xl font-extrabold tracking-tight">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                Everything you need to know before joining as a ProjectbyAI contributor.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {[
+                {
+                  q: "Do I still own the rights to my code?",
+                  a: "Yes, 100%. You retain full intellectual ownership of your project. You grant ProjectbyAI a non-exclusive license to distribute educational copies to students for learning and academic reference.",
+                },
+                {
+                  q: "Is there any minimum payout threshold or lock-in?",
+                  a: "No! There is zero minimum withdrawal limit. Even if you earn ₹500 or ₹1,000 in a week, you receive your full payout automatically without any minimum threshold bond.",
+                },
+                {
+                  q: "How fast do submitted projects get approved?",
+                  a: "Our verification team typically inspects and approves contributor submissions within 12 to 24 hours. You can track the live status (Under Review vs Published) in your dashboard.",
+                },
+                {
+                  q: "What types of academic projects can I upload?",
+                  a: "We accept final-year capstone projects, semester mini-projects, research prototypes, and production web or mobile applications across Computer Science, Information Technology, AI/Data Science, Electronics, and related academic streams.",
+                },
+                {
+                  q: "Do I have to answer customer support calls or emails?",
+                  a: "Not at all. Our internal technical support team handles customer onboarding, download issues, and environment queries using your provided README file and installation walkthrough video.",
+                },
+              ].map((faq, idx) => {
+                const isOpen = landingFaqOpen === idx;
+                return (
+                  <Card key={idx} className="p-4 sm:p-5 border-border bg-card">
+                    <button
+                      type="button"
+                      onClick={() => setLandingFaqOpen(isOpen ? null : idx)}
+                      className="w-full flex items-center justify-between text-left font-bold text-sm text-foreground focus:outline-none"
+                    >
+                      <span>{faq.q}</span>
+                      <span className="text-muted-foreground text-xs font-normal ml-3 shrink-0">
+                        {isOpen ? "▲" : "▼"}
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-3 pt-3 border-t border-border/60 leading-relaxed">
+                        {faq.a}
+                      </p>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 7: FINAL CALL TO ACTION */}
+        <section className="py-16 lg:py-20 bg-gradient-to-br from-primary/10 via-background to-emerald-500/10">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-6">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+              Ready to Turn Your Code Into Weekly Income?
+            </h2>
+            <p className="text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+              Join fellow student creators across India earning ₹10,000 to ₹50,000 every month from their college projects. Free to list, 70% direct royalty, and automatic weekly bank/UPI deposits.
+            </p>
+            <div>
+              <a href="#auth-section">
+                <Button size="lg" className="font-bold text-sm h-12 px-8 shadow-md gap-2">
+                  Join as Contributor — Keep 70% <ArrowRight className="w-4 h-4" />
+                </Button>
+              </a>
+            </div>
+          </div>
+        </section>
 
         <Footer />
       </div>
