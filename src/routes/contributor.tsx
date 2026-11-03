@@ -237,6 +237,8 @@ python app.py # or npm run dev
   const [settingAccount, setSettingAccount] = useState("");
   const [settingIfsc, setSettingIfsc] = useState("");
   const [settingHolder, setSettingHolder] = useState("");
+  const [settingPreferredMethod, setSettingPreferredMethod] = useState<"upi" | "bank">("upi");
+  const [payoutsList, setPayoutsList] = useState<any[]>([]);
   const [newPassword, setNewPassword] = useState("");
 
   // Fetch real data for logged-in user
@@ -262,12 +264,15 @@ python app.py # or npm run dev
           bank_account: profile.bank_account || "",
           bank_ifsc: profile.bank_ifsc || "",
           account_holder_name: profile.account_holder_name || profile.full_name || "",
+          preferred_payout_method: profile.preferred_payout_method || (profile.bank_account ? "bank" : "upi"),
           commission_tier: profile.commission_tier || "standard_70",
           total_earnings: profile.total_earnings || 0,
+          total_withdrawn: profile.total_withdrawn || 0,
           sales_count: profile.sales_count || 0,
           rating: profile.rating || 0,
           review_count: profile.review_count || 0,
         });
+        setSettingPreferredMethod(profile.preferred_payout_method || (profile.bank_account ? "bank" : "upi"));
       } else {
         setContributorProfile({
           full_name: userMeta?.full_name || "",
@@ -280,8 +285,10 @@ python app.py # or npm run dev
           bank_account: "",
           bank_ifsc: "",
           account_holder_name: userMeta?.full_name || "",
+          preferred_payout_method: "upi",
           commission_tier: "standard_70",
           total_earnings: 0,
+          total_withdrawn: 0,
           sales_count: 0,
           rating: 0,
           review_count: 0,
@@ -348,6 +355,19 @@ python app.py # or npm run dev
         .order("created_at", { ascending: false });
 
       setReviewsList(revs || []);
+
+      // 6. Load weekly payouts & ledger debits
+      try {
+        const { data: pays } = await supabase
+          .from("contributor_payouts")
+          .select("*")
+          .eq("contributor_id", userId)
+          .order("created_at", { ascending: false });
+
+        setPayoutsList(pays || []);
+      } catch (e) {
+        setPayoutsList([]);
+      }
     } catch (err) {
       console.warn("Contributor data load note:", err);
       setMyProjects([]);
@@ -896,6 +916,7 @@ python app.py # or npm run dev
       bank_account: settingAccount,
       bank_ifsc: settingIfsc,
       account_holder_name: settingHolder,
+      preferred_payout_method: settingPreferredMethod,
     }));
 
     if (user?.id) {
@@ -912,6 +933,7 @@ python app.py # or npm run dev
             bank_account: settingAccount,
             bank_ifsc: settingIfsc,
             account_holder_name: settingHolder,
+            preferred_payout_method: settingPreferredMethod,
             email: user.email,
           },
         ]);
@@ -921,6 +943,74 @@ python app.py # or npm run dev
     }
 
     toast.success("Profile and payout details updated successfully!");
+  };
+
+  const getMyStatement = () => {
+    const entries: any[] = [];
+
+    // Add sales events from my uploaded projects
+    (myProjects || []).forEach((p: any) => {
+      const rate = Number(p.commission_rate || 70) / 100;
+      const price = Number(p.price || 0);
+      const sales = Number(p.sales_count || 0);
+      if (sales > 0) {
+        const royaltyPerUnit = Math.round(price * rate);
+        for (let i = 0; i < sales; i++) {
+          entries.push({
+            id: `sale-${p.id}-${i}`,
+            date: new Date(p.created_at || Date.now()).getTime() + (i * 3600000),
+            dateStr: new Date(new Date(p.created_at || Date.now()).getTime() + (i * 3600000)).toLocaleString("en-IN", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            type: "sale",
+            title: p.title,
+            details: `${Math.round(rate * 100)}% royalty cut of ₹${price}`,
+            reference: `Unit #${i + 1}`,
+            amount: royaltyPerUnit,
+            status: "completed",
+          });
+        }
+      }
+    });
+
+    // Add payouts received
+    (payoutsList || []).forEach((p: any) => {
+      entries.push({
+        id: p.id,
+        date: new Date(p.created_at || Date.now()).getTime(),
+        dateStr: new Date(p.created_at || Date.now()).toLocaleString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        type: "payout",
+        title: `Weekly Payout Disbursed via ${p.payout_method?.toUpperCase() || "UPI"}`,
+        details: p.notes || "Weekly automated payout",
+        reference: p.utr_reference ? `UTR: ${p.utr_reference}` : "Completed",
+        amount: Number(p.amount || 0),
+        status: p.status || "completed",
+      });
+    });
+
+    // Sort ascending for running balance
+    entries.sort((a, b) => a.date - b.date);
+    let balance = 0;
+    entries.forEach((e) => {
+      if (e.type === "sale") {
+        balance += e.amount;
+      } else {
+        balance = Math.max(0, balance - e.amount);
+      }
+      e.runningBalance = balance;
+    });
+
+    return entries.reverse();
   };
 
   // -------------------------------------------------------------------------------------------------
@@ -3048,107 +3138,262 @@ python app.py # or npm run dev
           {activeTab === "finances" && (
             <div className="space-y-6">
               {/* Header */}
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">Finances & Payout Details</h1>
-                <p className="text-sm text-muted-foreground">
-                  Configure your UPI ID or Direct Bank Transfer account to receive royalty payouts.
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold tracking-tight">Finances & Weekly Payout Ledger</h1>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    100% transparent tracking of project sales royalties, weekly settlements, and payment credentials.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 text-xs font-semibold px-2.5 py-1">
+                    <Clock className="w-3.5 h-3.5 mr-1" /> Weekly Payout Schedule
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Weekly Payout Policy Banner */}
+              <div className="p-4 rounded-xl border border-indigo-500/30 bg-indigo-50/70 dark:bg-indigo-950/20 text-foreground flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 shrink-0 text-indigo-600 mt-0.5" />
+                <div className="space-y-1 text-xs">
+                  <span className="font-bold text-sm block">
+                    Zero Minimum Limit — Weekly Automated Deposits
+                  </span>
+                  <p className="text-muted-foreground leading-relaxed">
+                    There is <strong>no minimum price threshold</strong>. Whatever money you earn in sales during the week will be disbursed automatically every week directly into your configured UPI ID or Bank Account with official bank transaction UTR references.
+                  </p>
+                </div>
               </div>
 
               {/* Earnings Breakdown */}
-              <div className="grid sm:grid-cols-3 gap-4">
-                <Card className="p-5 border-border shadow-xs">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase">Lifetime Earnings</span>
-                  <p className="text-2xl font-bold text-foreground mt-2">
-                    ₹{contributorProfile.total_earnings.toLocaleString("en-IN")}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="p-5 border-border shadow-xs border-l-4 border-l-emerald-500">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase">Due Next Payout</span>
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
+                    ₹{Math.max(0, (contributorProfile.total_earnings || 0) - (payoutsList || []).filter((p: any) => p.status === "completed").reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0)).toLocaleString("en-IN")}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1 font-medium">100% Transparent Tracking</p>
+                  <p className="text-xs text-muted-foreground mt-1">Processed automatically weekly</p>
                 </Card>
 
                 <Card className="p-5 border-border shadow-xs">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase">Available for Withdrawal</span>
-                  <p className="text-2xl font-bold text-emerald-500 mt-2">
-                    ₹{Math.round(contributorProfile.total_earnings * 0.7).toLocaleString("en-IN")}
+                  <span className="text-xs font-semibold text-muted-foreground uppercase">Lifetime Earned</span>
+                  <p className="text-2xl font-bold text-foreground mt-2">
+                    ₹{(contributorProfile.total_earnings || 0).toLocaleString("en-IN")}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">Processed weekly</p>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">From project sales</p>
+                </Card>
+
+                <Card className="p-5 border-border shadow-xs">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase">Total Received</span>
+                  <p className="text-2xl font-bold text-foreground mt-2">
+                    ₹{(payoutsList || []).filter((p: any) => p.status === "completed").reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0).toLocaleString("en-IN")}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Disbursed to bank/UPI</p>
                 </Card>
 
                 <Card className="p-5 border-border shadow-xs">
                   <span className="text-xs font-semibold text-muted-foreground uppercase">Active Payout Method</span>
-                  <p className="text-base font-bold text-foreground mt-2 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    {contributorProfile.upi_id ? `UPI (${contributorProfile.upi_id})` : "Not configured yet"}
+                  <p className="text-sm font-bold text-foreground mt-2 flex items-center gap-1.5 truncate">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    {settingPreferredMethod === "bank" && settingAccount
+                      ? `Bank (${settingBankName || "Bank"})`
+                      : settingUpi
+                      ? `UPI (${settingUpi})`
+                      : "Not set yet"}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">Direct Transfer to UPI or Bank</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {settingPreferredMethod === "bank" ? "Direct Bank Transfer" : "Instant UPI Transfer"}
+                  </p>
                 </Card>
               </div>
 
+              {/* Passbook / Ledger Book Table */}
+              <Card className="border-border shadow-xs overflow-hidden">
+                <div className="p-4 border-b border-border flex items-center justify-between flex-wrap gap-2 bg-muted/20">
+                  <div>
+                    <h3 className="font-bold text-base text-foreground flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-primary" />
+                      Your Passbook & Transaction Ledger
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Detailed chronological log of every project sale royalty credit and weekly disbursement debit.
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {(getMyStatement() || []).length} Transactions Recorded
+                  </Badge>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-muted/40 text-muted-foreground font-semibold uppercase tracking-wider border-b border-border">
+                        <th className="py-3 px-4">Date & Time</th>
+                        <th className="py-3 px-4">Type</th>
+                        <th className="py-3 px-4">Description / Reference</th>
+                        <th className="py-3 px-4 text-right">Amount</th>
+                        <th className="py-3 px-4 text-right">Running Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {(() => {
+                        const stmt = getMyStatement();
+                        if (stmt.length === 0) {
+                          return (
+                            <tr>
+                              <td colSpan={5} className="py-12 text-center text-muted-foreground">
+                                <div className="flex flex-col items-center justify-center space-y-2">
+                                  <Clock className="w-7 h-7 text-muted-foreground/40" />
+                                  <p className="font-medium text-foreground text-sm">No transaction activity yet</p>
+                                  <p className="text-xs max-w-sm">
+                                    When students acquire your approved projects, your royalties will immediately reflect here as Sale Credits!
+                                  </p>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        return stmt.map((entry: any) => (
+                          <tr key={entry.id} className="hover:bg-muted/20 transition-colors">
+                            <td className="py-3.5 px-4 text-muted-foreground whitespace-nowrap">
+                              {entry.dateStr}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              {entry.type === "sale" ? (
+                                <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[10px] font-semibold py-0 px-1.5">
+                                  + SALE CREDIT
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30 text-[10px] font-semibold py-0 px-1.5">
+                                  - WEEKLY PAYOUT
+                                </Badge>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <div className="space-y-0.5">
+                                <p className="font-medium text-foreground">{entry.title}</p>
+                                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                  <span>{entry.details}</span>
+                                  <span>•</span>
+                                  <span className="font-mono">{entry.reference}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-bold whitespace-nowrap">
+                              {entry.type === "sale" ? (
+                                <span className="text-emerald-600 dark:text-emerald-400">+₹{Math.round(entry.amount).toLocaleString("en-IN")}</span>
+                              ) : (
+                                <span className="text-rose-600 dark:text-rose-400">-₹{Math.round(entry.amount).toLocaleString("en-IN")}</span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-mono font-bold text-foreground whitespace-nowrap">
+                              ₹{Math.round(entry.runningBalance).toLocaleString("en-IN")}
+                            </td>
+                          </tr>
+                        ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+
               {/* Payout Form */}
               <Card className="p-6 border-border shadow-xs space-y-4">
-                <h3 className="font-semibold text-base text-foreground">
-                  Update Payout Credentials
-                </h3>
+                <div className="flex items-center justify-between border-b pb-3 flex-wrap gap-2">
+                  <div>
+                    <h3 className="font-semibold text-base text-foreground">
+                      Payout Credentials & Preferences
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Choose how you prefer to receive your automated weekly disbursements.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs bg-muted/40 p-1 rounded-lg border border-border">
+                    <button
+                      type="button"
+                      onClick={() => setSettingPreferredMethod("upi")}
+                      className={`px-3 py-1 rounded font-medium transition-all ${settingPreferredMethod === "upi" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      Instant UPI
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSettingPreferredMethod("bank")}
+                      className={`px-3 py-1 rounded font-medium transition-all ${settingPreferredMethod === "bank" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      Direct Bank Transfer
+                    </button>
+                  </div>
+                </div>
 
                 <form onSubmit={handleSaveSettings} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-foreground">
-                      UPI ID (Instant Payouts via GPay, PhonePe, Paytm)
-                    </label>
-                    <Input
-                      placeholder="e.g. yourname@okaxis or 9876543210@upi"
-                      value={settingUpi}
-                      onChange={(e) => setSettingUpi(e.target.value)}
-                      className="h-10 text-sm"
-                    />
-                  </div>
+                  {settingPreferredMethod === "upi" ? (
+                    <div className="space-y-2 p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
+                      <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <CreditCard className="w-3.5 h-3.5 text-emerald-500" />
+                        UPI ID / VPA (Instant Payouts via GPay, PhonePe, Paytm, BHIM) *
+                      </label>
+                      <Input
+                        placeholder="e.g. yourname@okaxis, 9876543210@paytm, username@upi"
+                        value={settingUpi}
+                        onChange={(e) => setSettingUpi(e.target.value)}
+                        className="h-10 text-sm font-mono bg-background"
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        Your weekly royalties will be deposited straight into this UPI ID.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 p-4 rounded-xl border border-indigo-500/20 bg-indigo-500/5">
+                      <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <Building className="w-3.5 h-3.5 text-indigo-500" />
+                        Direct Bank Account Details (NEFT / IMPS / RTGS) *
+                      </label>
 
-                  <div className="pt-2 border-t border-border">
-                    <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-3">
-                      Or Direct Bank Account (NEFT / IMPS)
-                    </h4>
+                      <div className="grid sm:grid-cols-2 gap-4 pt-1">
+                        <div className="space-y-1.5">
+                          <label className="text-xs text-muted-foreground font-medium">Account Holder Name *</label>
+                          <Input
+                            placeholder="As per bank passbook"
+                            value={settingHolder}
+                            onChange={(e) => setSettingHolder(e.target.value)}
+                            className="h-9 text-xs bg-background"
+                          />
+                        </div>
 
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="text-xs text-muted-foreground">Account Holder Name</label>
-                        <Input
-                          placeholder="As per bank passbook"
-                          value={settingHolder}
-                          onChange={(e) => setSettingHolder(e.target.value)}
-                          className="h-9 text-xs"
-                        />
-                      </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs text-muted-foreground font-medium">Bank Name *</label>
+                          <Input
+                            placeholder="e.g. State Bank of India / HDFC Bank"
+                            value={settingBankName}
+                            onChange={(e) => setSettingBankName(e.target.value)}
+                            className="h-9 text-xs bg-background"
+                          />
+                        </div>
 
-                      <div className="space-y-1.5">
-                        <label className="text-xs text-muted-foreground">Bank Name</label>
-                        <Input
-                          placeholder="e.g. HDFC Bank / State Bank of India"
-                          value={settingBankName}
-                          onChange={(e) => setSettingBankName(e.target.value)}
-                          className="h-9 text-xs"
-                        />
-                      </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs text-muted-foreground font-medium">Bank Account Number *</label>
+                          <Input
+                            placeholder="Account Number"
+                            value={settingAccount}
+                            onChange={(e) => setSettingAccount(e.target.value)}
+                            className="h-9 text-xs font-mono bg-background"
+                          />
+                        </div>
 
-                      <div className="space-y-1.5">
-                        <label className="text-xs text-muted-foreground">Account Number</label>
-                        <Input
-                          placeholder="Bank Account Number"
-                          value={settingAccount}
-                          onChange={(e) => setSettingAccount(e.target.value)}
-                          className="h-9 text-xs font-mono"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label className="text-xs text-muted-foreground">IFSC Code</label>
-                        <Input
-                          placeholder="e.g. HDFC0001234"
-                          value={settingIfsc}
-                          onChange={(e) => setSettingIfsc(e.target.value.toUpperCase())}
-                          className="h-9 text-xs font-mono uppercase"
-                        />
+                        <div className="space-y-1.5">
+                          <label className="text-xs text-muted-foreground font-medium">Bank IFSC Code *</label>
+                          <Input
+                            placeholder="e.g. SBIN0001234 / HDFC0001234"
+                            value={settingIfsc}
+                            onChange={(e) => setSettingIfsc(e.target.value.toUpperCase())}
+                            className="h-9 text-xs font-mono uppercase bg-background"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   <Button type="submit" className="font-semibold text-xs h-10 px-6">
                     Save Payout Details

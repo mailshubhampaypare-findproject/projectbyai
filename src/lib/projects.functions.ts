@@ -557,3 +557,232 @@ export const deleteContactQuery = createServerFn({ method: "POST" })
 
     return { success: true };
   });
+
+export const listContributorsWithStats = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.SUPABASE_URL;
+
+    if (!supabaseUrl || !serviceKey) {
+      throw new Error("Supabase environment configuration missing on server.");
+    }
+
+    const serviceClient = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false },
+    });
+
+    // 1. Fetch contributor profiles
+    const { data: contribProfiles } = await serviceClient
+      .from("contributor_profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    // 2. Fetch all user profiles for name/email fallback
+    const { data: userProfiles } = await serviceClient
+      .from("profiles")
+      .select("id, email, full_name, avatar_url, created_at");
+
+    // 3. Fetch all library projects
+    const { data: allProjects } = await serviceClient
+      .from("library_projects")
+      .select("id, title, price, contributor_id, contributor_name, commission_rate, sales_count, status, is_approved, created_at");
+
+    // 4. Fetch all payouts
+    const { data: allPayouts } = await serviceClient
+      .from("contributor_payouts")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    // 5. Fetch all billing transactions
+    const { data: allTransactions } = await serviceClient
+      .from("billing_transactions")
+      .select("id, item_name, amount, payment_id, status, created_at")
+      .eq("status", "Paid");
+
+    // Map profiles by ID
+    const userMap = new Map();
+    (userProfiles || []).forEach((u: any) => userMap.set(u.id, u));
+
+    // Group contributors: from contributor_profiles, or any user that has projects with contributor_id
+    const contributorIds = new Set<string>();
+    (contribProfiles || []).forEach((cp: any) => contributorIds.add(cp.id));
+    (allProjects || []).forEach((p: any) => {
+      if (p.contributor_id) contributorIds.add(p.contributor_id);
+    });
+
+    const contributorsList = Array.from(contributorIds).map((cId) => {
+      const cp = (contribProfiles || []).find((p: any) => p.id === cId) || {};
+      const u = userMap.get(cId) || {};
+
+      // Their projects
+      const myProjects = (allProjects || []).filter((p: any) => p.contributor_id === cId);
+      const approvedProjects = myProjects.filter((p: any) => p.status === "published" || p.is_approved === true);
+
+      // Their payouts
+      const myPayouts = (allPayouts || []).filter((pay: any) => pay.contributor_id === cId);
+      const totalWithdrawn = myPayouts
+        .filter((pay: any) => pay.status === "completed")
+        .reduce((sum: number, pay: any) => sum + Number(pay.amount || 0), 0);
+
+      // Compute total units sold and earnings from projects & billing
+      let unitsSold = 0;
+      let grossSales = 0;
+      let totalEarned = 0;
+      const salesEvents: any[] = [];
+
+      myProjects.forEach((proj: any) => {
+        const rate = Number(proj.commission_rate || 70) / 100;
+        const projPrice = Number(proj.price || 0);
+        const projSales = Number(proj.sales_count || 0);
+
+        // Check if there are real transactions matching this project
+        const matchingTxns = (allTransactions || []).filter((t: any) =>
+          t.item_name && t.item_name.includes(proj.title)
+        );
+
+        if (matchingTxns.length > 0) {
+          matchingTxns.forEach((tx: any) => {
+            const saleAmt = Number(tx.amount || projPrice);
+            const earnAmt = Math.round(saleAmt * rate);
+            unitsSold += 1;
+            grossSales += saleAmt;
+            totalEarned += earnAmt;
+            salesEvents.push({
+              id: tx.id,
+              type: "sale",
+              title: proj.title,
+              amount: earnAmt,
+              gross_amount: saleAmt,
+              commission_rate: Math.round(rate * 100),
+              created_at: tx.created_at,
+              payment_id: tx.payment_id,
+            });
+          });
+        } else if (projSales > 0) {
+          const totalFromProjSales = Math.round(projPrice * rate * projSales);
+          unitsSold += projSales;
+          grossSales += projPrice * projSales;
+          totalEarned += totalFromProjSales;
+          salesEvents.push({
+            id: `proj-sales-${proj.id}`,
+            type: "sale",
+            title: proj.title,
+            amount: totalFromProjSales,
+            gross_amount: projPrice * projSales,
+            commission_rate: Math.round(rate * 100),
+            created_at: proj.created_at,
+            units: projSales,
+          });
+        }
+      });
+
+      // Contributor profile total_earnings override if larger
+      if (cp.total_earnings && Number(cp.total_earnings) > totalEarned) {
+        totalEarned = Number(cp.total_earnings);
+      }
+
+      const unpaidBalance = Math.max(0, totalEarned - totalWithdrawn);
+
+      return {
+        id: cId,
+        name: cp.full_name || u.full_name || "Academic Contributor",
+        email: cp.email || u.email || "No email",
+        phone: cp.phone || "",
+        avatar_url: cp.avatar_url || u.avatar_url || "",
+        created_at: cp.created_at || u.created_at || new Date().toISOString(),
+        projects_count: approvedProjects.length,
+        total_projects: myProjects.length,
+        units_sold: unitsSold,
+        gross_sales: grossSales,
+        lifetime_earnings: totalEarned,
+        total_withdrawn: totalWithdrawn,
+        unpaid_balance: unpaidBalance,
+        preferred_payout_method: cp.preferred_payout_method || (cp.bank_account ? "bank" : "upi"),
+        upi_id: cp.upi_id || "",
+        bank_name: cp.bank_name || "",
+        bank_account: cp.bank_account || "",
+        bank_ifsc: cp.bank_ifsc || "",
+        account_holder_name: cp.account_holder_name || cp.full_name || u.full_name || "",
+        payouts: myPayouts,
+        sales_events: salesEvents,
+      };
+    });
+
+    const totalContributors = contributorsList.length;
+    const totalEarnings = contributorsList.reduce((acc, c) => acc + c.lifetime_earnings, 0);
+    const totalDisbursed = contributorsList.reduce((acc, c) => acc + c.total_withdrawn, 0);
+    const pendingWeeklySettlement = contributorsList.reduce((acc, c) => acc + c.unpaid_balance, 0);
+
+    return {
+      contributors: contributorsList,
+      summary: {
+        totalContributors,
+        totalEarnings,
+        totalDisbursed,
+        pendingWeeklySettlement,
+      },
+    };
+  });
+
+export const recordContributorPayout = createServerFn({ method: "POST" })
+  .validator((d: unknown) =>
+    z.object({
+      contributor_id: z.string().uuid(),
+      amount: z.number().positive(),
+      payout_method: z.enum(["upi", "bank"]),
+      payout_details: z.record(z.any()),
+      utr_reference: z.string().min(1),
+      notes: z.string().optional(),
+    }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.SUPABASE_URL;
+
+    if (!supabaseUrl || !serviceKey) {
+      throw new Error("Supabase environment configuration missing on server.");
+    }
+
+    const serviceClient = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false },
+    });
+
+    // 1. Insert into contributor_payouts
+    const { data: payout, error: pError } = await serviceClient
+      .from("contributor_payouts")
+      .insert({
+        contributor_id: data.contributor_id,
+        amount: data.amount,
+        payout_method: data.payout_method,
+        payout_details: data.payout_details,
+        utr_reference: data.utr_reference.trim(),
+        notes: data.notes?.trim() || "Weekly automated payout",
+        status: "completed",
+        processed_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (pError) {
+      throw new Error("Failed to record payout: " + pError.message);
+    }
+
+    // 2. Increment total_withdrawn in contributor_profiles
+    const { data: existingProfile } = await serviceClient
+      .from("contributor_profiles")
+      .select("total_withdrawn")
+      .eq("id", data.contributor_id)
+      .maybeSingle();
+
+    const newWithdrawn = (Number(existingProfile?.total_withdrawn) || 0) + data.amount;
+
+    await serviceClient
+      .from("contributor_profiles")
+      .update({
+        total_withdrawn: newWithdrawn,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.contributor_id);
+
+    return { success: true, payout };
+  });

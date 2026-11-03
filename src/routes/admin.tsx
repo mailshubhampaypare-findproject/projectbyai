@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { listRegisteredUsers, getSalesStatistics, listContactQueries, deleteContactQuery } from "@/lib/projects.functions";
+import { listRegisteredUsers, getSalesStatistics, listContactQueries, deleteContactQuery, listContributorsWithStats, recordContributorPayout } from "@/lib/projects.functions";
 import { MOCK_BLOG_POSTS } from "@/lib/blog-data";
 import { PREBUILT_PROJECTS } from "@/lib/prebuilt-data";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,13 @@ import {
   ShieldCheck,
   RefreshCw,
   Search,
-  Filter
+  Filter,
+  Wallet,
+  CreditCard,
+  Building,
+  Copy,
+  ArrowUpRight,
+  CheckCheck
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -280,7 +286,7 @@ function AdminPortal() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   
-  const [activeTab, setActiveTab] = useState<"library" | "approvals" | "blogs" | "users" | "coupons" | "queries">("library");
+  const [activeTab, setActiveTab] = useState<"library" | "approvals" | "contributors" | "blogs" | "users" | "coupons" | "queries">("library");
 
   // Project Approvals state
   const [approvalsFilter, setApprovalsFilter] = useState<"all" | "pending" | "published" | "rejected">("pending");
@@ -290,6 +296,34 @@ function AdminPortal() {
   const [rejectionTargetProject, setRejectionTargetProject] = useState<any | null>(null);
   const [rejectionReasonInput, setRejectionReasonInput] = useState("");
   const [processingApprovalId, setProcessingApprovalId] = useState<string | null>(null);
+
+  // Contributors & Payouts state
+  const [contributorsData, setContributorsData] = useState<{
+    contributors: any[];
+    summary: {
+      totalContributors: number;
+      totalEarnings: number;
+      totalDisbursed: number;
+      pendingWeeklySettlement: number;
+    };
+  }>({
+    contributors: [],
+    summary: { totalContributors: 0, totalEarnings: 0, totalDisbursed: 0, pendingWeeklySettlement: 0 },
+  });
+  const [loadingContributors, setLoadingContributors] = useState(false);
+  const [contributorsTab, setContributorsTab] = useState<"queue" | "directory">("queue");
+  const [contributorsSearch, setContributorsSearch] = useState("");
+  const [viewingLedgerContributor, setViewingLedgerContributor] = useState<any | null>(null);
+
+  // Payout action modal state
+  const [payoutModalOpen, setPayoutModalOpen] = useState(false);
+  const [payoutTargetContributor, setPayoutTargetContributor] = useState<any | null>(null);
+  const [payoutAmountInput, setPayoutAmountInput] = useState<number>(0);
+  const [payoutUtrInput, setPayoutUtrInput] = useState("");
+  const [payoutNotesInput, setPayoutNotesInput] = useState("");
+  const [processingPayout, setProcessingPayout] = useState(false);
+  const fetchContributors = useServerFn(listContributorsWithStats);
+  const submitPayout = useServerFn(recordContributorPayout);
 
   // Contact queries state
   const [queries, setQueries] = useState<any[]>([]);
@@ -419,6 +453,7 @@ function AdminPortal() {
       loadSales();
       loadCoupons();
       loadQueries();
+      loadContributors();
     }
   }, [isLogged]);
 
@@ -523,6 +558,144 @@ function AdminPortal() {
     } finally {
       setLoadingSales(false);
     }
+  };
+
+  const loadContributors = async () => {
+    setLoadingContributors(true);
+    try {
+      const res = await fetchContributors();
+      if (res && res.contributors) {
+        setContributorsData(res);
+      }
+    } catch (err: any) {
+      console.warn("Failed to load contributors:", err);
+    } finally {
+      setLoadingContributors(false);
+    }
+  };
+
+  const handleOpenPayoutModal = (contributor: any) => {
+    setPayoutTargetContributor(contributor);
+    setPayoutAmountInput(contributor.unpaid_balance || 0);
+    setPayoutUtrInput("");
+    setPayoutNotesInput(`Weekly payout for ${contributor.name}`);
+    setPayoutModalOpen(true);
+  };
+
+  const handleProcessPayout = async () => {
+    if (!payoutTargetContributor) return;
+    if (payoutAmountInput <= 0) {
+      toast.error("Please enter a valid payout amount greater than 0.");
+      return;
+    }
+    if (!payoutUtrInput.trim()) {
+      toast.error("Please enter a bank/UPI transaction UTR reference number.");
+      return;
+    }
+
+    setProcessingPayout(true);
+    try {
+      const method = payoutTargetContributor.preferred_payout_method || (payoutTargetContributor.upi_id ? "upi" : "bank");
+      const details = {
+        upi_id: payoutTargetContributor.upi_id,
+        bank_name: payoutTargetContributor.bank_name,
+        bank_account: payoutTargetContributor.bank_account,
+        bank_ifsc: payoutTargetContributor.bank_ifsc,
+        account_holder_name: payoutTargetContributor.account_holder_name,
+      };
+
+      const res = await submitPayout({
+        data: {
+          contributor_id: payoutTargetContributor.id,
+          amount: Number(payoutAmountInput),
+          payout_method: method as "upi" | "bank",
+          payout_details: details,
+          utr_reference: payoutUtrInput.trim(),
+          notes: payoutNotesInput.trim() || "Weekly settlement",
+        },
+      });
+
+      if (res && res.success) {
+        toast.success(`Disbursed ₹${Number(payoutAmountInput).toLocaleString("en-IN")} to ${payoutTargetContributor.name}!`);
+        setPayoutModalOpen(false);
+        setPayoutTargetContributor(null);
+        setPayoutUtrInput("");
+        setPayoutNotesInput("");
+        loadContributors();
+      }
+    } catch (err: any) {
+      toast.error("Failed to record payout: " + (err.message || String(err)));
+    } finally {
+      setProcessingPayout(false);
+    }
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      toast.success(`Copied ${label} to clipboard!`);
+    }
+  };
+
+  const getContributorStatement = (contributor: any) => {
+    if (!contributor) return [];
+    const entries: any[] = [];
+
+    // Add sales
+    (contributor.sales_events || []).forEach((s: any) => {
+      entries.push({
+        id: s.id,
+        date: new Date(s.created_at || Date.now()).getTime(),
+        dateStr: new Date(s.created_at || Date.now()).toLocaleString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        type: "sale",
+        description: `Project Sale: ${s.title}`,
+        details: `${s.commission_rate || 70}% royalty cut of ₹${s.gross_amount || s.amount}`,
+        reference: s.payment_id ? `Ref: ${s.payment_id}` : `Units: ${s.units || 1}`,
+        amount: s.amount,
+        status: "completed",
+      });
+    });
+
+    // Add payouts
+    (contributor.payouts || []).forEach((p: any) => {
+      entries.push({
+        id: p.id,
+        date: new Date(p.created_at || Date.now()).getTime(),
+        dateStr: new Date(p.created_at || Date.now()).toLocaleString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        type: "payout",
+        description: `Weekly Payout Disbursed via ${p.payout_method?.toUpperCase() || "UPI"}`,
+        details: p.notes || "Weekly automated payout",
+        reference: p.utr_reference ? `UTR: ${p.utr_reference}` : "Completed",
+        amount: p.amount,
+        status: p.status || "completed",
+      });
+    });
+
+    // Sort ascending first to calculate running balance, then reverse for display
+    entries.sort((a, b) => a.date - b.date);
+    let balance = 0;
+    entries.forEach((e) => {
+      if (e.type === "sale") {
+        balance += e.amount;
+      } else {
+        balance = Math.max(0, balance - e.amount);
+      }
+      e.runningBalance = balance;
+    });
+
+    return entries.reverse();
   };
 
   const loadCoupons = async () => {
@@ -1241,6 +1414,22 @@ function AdminPortal() {
               {pendingApprovalsCount > 0 && (
                 <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500 text-slate-950 animate-pulse">
                   {pendingApprovalsCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("contributors")}
+              className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeTab === "contributors" ? "bg-primary text-primary-foreground shadow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Wallet className="h-4 w-4" />
+                <span>Contributors & Payouts</span>
+              </div>
+              {contributorsData.summary.pendingWeeklySettlement > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-slate-950">
+                  ₹{Math.round(contributorsData.summary.pendingWeeklySettlement).toLocaleString("en-IN")}
                 </span>
               )}
             </button>
@@ -2370,6 +2559,595 @@ function AdminPortal() {
                           <AlertCircle className="h-3.5 w-3.5" />
                         )}
                         Send Feedback & Request Changes
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
+        ) : activeTab === "contributors" ? (
+          <div className="space-y-8 max-w-6xl mx-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between gap-4 flex-wrap border-b pb-5">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-3xl font-extrabold tracking-tight">Contributor Directory & Payout Hub</h1>
+                  {contributorsData.summary.pendingWeeklySettlement > 0 && (
+                    <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 font-bold px-2.5 py-0.5">
+                      ₹{Math.round(contributorsData.summary.pendingWeeklySettlement).toLocaleString("en-IN")} Due
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-muted-foreground text-sm mt-1">
+                  Manage academic project contributors, track their project sales & royalties, and process weekly automated payouts.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={loadContributors}
+                disabled={loadingContributors}
+                className="gap-2 border-slate-200"
+              >
+                <RefreshCw className={`h-4 w-4 ${loadingContributors ? "animate-spin" : ""}`} />
+                Refresh Data
+              </Button>
+            </div>
+
+            {/* Weekly Settlement Notification Banner */}
+            <div className="p-4 rounded-xl border border-indigo-500/30 bg-indigo-50/80 text-indigo-950 flex items-start gap-3">
+              <Clock className="w-5 h-5 shrink-0 text-indigo-600 mt-0.5" />
+              <div className="space-y-1 text-xs">
+                <span className="font-bold text-sm block text-indigo-950">
+                  Weekly Automated Payout Policy
+                </span>
+                <p className="text-indigo-800 leading-relaxed">
+                  Contributors receive weekly payouts with <strong>no minimum price threshold</strong>. Any positive balance earned from project sales during the week is queued for settlement directly to their saved UPI ID or Bank Account.
+                </p>
+              </div>
+            </div>
+
+            {/* KPI Cards */}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Active Contributors</p>
+                    <p className="text-2xl font-black text-slate-800 mt-1">{contributorsData.summary.totalContributors}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Registered creators</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center">
+                    <Users className="h-5 w-5" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Creator Royalties</p>
+                    <p className="text-2xl font-black text-indigo-600 mt-1">₹{Math.round(contributorsData.summary.totalEarnings).toLocaleString("en-IN")}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">70% & 90% tiers earned</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-indigo-500/15 text-indigo-600 flex items-center justify-center">
+                    <Wallet className="h-5 w-5" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Disbursed</p>
+                    <p className="text-2xl font-black text-slate-800 mt-1">₹{Math.round(contributorsData.summary.totalDisbursed).toLocaleString("en-IN")}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Transferred to date</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-emerald-500/15 text-emerald-600 flex items-center justify-center">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Due for Settlement</p>
+                    <p className="text-2xl font-black text-emerald-600 mt-1">₹{Math.round(contributorsData.summary.pendingWeeklySettlement).toLocaleString("en-IN")}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Weekly queue</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-emerald-500/15 text-emerald-600 flex items-center justify-center">
+                    <ArrowUpRight className="h-5 w-5" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                <Button
+                  size="sm"
+                  variant={contributorsTab === "queue" ? "default" : "ghost"}
+                  onClick={() => setContributorsTab("queue")}
+                  className={`text-xs gap-1.5 h-8 font-medium ${contributorsTab === "queue" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-slate-600"}`}
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  Weekly Settlement Queue ({contributorsData.contributors.filter((c: any) => c.unpaid_balance > 0).length})
+                </Button>
+                <Button
+                  size="sm"
+                  variant={contributorsTab === "directory" ? "default" : "ghost"}
+                  onClick={() => setContributorsTab("directory")}
+                  className={`text-xs gap-1.5 h-8 font-medium ${contributorsTab === "directory" ? "bg-slate-900 hover:bg-slate-800 text-white" : "text-slate-600"}`}
+                >
+                  <Users className="h-3.5 w-3.5" />
+                  All Contributors ({contributorsData.contributors.length})
+                </Button>
+              </div>
+
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                <Input
+                  value={contributorsSearch}
+                  onChange={(e) => setContributorsSearch(e.target.value)}
+                  placeholder="Search name, email, UPI, bank..."
+                  className="pl-8 text-xs h-8 bg-slate-50 border-slate-200"
+                />
+              </div>
+            </div>
+
+            {/* Loading state */}
+            {loadingContributors ? (
+              <div className="py-20 text-center text-muted-foreground flex flex-col items-center justify-center gap-2">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                Loading contributor statistics and ledger accounts...
+              </div>
+            ) : (() => {
+              const q = contributorsSearch.toLowerCase();
+              const filteredList = contributorsData.contributors.filter((c: any) => {
+                if (contributorsTab === "queue" && c.unpaid_balance <= 0) return false;
+                if (!q) return true;
+                return (
+                  (c.name || "").toLowerCase().includes(q) ||
+                  (c.email || "").toLowerCase().includes(q) ||
+                  (c.upi_id || "").toLowerCase().includes(q) ||
+                  (c.bank_name || "").toLowerCase().includes(q) ||
+                  (c.bank_account || "").toLowerCase().includes(q)
+                );
+              });
+
+              if (filteredList.length === 0) {
+                return (
+                  <div className="py-16 text-center text-muted-foreground border-2 border-dashed rounded-xl bg-white space-y-2 p-6">
+                    <CheckCheck className="h-10 w-10 text-emerald-500 mx-auto" />
+                    <p className="font-semibold text-slate-800">
+                      {contributorsTab === "queue"
+                        ? "All weekly payouts are settled!"
+                        : "No contributors found matching your search."}
+                    </p>
+                    <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                      {contributorsTab === "queue"
+                        ? "There are no pending contributor balances awaiting weekly disbursement."
+                        : "Try a different search query or click Refresh Data above."}
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-4">
+                  {filteredList.map((c: any) => (
+                    <Card key={c.id} className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                      <div className="p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+                        {/* Contributor Profile & Details */}
+                        <div className="space-y-2 flex-1 min-w-0">
+                          <div className="flex items-center gap-3">
+                            <div className="h-11 w-11 rounded-full bg-primary/10 text-primary font-bold text-base flex items-center justify-center shrink-0 border border-primary/20">
+                              {c.name ? c.name.charAt(0).toUpperCase() : "C"}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-bold text-base text-slate-900 truncate">{c.name}</h3>
+                                {c.unpaid_balance > 0 && (
+                                  <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 text-[11px] font-semibold">
+                                    ₹{Math.round(c.unpaid_balance).toLocaleString("en-IN")} Due
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate">{c.email}</p>
+                            </div>
+                          </div>
+
+                          {/* Stats Pills */}
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap pt-1">
+                            <span>
+                              Registered: <strong className="text-slate-800">{new Date(c.created_at).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}</strong>
+                            </span>
+                            <span>•</span>
+                            <span>
+                              Live Projects: <strong className="text-slate-800">{c.projects_count}</strong>
+                            </span>
+                            <span>•</span>
+                            <span>
+                              Units Sold: <strong className="text-slate-800">{c.units_sold}</strong>
+                            </span>
+                            <span>•</span>
+                            <span>
+                              Lifetime Earned: <strong className="text-indigo-600 font-bold">₹{Math.round(c.lifetime_earnings).toLocaleString("en-IN")}</strong>
+                            </span>
+                            <span>•</span>
+                            <span>
+                              Paid to Date: <strong className="text-slate-800">₹{Math.round(c.total_withdrawn).toLocaleString("en-IN")}</strong>
+                            </span>
+                          </div>
+
+                          {/* Payment Coordinates Box */}
+                          <div className="mt-2 p-2.5 rounded-lg border border-slate-200 bg-slate-50 flex items-center gap-3 flex-wrap text-xs">
+                            <span className="font-semibold text-slate-700 flex items-center gap-1.5 shrink-0">
+                              {c.preferred_payout_method === "bank" ? (
+                                <>
+                                  <Building className="h-3.5 w-3.5 text-indigo-600" /> Direct Bank:
+                                </>
+                              ) : (
+                                <>
+                                  <CreditCard className="h-3.5 w-3.5 text-emerald-600" /> UPI ID:
+                                </>
+                              )}
+                            </span>
+
+                            {c.preferred_payout_method === "bank" && c.bank_account ? (
+                              <div className="flex items-center gap-2 flex-wrap text-slate-800 font-mono text-[11px]">
+                                <span>{c.bank_name || "Bank"}</span>
+                                <span>•</span>
+                                <span className="font-bold">A/C: {c.bank_account}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => copyToClipboard(c.bank_account, "Account Number")}
+                                  className="text-slate-500 hover:text-slate-800 p-0.5"
+                                  title="Copy Account Number"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </button>
+                                <span>•</span>
+                                <span>IFSC: {c.bank_ifsc}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => copyToClipboard(c.bank_ifsc, "IFSC Code")}
+                                  className="text-slate-500 hover:text-slate-800 p-0.5"
+                                  title="Copy IFSC Code"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </button>
+                                <span>•</span>
+                                <span>Holder: {c.account_holder_name}</span>
+                              </div>
+                            ) : c.upi_id ? (
+                              <div className="flex items-center gap-2 text-slate-800 font-mono font-bold text-[11px]">
+                                <span>{c.upi_id}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => copyToClipboard(c.upi_id, "UPI ID")}
+                                  className="text-slate-500 hover:text-slate-800 p-0.5"
+                                  title="Copy UPI ID"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-amber-600 font-medium">No payout credentials saved yet</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-2 shrink-0 self-end lg:self-center flex-wrap">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setViewingLedgerContributor(c)}
+                            className="text-xs h-9 gap-1.5 border-slate-300 hover:bg-slate-50"
+                          >
+                            <BookOpen className="h-3.5 w-3.5 text-slate-600" />
+                            View Passbook / Ledger
+                          </Button>
+
+                          {c.unpaid_balance > 0 && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleOpenPayoutModal(c)}
+                              className="text-xs h-9 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              Pay ₹{Math.round(c.unpaid_balance).toLocaleString("en-IN")}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              );
+            })()}
+
+            {/* Passbook / Ledger Modal */}
+            {viewingLedgerContributor && (
+              <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+                <Card className="w-full max-w-4xl bg-white border border-slate-200 text-slate-900 shadow-2xl relative max-h-[90vh] flex flex-col">
+                  <button
+                    onClick={() => setViewingLedgerContributor(null)}
+                    className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10 p-1 rounded-full hover:bg-slate-100"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+
+                  <CardHeader className="border-b pb-4">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-indigo-500/15 text-indigo-700 border-indigo-500/30 text-xs">
+                        Official Contributor Ledger
+                      </Badge>
+                      <span className="text-xs text-muted-foreground font-mono">ID: {viewingLedgerContributor.id}</span>
+                    </div>
+                    <CardTitle className="text-2xl font-bold mt-1">
+                      {viewingLedgerContributor.name} — Passbook Statement
+                    </CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground flex items-center gap-3 mt-1 flex-wrap">
+                      <span>Email: <strong>{viewingLedgerContributor.email}</strong></span>
+                      <span>•</span>
+                      <span>Lifetime Earnings: <strong className="text-indigo-600 font-bold">₹{Math.round(viewingLedgerContributor.lifetime_earnings).toLocaleString("en-IN")}</strong></span>
+                      <span>•</span>
+                      <span>Total Withdrawn: <strong>₹{Math.round(viewingLedgerContributor.total_withdrawn).toLocaleString("en-IN")}</strong></span>
+                      <span>•</span>
+                      <span>Unpaid Balance: <strong className="text-emerald-600 font-bold">₹{Math.round(viewingLedgerContributor.unpaid_balance).toLocaleString("en-IN")}</strong></span>
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="overflow-y-auto p-6 space-y-4 flex-1">
+                    {/* Payment Info Card */}
+                    <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 text-xs flex items-center justify-between flex-wrap gap-2">
+                      <div>
+                        <span className="text-muted-foreground block font-medium">Configured Payout Destination:</span>
+                        <div className="font-bold text-slate-900 mt-0.5">
+                          {viewingLedgerContributor.preferred_payout_method === "bank" && viewingLedgerContributor.bank_account
+                            ? `${viewingLedgerContributor.bank_name || "Bank"} — A/C: ${viewingLedgerContributor.bank_account} (IFSC: ${viewingLedgerContributor.bank_ifsc})`
+                            : viewingLedgerContributor.upi_id
+                            ? `UPI ID: ${viewingLedgerContributor.upi_id}`
+                            : "No payout details on file"}
+                        </div>
+                      </div>
+                      {viewingLedgerContributor.unpaid_balance > 0 && (
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            const c = viewingLedgerContributor;
+                            setViewingLedgerContributor(null);
+                            handleOpenPayoutModal(c);
+                          }}
+                          className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Settle ₹{Math.round(viewingLedgerContributor.unpaid_balance).toLocaleString("en-IN")}
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Statement Table */}
+                    <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-xs">
+                          <thead>
+                            <tr className="bg-slate-100 text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200">
+                              <th className="p-3">Date & Time</th>
+                              <th className="p-3">Transaction</th>
+                              <th className="p-3">Reference / Notes</th>
+                              <th className="p-3 text-right">Amount</th>
+                              <th className="p-3 text-right">Running Balance</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {(() => {
+                              const stmt = getContributorStatement(viewingLedgerContributor);
+                              if (stmt.length === 0) {
+                                return (
+                                  <tr>
+                                    <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                                      No transaction history found for this contributor yet.
+                                    </td>
+                                  </tr>
+                                );
+                              }
+
+                              return stmt.map((entry: any) => (
+                                <tr key={entry.id} className="hover:bg-slate-50/70 transition-colors">
+                                  <td className="p-3 text-slate-600 whitespace-nowrap">
+                                    {entry.dateStr}
+                                  </td>
+                                  <td className="p-3">
+                                    <div className="space-y-0.5">
+                                      <div className="flex items-center gap-1.5 font-semibold">
+                                        {entry.type === "sale" ? (
+                                          <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 text-[10px] py-0 px-1.5">
+                                            + SALE CREDIT
+                                          </Badge>
+                                        ) : (
+                                          <Badge className="bg-rose-500/15 text-rose-700 border-rose-500/30 text-[10px] py-0 px-1.5">
+                                            - WEEKLY PAYOUT
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-slate-900 font-medium">{entry.description}</p>
+                                      <p className="text-[11px] text-muted-foreground">{entry.details}</p>
+                                    </div>
+                                  </td>
+                                  <td className="p-3 font-mono text-[11px] text-slate-600">
+                                    {entry.reference}
+                                  </td>
+                                  <td className="p-3 text-right font-bold whitespace-nowrap">
+                                    {entry.type === "sale" ? (
+                                      <span className="text-emerald-600">+₹{Math.round(entry.amount).toLocaleString("en-IN")}</span>
+                                    ) : (
+                                      <span className="text-rose-600">-₹{Math.round(entry.amount).toLocaleString("en-IN")}</span>
+                                    )}
+                                  </td>
+                                  <td className="p-3 text-right font-bold text-slate-900 font-mono whitespace-nowrap">
+                                    ₹{Math.round(entry.runningBalance).toLocaleString("en-IN")}
+                                  </td>
+                                </tr>
+                              ));
+                            })()}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </CardContent>
+
+                  <div className="p-4 border-t bg-slate-50 flex justify-end">
+                    <Button variant="outline" size="sm" onClick={() => setViewingLedgerContributor(null)}>
+                      Close Passbook
+                    </Button>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* Disburse Payout Modal */}
+            {payoutModalOpen && payoutTargetContributor && (
+              <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+                <Card className="w-full max-w-lg bg-white border border-slate-200 text-slate-900 shadow-2xl relative">
+                  <button
+                    onClick={() => {
+                      setPayoutModalOpen(false);
+                      setPayoutTargetContributor(null);
+                    }}
+                    className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+
+                  <CardHeader className="border-b">
+                    <CardTitle className="text-xl font-bold flex items-center gap-2 text-emerald-700">
+                      <Wallet className="h-5 w-5 text-emerald-600" />
+                      Disburse Weekly Payout
+                    </CardTitle>
+                    <CardDescription className="text-xs mt-1">
+                      Recipient: <strong className="text-slate-800">{payoutTargetContributor.name}</strong> ({payoutTargetContributor.email})
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="p-6 space-y-4 text-xs">
+                    {/* Payment destination display */}
+                    <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 space-y-2">
+                      <span className="font-semibold text-slate-700 uppercase tracking-wider block text-[10px]">
+                        Payment Destination ({payoutTargetContributor.preferred_payout_method === "bank" ? "Direct Bank" : "UPI"})
+                      </span>
+                      {payoutTargetContributor.preferred_payout_method === "bank" && payoutTargetContributor.bank_account ? (
+                        <div className="space-y-1 font-mono text-slate-900">
+                          <div>Bank: <strong>{payoutTargetContributor.bank_name || "Bank"}</strong></div>
+                          <div className="flex items-center gap-2">
+                            <span>A/C: <strong>{payoutTargetContributor.bank_account}</strong></span>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(payoutTargetContributor.bank_account, "Account Number")}
+                              className="text-primary hover:underline text-[10px] inline-flex items-center gap-0.5"
+                            >
+                              <Copy className="h-3 w-3" /> Copy
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span>IFSC: <strong>{payoutTargetContributor.bank_ifsc}</strong></span>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(payoutTargetContributor.bank_ifsc, "IFSC Code")}
+                              className="text-primary hover:underline text-[10px] inline-flex items-center gap-0.5"
+                            >
+                              <Copy className="h-3 w-3" /> Copy
+                            </button>
+                          </div>
+                          <div>Holder: <strong>{payoutTargetContributor.account_holder_name}</strong></div>
+                        </div>
+                      ) : payoutTargetContributor.upi_id ? (
+                        <div className="flex items-center justify-between font-mono font-bold text-slate-900 bg-white p-2 rounded border border-slate-200">
+                          <span>{payoutTargetContributor.upi_id}</span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(payoutTargetContributor.upi_id, "UPI ID")}
+                            className="text-primary hover:underline text-[10px] inline-flex items-center gap-0.5"
+                          >
+                            <Copy className="h-3 w-3" /> Copy UPI
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-rose-600 font-semibold">No payout credentials configured by contributor.</p>
+                      )}
+                    </div>
+
+                    {/* Amount */}
+                    <div className="space-y-1.5">
+                      <label className="font-bold text-slate-700 uppercase text-[11px]">Payout Amount (₹) *</label>
+                      <Input
+                        type="number"
+                        value={payoutAmountInput}
+                        onChange={(e) => setPayoutAmountInput(Number(e.target.value))}
+                        min={1}
+                        className="text-sm font-bold bg-white"
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        Current unpaid balance: ₹{Math.round(payoutTargetContributor.unpaid_balance).toLocaleString("en-IN")}.
+                      </p>
+                    </div>
+
+                    {/* UTR / Transaction Ref */}
+                    <div className="space-y-1.5">
+                      <label className="font-bold text-slate-700 uppercase text-[11px]">
+                        Bank / UPI Transaction UTR Reference *
+                      </label>
+                      <Input
+                        placeholder="e.g. 40921820491 or IMPS202611039"
+                        value={payoutUtrInput}
+                        onChange={(e) => setPayoutUtrInput(e.target.value)}
+                        className="font-mono text-xs bg-white uppercase"
+                        required
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        Enter the transaction UTR number generated by your bank / UPI app after sending the money. This will be posted to the contributor's passbook.
+                      </p>
+                    </div>
+
+                    {/* Notes */}
+                    <div className="space-y-1.5">
+                      <label className="font-bold text-slate-700 uppercase text-[11px]">Internal Notes / Label</label>
+                      <Input
+                        placeholder="e.g. Weekly settlement - Nov 3"
+                        value={payoutNotesInput}
+                        onChange={(e) => setPayoutNotesInput(e.target.value)}
+                        className="text-xs bg-white"
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-3 border-t">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setPayoutModalOpen(false);
+                          setPayoutTargetContributor(null);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleProcessPayout}
+                        disabled={processingPayout}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5"
+                      >
+                        {processingPayout ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        )}
+                        Confirm & Record Payout
                       </Button>
                     </div>
                   </CardContent>
