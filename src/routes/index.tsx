@@ -158,7 +158,11 @@ function HomePage() {
           .order("created_at", { ascending: false });
 
         if (data && data.length > 0) {
-          setProjects(data);
+          // Filter to only approved/published projects in marketplace
+          const approved = data.filter(
+            (p) => p.status !== "under_review" && p.status !== "rejected" && p.is_approved !== false
+          );
+          setProjects(approved.length > 0 ? approved : PREBUILT_PROJECTS);
         } else {
           setProjects(PREBUILT_PROJECTS);
         }

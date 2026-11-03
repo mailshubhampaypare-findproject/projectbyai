@@ -43,7 +43,18 @@ import {
   ListOrdered,
   Users,
   Tag,
-  Mail
+  Mail,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Eye,
+  Download,
+  ExternalLink,
+  Video,
+  ShieldCheck,
+  RefreshCw,
+  Search,
+  Filter
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -269,7 +280,16 @@ function AdminPortal() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   
-  const [activeTab, setActiveTab] = useState<"library" | "blogs" | "users" | "coupons" | "queries">("library");
+  const [activeTab, setActiveTab] = useState<"library" | "approvals" | "blogs" | "users" | "coupons" | "queries">("library");
+
+  // Project Approvals state
+  const [approvalsFilter, setApprovalsFilter] = useState<"all" | "pending" | "published" | "rejected">("pending");
+  const [approvalsSearch, setApprovalsSearch] = useState("");
+  const [reviewingProject, setReviewingProject] = useState<any | null>(null);
+  const [rejectionModalOpen, setRejectionModalOpen] = useState(false);
+  const [rejectionTargetProject, setRejectionTargetProject] = useState<any | null>(null);
+  const [rejectionReasonInput, setRejectionReasonInput] = useState("");
+  const [processingApprovalId, setProcessingApprovalId] = useState<string | null>(null);
 
   // Contact queries state
   const [queries, setQueries] = useState<any[]>([]);
@@ -801,6 +821,121 @@ function AdminPortal() {
     }
   };
 
+  // Computed Project Approvals
+  const contributorProjects = projects.filter(
+    (p) => p.contributor_id || p.status === "under_review" || p.status === "rejected" || p.is_approved === false
+  );
+  const pendingApprovalsCount = projects.filter(
+    (p) => p.status === "under_review" || p.is_approved === false
+  ).length;
+  const publishedApprovalsCount = projects.filter(
+    (p) => (p.status === "published" || (!p.status && p.is_approved !== false)) && (p.contributor_id || p.is_approved === true)
+  ).length;
+  const rejectedApprovalsCount = projects.filter(
+    (p) => p.status === "rejected"
+  ).length;
+
+  const filteredApprovals = contributorProjects.filter((p) => {
+    const isPending = p.status === "under_review" || p.is_approved === false;
+    const isPublished = (p.status === "published" || (!p.status && p.is_approved !== false)) && (p.contributor_id || p.is_approved === true);
+    const isRejected = p.status === "rejected";
+
+    if (approvalsFilter === "pending" && !isPending) return false;
+    if (approvalsFilter === "published" && !isPublished) return false;
+    if (approvalsFilter === "rejected" && !isRejected) return false;
+
+    if (approvalsSearch.trim()) {
+      const q = approvalsSearch.toLowerCase();
+      const matchTitle = (p.title || "").toLowerCase().includes(q);
+      const matchCategory = (p.category || "").toLowerCase().includes(q);
+      const matchTech = Array.isArray(p.tech) ? p.tech.some((t: string) => (t || "").toLowerCase().includes(q)) : false;
+      const matchAuthor = (p.contributor_name || "").toLowerCase().includes(q);
+      if (!matchTitle && !matchCategory && !matchTech && !matchAuthor) return false;
+    }
+    return true;
+  });
+
+  const handleApproveProject = async (project: any) => {
+    setProcessingApprovalId(project.id);
+    try {
+      const { error } = await supabase
+        .from("library_projects")
+        .update({
+          status: "published",
+          is_approved: true,
+          rejection_reason: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", project.id);
+      
+      if (error) throw error;
+
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === project.id
+            ? { ...p, status: "published", is_approved: true, rejection_reason: null }
+            : p
+        )
+      );
+
+      if (reviewingProject && reviewingProject.id === project.id) {
+        setReviewingProject({ ...reviewingProject, status: "published", is_approved: true, rejection_reason: null });
+      }
+
+      toast.success(`Project "${project.title}" approved & published to Marketplace!`);
+    } catch (err: any) {
+      toast.error("Failed to approve project: " + err.message);
+    } finally {
+      setProcessingApprovalId(null);
+    }
+  };
+
+  const handleOpenRejectModal = (project: any) => {
+    setRejectionTargetProject(project);
+    setRejectionReasonInput(project.rejection_reason || "");
+    setRejectionModalOpen(true);
+  };
+
+  const handleRejectProject = async () => {
+    if (!rejectionTargetProject) return;
+    setProcessingApprovalId(rejectionTargetProject.id);
+    try {
+      const reason = rejectionReasonInput.trim() || "Project requirements not fully met. Please verify code or documentation.";
+      const { error } = await supabase
+        .from("library_projects")
+        .update({
+          status: "rejected",
+          is_approved: false,
+          rejection_reason: reason,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", rejectionTargetProject.id);
+
+      if (error) throw error;
+
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === rejectionTargetProject.id
+            ? { ...p, status: "rejected", is_approved: false, rejection_reason: reason }
+            : p
+        )
+      );
+
+      if (reviewingProject && reviewingProject.id === rejectionTargetProject.id) {
+        setReviewingProject({ ...reviewingProject, status: "rejected", is_approved: false, rejection_reason: reason });
+      }
+
+      toast.error(`Project marked as rejected with feedback.`);
+      setRejectionModalOpen(false);
+      setRejectionTargetProject(null);
+      setRejectionReasonInput("");
+    } catch (err: any) {
+      toast.error("Failed to reject project: " + err.message);
+    } finally {
+      setProcessingApprovalId(null);
+    }
+  };
+
   const addProjectFaq = () => {
     if (!newFaqQ || !newFaqA) {
       toast.error("Please fill in both question and answer.");
@@ -1092,6 +1227,22 @@ function AdminPortal() {
             >
               <LayoutDashboard className="h-4 w-4" />
               Project Library
+            </button>
+            <button
+              onClick={() => setActiveTab("approvals")}
+              className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeTab === "approvals" ? "bg-primary text-primary-foreground shadow" : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Project Approvals</span>
+              </div>
+              {pendingApprovalsCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500 text-slate-950 animate-pulse">
+                  {pendingApprovalsCount}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setActiveTab("blogs")}
@@ -1569,6 +1720,658 @@ function AdminPortal() {
                         </Button>
                       </div>
                     </form>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
+        ) : activeTab === "approvals" ? (
+          <div className="space-y-8 max-w-6xl mx-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between gap-4 flex-wrap border-b pb-5">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-3xl font-extrabold tracking-tight">Project Approvals</h1>
+                  {pendingApprovalsCount > 0 && (
+                    <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 font-bold px-2.5 py-0.5">
+                      {pendingApprovalsCount} Pending
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-muted-foreground text-sm mt-1">
+                  Inspect and verify projects submitted by contributors before publishing to the public marketplace.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={loadLibraryProjects}
+                disabled={loadingProjects}
+                className="gap-2 border-slate-200"
+              >
+                <RefreshCw className={`h-4 w-4 ${loadingProjects ? "animate-spin" : ""}`} />
+                Refresh Submissions
+              </Button>
+            </div>
+
+            {/* KPI Summary Cards */}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pending Review</p>
+                    <p className="text-2xl font-black text-amber-600 mt-1">{pendingApprovalsCount}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Awaiting verification</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center">
+                    <Clock className="h-5 w-5" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Published in Market</p>
+                    <p className="text-2xl font-black text-emerald-600 mt-1">{publishedApprovalsCount}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Live & purchasable</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-emerald-500/15 text-emerald-600 flex items-center justify-center">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Changes Requested</p>
+                    <p className="text-2xl font-black text-rose-600 mt-1">{rejectedApprovalsCount}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Feedback sent</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-rose-500/15 text-rose-600 flex items-center justify-center">
+                    <AlertCircle className="h-5 w-5" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-slate-200 shadow-sm">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Submissions</p>
+                    <p className="text-2xl font-black text-slate-800 mt-1">{contributorProjects.length}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">From all contributors</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-indigo-500/15 text-indigo-600 flex items-center justify-center">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                <Button
+                  size="sm"
+                  variant={approvalsFilter === "pending" ? "default" : "ghost"}
+                  onClick={() => setApprovalsFilter("pending")}
+                  className={`text-xs gap-1.5 h-8 font-medium ${approvalsFilter === "pending" ? "bg-amber-600 hover:bg-amber-700 text-white" : "text-slate-600"}`}
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  Pending ({pendingApprovalsCount})
+                </Button>
+                <Button
+                  size="sm"
+                  variant={approvalsFilter === "published" ? "default" : "ghost"}
+                  onClick={() => setApprovalsFilter("published")}
+                  className={`text-xs gap-1.5 h-8 font-medium ${approvalsFilter === "published" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "text-slate-600"}`}
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Published ({publishedApprovalsCount})
+                </Button>
+                <Button
+                  size="sm"
+                  variant={approvalsFilter === "rejected" ? "default" : "ghost"}
+                  onClick={() => setApprovalsFilter("rejected")}
+                  className={`text-xs gap-1.5 h-8 font-medium ${approvalsFilter === "rejected" ? "bg-rose-600 hover:bg-rose-700 text-white" : "text-slate-600"}`}
+                >
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Changes Needed ({rejectedApprovalsCount})
+                </Button>
+                <Button
+                  size="sm"
+                  variant={approvalsFilter === "all" ? "default" : "ghost"}
+                  onClick={() => setApprovalsFilter("all")}
+                  className={`text-xs gap-1.5 h-8 font-medium ${approvalsFilter === "all" ? "bg-slate-900 hover:bg-slate-800 text-white" : "text-slate-600"}`}
+                >
+                  All ({contributorProjects.length})
+                </Button>
+              </div>
+
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                <Input
+                  value={approvalsSearch}
+                  onChange={(e) => setApprovalsSearch(e.target.value)}
+                  placeholder="Search title, contributor, stack..."
+                  className="pl-8 text-xs h-8 bg-slate-50 border-slate-200"
+                />
+              </div>
+            </div>
+
+            {/* Submissions List */}
+            {loadingProjects ? (
+              <div className="py-20 text-center text-muted-foreground flex flex-col items-center justify-center gap-2">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                Loading submissions...
+              </div>
+            ) : filteredApprovals.length === 0 ? (
+              <div className="py-16 text-center text-muted-foreground border-2 border-dashed rounded-xl bg-white space-y-2 p-6">
+                <ShieldCheck className="h-10 w-10 text-slate-300 mx-auto" />
+                <p className="font-semibold text-slate-700">No submissions found</p>
+                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                  {approvalsFilter === "pending"
+                    ? "Great job! All contributor projects have been reviewed and approved."
+                    : "No projects match the selected status or search filter."}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredApprovals.map((p) => {
+                  const [thumbUrl, thumbAlt] = (p.thumbnail || "").split("||");
+                  const isPending = p.status === "under_review" || p.is_approved === false;
+                  const isPublished = (p.status === "published" || (!p.status && p.is_approved !== false)) && (p.contributor_id || p.is_approved === true);
+                  const isRejected = p.status === "rejected";
+
+                  return (
+                    <Card key={p.id} className="bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                      <div className="p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+                        {/* Thumbnail & Title Info */}
+                        <div className="flex items-start gap-4 flex-1 min-w-0">
+                          <div className="h-20 w-28 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200 shadow-inner">
+                            {thumbUrl ? (
+                              <img src={thumbUrl} alt={thumbAlt || p.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-medium">
+                                No Image
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-1.5 min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-bold text-base text-slate-900 truncate">{p.title}</h3>
+                              {p.category && (
+                                <Badge variant="secondary" className="text-[11px] font-medium bg-slate-100 text-slate-700">
+                                  {p.category}
+                                </Badge>
+                              )}
+                              {isPending ? (
+                                <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30 text-[11px] font-semibold flex items-center gap-1">
+                                  <Clock className="w-3 h-3 text-amber-600" />
+                                  Pending Review
+                                </Badge>
+                              ) : isRejected ? (
+                                <Badge className="bg-rose-500/15 text-rose-700 border-rose-500/30 text-[11px] font-semibold flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3 text-rose-600" />
+                                  Changes Needed
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 text-[11px] font-semibold flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                  Published Live
+                                </Badge>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                              <span>
+                                Contributor: <strong className="text-slate-800">{p.contributor_name || "Academic Contributor"}</strong>
+                              </span>
+                              <span>•</span>
+                              <span>
+                                Commission: <strong className="text-slate-800">{p.commission_rate || (p.tutorial_video_url ? 90 : 70)}%</strong>
+                              </span>
+                              <span>•</span>
+                              <span>
+                                Price: <strong className="text-slate-900 font-bold">₹{p.price}</strong>
+                              </span>
+                              {p.created_at && (
+                                <>
+                                  <span>•</span>
+                                  <span>Submitted: {new Date(p.created_at).toLocaleDateString()}</span>
+                                </>
+                              )}
+                            </div>
+
+                            {/* Tech pills */}
+                            {Array.isArray(p.tech) && p.tech.length > 0 && (
+                              <div className="flex items-center gap-1 flex-wrap pt-0.5">
+                                {p.tech.slice(0, 4).map((techName: string, idx: number) => (
+                                  <span key={idx} className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600 border border-slate-200">
+                                    {techName}
+                                  </span>
+                                ))}
+                                {p.tech.length > 4 && (
+                                  <span className="text-[10px] text-muted-foreground">
+                                    +{p.tech.length - 4} more
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Rejection reason callout if present */}
+                            {isRejected && p.rejection_reason && (
+                              <div className="mt-2 p-2 rounded bg-rose-50 border border-rose-200 text-xs text-rose-800">
+                                <span className="font-semibold">Feedback sent to contributor: </span>
+                                {p.rejection_reason}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-2 flex-wrap shrink-0 self-end lg:self-center">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setReviewingProject(p)}
+                            className="text-xs h-8 gap-1.5 border-slate-300 hover:bg-slate-50"
+                          >
+                            <Eye className="h-3.5 w-3.5 text-slate-600" />
+                            Review Project
+                          </Button>
+
+                          {!isPublished && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleApproveProject(p)}
+                              disabled={processingApprovalId === p.id}
+                              className="text-xs h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+                            >
+                              {processingApprovalId === p.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                              )}
+                              Approve & Publish
+                            </Button>
+                          )}
+
+                          {!isRejected && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleOpenRejectModal(p)}
+                              disabled={processingApprovalId === p.id}
+                              className="text-xs h-8 gap-1.5 border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                            >
+                              <AlertCircle className="h-3.5 w-3.5" />
+                              Request Changes
+                            </Button>
+                          )}
+
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => editProject(p)}
+                            className="text-xs h-8 text-slate-500 hover:text-slate-800 px-2"
+                            title="Edit details directly"
+                          >
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteProject(p.id)}
+                            className="text-xs h-8 text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-2"
+                            title="Delete submission"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Detailed Inspection Modal */}
+            {reviewingProject && (
+              <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+                <Card className="w-full max-w-4xl bg-white border border-slate-200 text-slate-900 shadow-2xl relative max-h-[90vh] flex flex-col">
+                  <button
+                    onClick={() => setReviewingProject(null)}
+                    className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10 p-1 rounded-full hover:bg-slate-100"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+
+                  <CardHeader className="border-b pb-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-primary">Inspection & Approval</span>
+                      {reviewingProject.status === "under_review" || reviewingProject.is_approved === false ? (
+                        <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30 text-xs">Under Review</Badge>
+                      ) : reviewingProject.status === "rejected" ? (
+                        <Badge className="bg-rose-500/15 text-rose-700 border-rose-500/30 text-xs">Changes Needed</Badge>
+                      ) : (
+                        <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 text-xs">Published Live</Badge>
+                      )}
+                    </div>
+                    <CardTitle className="text-2xl font-bold mt-1">{reviewingProject.title}</CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground flex items-center gap-3 mt-1 flex-wrap">
+                      <span>Category: <strong>{reviewingProject.category || "General"}</strong></span>
+                      <span>•</span>
+                      <span>Slug: <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-800">/projects/{reviewingProject.slug}</code></span>
+                      <span>•</span>
+                      <span>Price: <strong className="text-slate-900 font-bold">₹{reviewingProject.price}</strong></span>
+                      <span>•</span>
+                      <span>Contributor: <strong>{reviewingProject.contributor_name || "Academic Contributor"}</strong></span>
+                      <span>•</span>
+                      <span>Royalty: <strong>{reviewingProject.commission_rate || 70}%</strong></span>
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="overflow-y-auto p-6 space-y-6 flex-1 text-sm">
+                    {/* Deliverables checklist */}
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Submitted Project Deliverables</h4>
+                      <div className="grid sm:grid-cols-3 gap-3">
+                        {/* Source Code ZIP */}
+                        <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
+                          <div className="flex items-center gap-2 text-slate-900 font-semibold text-xs">
+                            <Download className="h-4 w-4 text-primary" />
+                            Source Code ZIP
+                          </div>
+                          {reviewingProject.zip_url ? (
+                            <a
+                              href={reviewingProject.zip_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-xs text-primary font-medium hover:underline break-all"
+                            >
+                              Download Code Archive <ExternalLink className="h-3 w-3 shrink-0" />
+                            </a>
+                          ) : (
+                            <p className="text-xs text-rose-600 font-medium">No code ZIP provided</p>
+                          )}
+                        </div>
+
+                        {/* Tutorial Video */}
+                        <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
+                          <div className="flex items-center gap-2 text-slate-900 font-semibold text-xs">
+                            <Video className="h-4 w-4 text-amber-600" />
+                            Walkthrough Video
+                          </div>
+                          {reviewingProject.tutorial_video_url ? (
+                            <a
+                              href={reviewingProject.tutorial_video_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-xs text-amber-700 font-medium hover:underline break-all"
+                            >
+                              Open Contributor Video <ExternalLink className="h-3 w-3 shrink-0" />
+                            </a>
+                          ) : reviewingProject.youtube_id ? (
+                            <a
+                              href={`https://www.youtube.com/watch?v=${reviewingProject.youtube_id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-xs text-amber-700 font-medium hover:underline"
+                            >
+                              YouTube Demo <ExternalLink className="h-3 w-3 shrink-0" />
+                            </a>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">Standard 70% rate (no video)</p>
+                          )}
+                        </div>
+
+                        {/* Live Public Page */}
+                        <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
+                          <div className="flex items-center gap-2 text-slate-900 font-semibold text-xs">
+                            <ExternalLink className="h-4 w-4 text-emerald-600" />
+                            Marketplace URL
+                          </div>
+                          <Link
+                            to="/projects/$slug"
+                            params={{ slug: reviewingProject.slug }}
+                            target="_blank"
+                            className="inline-flex items-center gap-1.5 text-xs text-emerald-700 font-medium hover:underline"
+                          >
+                            Preview Project Page <ExternalLink className="h-3 w-3 shrink-0" />
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Thumbnail & Media Preview */}
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Visual Assets</h4>
+                      <div className="flex items-start gap-4 flex-wrap">
+                        {reviewingProject.thumbnail && (
+                          <div className="space-y-1">
+                            <span className="text-[11px] text-muted-foreground block">Cover Thumbnail:</span>
+                            <img
+                              src={reviewingProject.thumbnail.split("||")[0]}
+                              alt="Thumbnail"
+                              className="h-32 w-auto max-w-xs object-cover rounded-lg border border-slate-200 shadow-sm"
+                            />
+                          </div>
+                        )}
+                        {Array.isArray(reviewingProject.screenshots) && reviewingProject.screenshots.length > 0 && (
+                          <div className="space-y-1 flex-1">
+                            <span className="text-[11px] text-muted-foreground block">Screenshots ({reviewingProject.screenshots.length}):</span>
+                            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                              {reviewingProject.screenshots.map((s: string, idx: number) => (
+                                <img
+                                  key={idx}
+                                  src={s}
+                                  alt={`Screenshot ${idx + 1}`}
+                                  className="h-32 w-auto max-w-xs object-cover rounded-lg border border-slate-200 shadow-sm shrink-0"
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Tech Stack */}
+                    {Array.isArray(reviewingProject.tech) && reviewingProject.tech.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Tech Stack</h4>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {reviewingProject.tech.map((t: string, idx: number) => (
+                            <Badge key={idx} variant="outline" className="text-xs bg-slate-50 font-normal">
+                              {t}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Short Summary */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Project Summary</h4>
+                      <div
+                        className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-xs leading-relaxed max-h-40 overflow-y-auto"
+                        dangerouslySetInnerHTML={{ __html: reviewingProject.description || "No summary provided." }}
+                      />
+                    </div>
+
+                    {/* Long Description / README */}
+                    {reviewingProject.long_description && (
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Detailed Documentation / README</h4>
+                        <div
+                          className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-xs leading-relaxed max-h-60 overflow-y-auto prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: reviewingProject.long_description }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Rejection Feedback History */}
+                    {reviewingProject.rejection_reason && (
+                      <div className="p-3.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-900 text-xs space-y-1">
+                        <span className="font-bold flex items-center gap-1.5 text-rose-800">
+                          <AlertCircle className="h-4 w-4" /> Current Feedback Notes:
+                        </span>
+                        <p>{reviewingProject.rejection_reason}</p>
+                      </div>
+                    )}
+                  </CardContent>
+
+                  {/* Inspection Footer Actions */}
+                  <div className="p-4 border-t bg-slate-50 flex items-center justify-between flex-wrap gap-3">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const p = reviewingProject;
+                          setReviewingProject(null);
+                          editProject(p);
+                        }}
+                        className="text-xs gap-1.5 border-slate-300"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                        Edit Details
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const p = reviewingProject;
+                          setReviewingProject(null);
+                          handleOpenRejectModal(p);
+                        }}
+                        className="text-xs gap-1.5 text-rose-600 border-rose-200 hover:bg-rose-50"
+                      >
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        Request Changes
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setReviewingProject(null)}
+                        className="text-xs"
+                      >
+                        Close
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleApproveProject(reviewingProject)}
+                        disabled={processingApprovalId === reviewingProject.id}
+                        className="text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                      >
+                        {processingApprovalId === reviewingProject.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        )}
+                        Approve & Publish to Marketplace
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* Rejection / Change Request Modal */}
+            {rejectionModalOpen && rejectionTargetProject && (
+              <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+                <Card className="w-full max-w-lg bg-white border border-slate-200 text-slate-900 shadow-2xl relative">
+                  <button
+                    onClick={() => {
+                      setRejectionModalOpen(false);
+                      setRejectionTargetProject(null);
+                    }}
+                    className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+
+                  <CardHeader className="border-b">
+                    <CardTitle className="text-xl font-bold flex items-center gap-2 text-rose-700">
+                      <AlertCircle className="h-5 w-5 text-rose-600" />
+                      Request Changes / Reject Submission
+                    </CardTitle>
+                    <CardDescription className="text-xs mt-1">
+                      Project: <strong className="text-slate-800">{rejectionTargetProject.title}</strong>
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="p-6 space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-700 uppercase">
+                        Feedback for Contributor *
+                      </label>
+                      <Textarea
+                        value={rejectionReasonInput}
+                        onChange={(e) => setRejectionReasonInput(e.target.value)}
+                        placeholder="e.g. The source code ZIP archive is missing the database schema file (schema.sql), and the live demo URL returns 404. Please re-upload with these resolved."
+                        className="min-h-28 text-xs bg-white"
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        This feedback will appear in the contributor's dashboard so they know exactly what to revise before re-submitting.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <span className="text-[11px] font-semibold text-slate-600 block">Quick reason presets:</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          "Missing README / setup installation instructions",
+                          "Source code ZIP archive is corrupted or password-protected",
+                          "Missing database schema / migration files",
+                          "Step-by-step video walkthrough link is inaccessible",
+                          "Documentation does not meet academic IEEE standards"
+                        ].map((preset, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setRejectionReasonInput(preset)}
+                            className="px-2 py-1 rounded text-[11px] bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 text-left transition-colors"
+                          >
+                            + {preset}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-3 border-t">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setRejectionModalOpen(false);
+                          setRejectionTargetProject(null);
+                        }}
+                        className="text-xs border-slate-300"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleRejectProject}
+                        disabled={processingApprovalId === rejectionTargetProject.id}
+                        className="text-xs bg-rose-600 hover:bg-rose-700 text-white font-semibold gap-1.5"
+                      >
+                        {processingApprovalId === rejectionTargetProject.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <AlertCircle className="h-3.5 w-3.5" />
+                        )}
+                        Send Feedback & Request Changes
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>

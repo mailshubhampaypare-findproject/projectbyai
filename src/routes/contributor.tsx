@@ -33,6 +33,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
+  Clock,
   Lock,
   Mail,
   CreditCard,
@@ -58,7 +59,6 @@ import {
   BookOpen,
   ArrowRight,
   BarChart3,
-  Clock,
   CheckCheck,
   Inbox,
   UploadCloud,
@@ -728,6 +728,8 @@ python app.py # or npm run dev
         contributor_name: contributorProfile.full_name || user?.user_metadata?.full_name || "Contributor",
         commission_rate: uploadTutorialVideoUrl ? 90 : 70,
         tutorial_video_url: uploadTutorialVideoUrl,
+        status: "under_review",
+        is_approved: false,
         views_count: 0,
         sales_count: 0,
         created_at: new Date().toISOString(),
@@ -741,9 +743,7 @@ python app.py # or npm run dev
 
       setMyProjects([newProj, ...myProjects]);
       toast.success(
-        uploadTutorialVideoUrl
-          ? "Project published with Step-by-Step Video! Submitted for 90% Commission."
-          : "Project published successfully! You will earn 70% on each sale."
+        "Project submitted for review! Once the admin approves your project, it will be published in the marketplace."
       );
 
       // Reset form
@@ -1742,6 +1742,21 @@ python app.py # or npm run dev
                 </div>
               </Card>
 
+              {/* Notice banner for Under Review Projects */}
+              {myProjects.some((p) => p.status === "under_review" || p.is_approved === false) && (
+                <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200 flex items-start gap-3 text-xs mb-4">
+                  <Clock className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                  <div className="space-y-0.5">
+                    <span className="font-bold block text-foreground">
+                      Project Under Review
+                    </span>
+                    <p className="text-muted-foreground leading-relaxed">
+                      Your submitted project is currently under review by our admin team. Once approved, it will automatically be published live to the marketplace so students can discover and acquire it.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Projects Table (Polaris Data Table) */}
               <Card className="border-border shadow-xs overflow-hidden">
                 <div className="overflow-x-auto">
@@ -1750,6 +1765,7 @@ python app.py # or npm run dev
                       <tr className="border-b border-border bg-muted/30 text-muted-foreground text-xs uppercase font-medium">
                         <th className="py-3 px-4">Project</th>
                         <th className="py-3 px-4">Category</th>
+                        <th className="py-3 px-4">Status</th>
                         <th className="py-3 px-4">Price</th>
                         <th className="py-3 px-4">Your Cut</th>
                         <th className="py-3 px-4">Sales</th>
@@ -1761,7 +1777,7 @@ python app.py # or npm run dev
                     <tbody className="divide-y divide-border">
                       {filteredProjects.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="py-12 text-center text-muted-foreground">
+                          <td colSpan={9} className="py-12 text-center text-muted-foreground">
                             <div className="flex flex-col items-center justify-center space-y-2">
                               <Package className="w-8 h-8 text-muted-foreground/40" />
                               <p className="font-medium text-foreground text-sm">No projects uploaded yet</p>
@@ -1810,6 +1826,42 @@ python app.py # or npm run dev
 
                               <td className="py-3.5 px-4 text-muted-foreground">
                                 {p.category || "General"}
+                              </td>
+
+                              <td className="py-3.5 px-4">
+                                {p.status === "under_review" || p.is_approved === false ? (
+                                  <div className="space-y-0.5">
+                                    <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[10px] font-semibold flex items-center gap-1 w-fit shadow-2xs">
+                                      <Clock className="w-3 h-3 text-amber-500" />
+                                      Under Review
+                                    </Badge>
+                                    <span className="text-[10px] text-muted-foreground block">
+                                      Pending Approval
+                                    </span>
+                                  </div>
+                                ) : p.status === "rejected" ? (
+                                  <div className="space-y-0.5">
+                                    <Badge className="bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30 text-[10px] font-semibold flex items-center gap-1 w-fit shadow-2xs">
+                                      <AlertCircle className="w-3 h-3 text-rose-500" />
+                                      Changes Needed
+                                    </Badge>
+                                    {p.rejection_reason && (
+                                      <span className="text-[10px] text-rose-500 dark:text-rose-400 block truncate max-w-[140px]" title={p.rejection_reason}>
+                                        {p.rejection_reason}
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="space-y-0.5">
+                                    <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[10px] font-semibold flex items-center gap-1 w-fit shadow-2xs">
+                                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                                      Published
+                                    </Badge>
+                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block">
+                                      Live in Marketplace
+                                    </span>
+                                  </div>
+                                )}
                               </td>
 
                               <td className="py-3.5 px-4 font-semibold text-foreground">
