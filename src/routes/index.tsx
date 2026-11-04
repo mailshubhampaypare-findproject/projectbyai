@@ -655,10 +655,10 @@ function HomePage() {
                 </Badge>
               </div>
               <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white">
-                Earn 70% to 90% as a Contributor
+                Earn 70% Standard Commission as a Contributor
               </h3>
               <p className="text-xs text-slate-700 dark:text-muted-foreground leading-relaxed">
-                Built an exceptional project during college? Don't let your code sit idle. Upload your project on Projectbyai and earn royalties every time a student downloads it.
+                Built an exceptional project during college? Don't let your code sit idle. Upload your project on Projectbyai and earn a flat 70% royalty every time a student downloads it.
               </p>
 
               <div className="grid grid-cols-2 gap-3 pt-2">
@@ -667,8 +667,8 @@ function HomePage() {
                   <p className="text-[10px] text-muted-foreground font-medium">Standard Royalty</p>
                 </div>
                 <div className="p-3 bg-white/90 dark:bg-muted rounded-xl border border-amber-200/60 text-center">
-                  <p className="text-lg font-black text-amber-700">90%</p>
-                  <p className="text-[10px] text-muted-foreground font-medium">With Video Tutorial</p>
+                  <p className="text-lg font-black text-amber-700">Weekly</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">Direct Bank & UPI Payout</p>
                 </div>
               </div>
             </div>

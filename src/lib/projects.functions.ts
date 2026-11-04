@@ -631,7 +631,7 @@ export const listContributorsWithStats = createServerFn({ method: "GET" })
       const salesEvents: any[] = [];
 
       myProjects.forEach((proj: any) => {
-        const rate = Number(proj.commission_rate || 70) / 100;
+        const rate = 0.7; // Standard 70% creator commission
         const projPrice = Number(proj.price || 0);
         const projSales = Number(proj.sales_count || 0);
 

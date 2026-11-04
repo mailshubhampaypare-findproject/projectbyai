@@ -2119,7 +2119,7 @@ function AdminPortal() {
                               </span>
                               <span>•</span>
                               <span>
-                                Commission: <strong className="text-slate-800">{p.commission_rate || (p.tutorial_video_url ? 90 : 70)}%</strong>
+                                Commission: <strong className="text-slate-800">{p.commission_rate || 70}%</strong>
                               </span>
                               <span>•</span>
                               <span>
@@ -2313,7 +2313,7 @@ function AdminPortal() {
                               YouTube Demo <ExternalLink className="h-3 w-3 shrink-0" />
                             </a>
                           ) : (
-                            <p className="text-xs text-muted-foreground">Standard 70% rate (no video)</p>
+                            <p className="text-xs text-muted-foreground">Standard 70% rate (no video provided)</p>
                           )}
                         </div>
 
@@ -2627,7 +2627,7 @@ function AdminPortal() {
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Creator Royalties</p>
                     <p className="text-2xl font-black text-indigo-600 mt-1">₹{Math.round(contributorsData.summary.totalEarnings).toLocaleString("en-IN")}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">70% & 90% tiers earned</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">70% creator royalties earned</p>
                   </div>
                   <div className="h-10 w-10 rounded-full bg-indigo-500/15 text-indigo-600 flex items-center justify-center">
                     <Wallet className="h-5 w-5" />

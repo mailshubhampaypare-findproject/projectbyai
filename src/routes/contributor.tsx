@@ -89,7 +89,6 @@ type TabType =
   | "projects"
   | "upload"
   | "community"
-  | "tutorial_tier"
   | "reviews"
   | "finances"
   | "settings";
@@ -138,14 +137,6 @@ function ContributorDashboardPage() {
   const [newQuestionText, setNewQuestionText] = useState("");
   const [newQuestionProject, setNewQuestionProject] = useState("");
   const [replyInputMap, setReplyInputMap] = useState<Record<string, string>>({});
-
-  // 90% Video Tutorial Tier Requests (clean - no prefilled requests)
-  const [tutorialRequests, setTutorialRequests] = useState<any[]>([]);
-  const [reqProject, setReqProject] = useState("");
-  const [reqVideoUrl, setReqVideoUrl] = useState("");
-  const [reqDuration, setReqDuration] = useState("");
-  const [reqNotes, setReqNotes] = useState("");
-  const [submittingTierReq, setSubmittingTierReq] = useState(false);
 
   // Reviews (clean - no prefilled reviews)
   const [reviewsList, setReviewsList] = useState<any[]>([]);
@@ -345,16 +336,7 @@ python app.py # or npm run dev
         }
       }
 
-      // 4. Load tutorial tier requests
-      const { data: treqs } = await supabase
-        .from("tutorial_tier_requests")
-        .select("*")
-        .eq("contributor_id", userId)
-        .order("created_at", { ascending: false });
-
-      setTutorialRequests(treqs || []);
-
-      // 5. Load reviews
+      // 4. Load reviews
       const { data: revs } = await supabase
         .from("project_reviews")
         .select("*")
@@ -569,7 +551,6 @@ python app.py # or npm run dev
   const parsedPrice = uploadPrice || 0;
   const contributorEarn70 = Math.round(parsedPrice * 0.7);
   const platformFee30 = Math.round(parsedPrice * 0.3);
-  const contributorEarn90 = Math.round(parsedPrice * 0.9);
 
   // Add Tech Tag
   const handleAddTech = () => {
@@ -752,7 +733,7 @@ python app.py # or npm run dev
         tech_stack: uploadTechStack,
         contributor_id: user?.id,
         contributor_name: contributorProfile.full_name || user?.user_metadata?.full_name || "Contributor",
-        commission_rate: uploadTutorialVideoUrl ? 90 : 70,
+        commission_rate: 70,
         tutorial_video_url: uploadTutorialVideoUrl,
         status: "under_review",
         is_approved: false,
@@ -790,39 +771,6 @@ python app.py # or npm run dev
     } finally {
       setUploadingProject(false);
     }
-  };
-
-  // Submit Video Tutorial for 90% Tier
-  const handleSubmitTutorialTier = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reqProject || !reqVideoUrl) {
-      toast.error("Please select a project and provide the tutorial video link.");
-      return;
-    }
-
-    setSubmittingTierReq(true);
-    setTimeout(() => {
-      const newReq = {
-        id: `tr-${Date.now()}`,
-        contributor_id: user?.id,
-        project_title: reqProject,
-        video_url: reqVideoUrl,
-        duration: reqDuration || "30 mins",
-        notes: reqNotes || "Full step-by-step code explanation and installation instructions.",
-        status: "pending",
-        commission_rate: 90,
-        submitted_at: "Just now",
-      };
-
-      setTutorialRequests([newReq, ...tutorialRequests]);
-      setSubmittingTierReq(false);
-      setReqVideoUrl("");
-      setReqDuration("");
-      setReqNotes("");
-      toast.success(
-        "Tutorial submitted! Our team will review your video within 24 hours. Once verified, your commission boosts to 90%."
-      );
-    }, 600);
   };
 
   // Community Question Submit
@@ -1888,27 +1836,6 @@ python app.py # or npm run dev
             <button
               type="button"
               onClick={() => {
-                setActiveTab("tutorial_tier");
-                setMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                activeTab === "tutorial_tier"
-                  ? "bg-primary text-primary-foreground shadow-xs font-semibold"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Video className="w-4 h-4 shrink-0" />
-                <span>90% Video Bonus</span>
-              </div>
-              <Badge className="bg-purple-500/20 text-purple-400 border border-purple-500/30 text-[10px] px-1 py-0">
-                +20%
-              </Badge>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
                 setActiveTab("reviews");
                 setMobileMenuOpen(false);
               }}
@@ -2167,26 +2094,26 @@ python app.py # or npm run dev
                 </Card>
               </div>
 
-              {/* 90% Tutorial Tier Callout Card */}
-              <div className="p-6 rounded-xl border border-purple-500/30 bg-gradient-to-r from-purple-500/10 via-card to-card flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              {/* Standard 70% Creator Royalty Banner */}
+              <div className="p-5 rounded-xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 via-card to-card flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="space-y-1 max-w-2xl">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
                     <Sparkles className="w-3.5 h-3.5" />
-                    MAX REVENUE TIER
+                    STANDARD 70% CREATOR ROYALTY
                   </div>
-                  <h3 className="text-lg font-bold text-foreground">
-                    Earn 90% Commission by adding a Step-by-Step Video Tutorial
+                  <h3 className="text-base sm:text-lg font-bold text-foreground">
+                    Keep 70% of Every Sale with Automated Weekly Payouts
                   </h3>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    Students learn much faster when they see how a project is coded from scratch. Record a screen recording explaining the architecture and installation to automatically qualify for 90% commission on every sale.
+                    Every project listed on ProjectbyAI earns a flat 70% direct royalty. Payouts are transferred automatically to your Bank Account or UPI ID every week with zero minimum withdrawal threshold.
                   </p>
                 </div>
                 <Button
-                  onClick={() => setActiveTab("tutorial_tier")}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shrink-0"
+                  onClick={() => setActiveTab("upload")}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shrink-0"
                 >
-                  <Video className="w-3.5 h-3.5 mr-1.5" />
-                  Submit Video for 90%
+                  <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
+                  Upload New Project
                 </Button>
               </div>
 
@@ -2343,9 +2270,7 @@ python app.py # or npm run dev
                         </tr>
                       ) : (
                         filteredProjects.map((p, idx) => {
-                          const hasVideo = !!p.tutorial_video_url;
-                          const earnRate = hasVideo ? 0.9 : 0.7;
-                          const cut = Math.round((p.price || 1499) * earnRate);
+                          const cut = Math.round((p.price || 1499) * 0.7);
 
                           return (
                             <tr key={p.slug || idx} className="hover:bg-muted/20 transition-colors">
@@ -2415,7 +2340,7 @@ python app.py # or npm run dev
                               </td>
 
                               <td className="py-3.5 px-4 font-bold text-emerald-500">
-                                ₹{cut} ({hasVideo ? "90%" : "70%"})
+                                ₹{cut} (70%)
                               </td>
 
                               <td className="py-3.5 px-4 text-foreground">
@@ -2427,16 +2352,9 @@ python app.py # or npm run dev
                               </td>
 
                               <td className="py-3.5 px-4">
-                                {hasVideo ? (
-                                  <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 text-[10px]">
-                                    <Video className="w-3 h-3 mr-1" />
-                                    90% Active
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="outline" className="text-muted-foreground text-[10px]">
-                                    70% Standard
-                                  </Badge>
-                                )}
+                                <Badge variant="outline" className="text-emerald-600 bg-emerald-500/10 border-emerald-500/20 text-[10px]">
+                                  70% Standard
+                                </Badge>
                               </td>
 
                               <td className="py-3.5 px-4 text-right">
@@ -2446,19 +2364,6 @@ python app.py # or npm run dev
                                       <Eye className="w-3.5 h-3.5" />
                                     </Button>
                                   </Link>
-                                  {!hasVideo && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        setReqProject(p.title);
-                                        setActiveTab("tutorial_tier");
-                                      }}
-                                      className="h-8 text-xs text-purple-400 border-purple-500/30 hover:bg-purple-500/10"
-                                    >
-                                      Upgrade 90%
-                                    </Button>
-                                  )}
                                 </div>
                               </td>
                             </tr>
@@ -2977,13 +2882,9 @@ python app.py # or npm run dev
                         <span>₹{platformFee30}</span>
                       </div>
 
-                      <div className="pt-2 border-t border-border mt-2 space-y-1">
-                        <div className="flex items-center justify-between text-purple-400 font-bold">
-                          <span>With 90% Tutorial Video:</span>
-                          <span>₹{contributorEarn90}</span>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground">
-                          You make an extra <strong className="text-foreground">+₹{contributorEarn90 - contributorEarn70}</strong> per sale!
+                      <div className="pt-2 border-t border-border mt-2">
+                        <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                          ✓ Standard 70% direct royalty paid out weekly to your UPI or Bank.
                         </p>
                       </div>
                     </div>
@@ -3285,185 +3186,7 @@ python app.py # or npm run dev
             </div>
           )}
 
-          {/* =============================================================================== */}
-          {/* TAB 5: 90% VIDEO TUTORIAL TIER (Upgrade Center) */}
-          {/* =============================================================================== */}
-          {activeTab === "tutorial_tier" && (
-            <div className="space-y-6">
-              {/* Header */}
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 text-xs font-semibold">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Creator Revenue Acceleration
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                  90% Video Tutorial Upgrade Tier
-                </h1>
-                <p className="text-sm text-muted-foreground max-w-2xl">
-                  Submit a step-by-step video explaining how you built the project from scratch. Once verified by admin, your royalty increases from 70% to 90% permanently.
-                </p>
-              </div>
-
-              {/* 3 Steps Guide Cards */}
-              <div className="grid sm:grid-cols-3 gap-4">
-                <Card className="p-4 border-border shadow-xs space-y-2">
-                  <div className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center text-xs">
-                    1
-                  </div>
-                  <h4 className="font-semibold text-sm text-foreground">Record Video Tutorial</h4>
-                  <p className="text-xs text-muted-foreground leading-normal">
-                    Record a 20–45 min screen recording walking through the folder structure, backend APIs, database models, and local installation steps.
-                  </p>
-                </Card>
-
-                <Card className="p-4 border-border shadow-xs space-y-2">
-                  <div className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center text-xs">
-                    2
-                  </div>
-                  <h4 className="font-semibold text-sm text-foreground">Upload & Share Link</h4>
-                  <p className="text-xs text-muted-foreground leading-normal">
-                    Upload your video as Unlisted on YouTube, Loom, or Google Drive, and paste the accessible link below.
-                  </p>
-                </Card>
-
-                <Card className="p-4 border-border shadow-xs space-y-2">
-                  <div className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center text-xs">
-                    3
-                  </div>
-                  <h4 className="font-semibold text-sm text-foreground">Admin Review & 90% Payout</h4>
-                  <p className="text-xs text-muted-foreground leading-normal">
-                    Our engineering team reviews your video within 24 hours. Once approved, your project earns 90% on every past & future sale!
-                  </p>
-                </Card>
-              </div>
-
-              {/* Submission Form */}
-              <Card className="p-6 border-border shadow-xs space-y-4">
-                <h3 className="font-semibold text-base text-foreground">
-                  Submit Tutorial Video to Admin
-                </h3>
-
-                <form onSubmit={handleSubmitTutorialTier} className="space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-muted-foreground">Select Project *</label>
-                      <select
-                        value={reqProject}
-                        onChange={(e) => setReqProject(e.target.value)}
-                        required
-                        className="w-full h-9 rounded-md border border-border bg-background px-3 text-xs text-foreground focus:outline-none"
-                      >
-                        <option value="">-- Choose from your projects --</option>
-                        {myProjects.map((p) => (
-                          <option key={p.title} value={p.title}>
-                            {p.title}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-muted-foreground">Approx. Duration</label>
-                      <Input
-                        placeholder="e.g. 35 mins"
-                        value={reqDuration}
-                        onChange={(e) => setReqDuration(e.target.value)}
-                        className="h-9 text-xs"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground">
-                      Video URL (YouTube Unlisted / Loom / Google Drive) *
-                    </label>
-                    <Input
-                      type="url"
-                      placeholder="https://youtu.be/..."
-                      value={reqVideoUrl}
-                      onChange={(e) => setReqVideoUrl(e.target.value)}
-                      required
-                      className="h-9 text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground">
-                      Notes for Admin Reviewer
-                    </label>
-                    <Textarea
-                      placeholder="Highlight key sections covered in the video (e.g. 0:00 Intro, 5:30 Database Setup, 18:20 ML Training, 30:00 Viva Questions)..."
-                      value={reqNotes}
-                      onChange={(e) => setReqNotes(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={submittingTierReq}
-                    className="bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs h-10 px-6"
-                  >
-                    <Send className="w-3.5 h-3.5 mr-1.5" />
-                    {submittingTierReq ? "Submitting Request..." : "Submit Video for 90% Review"}
-                  </Button>
-                </form>
-              </Card>
-
-              {/* Status List */}
-              <Card className="border-border shadow-xs overflow-hidden">
-                <div className="p-4 border-b border-border">
-                  <h4 className="font-semibold text-sm text-foreground">
-                    Submitted Tutorial Video Requests
-                  </h4>
-                </div>
-                <div className="divide-y divide-border">
-                  {tutorialRequests.length === 0 ? (
-                    <div className="py-8 text-center text-muted-foreground">
-                      <p className="text-sm">No tutorial video requests submitted yet.</p>
-                      <p className="text-xs text-muted-foreground mt-1">Submit your project walkthrough video above to unlock the 90% commission tier.</p>
-                    </div>
-                  ) : (
-                    tutorialRequests.map((tr) => (
-                      <div key={tr.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-foreground">{tr.project_title}</span>
-                            <span className="text-muted-foreground">({tr.duration})</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground truncate max-w-md">
-                            {tr.notes}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <Badge
-                            className={
-                              tr.status === "approved"
-                                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                                : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                            }
-                          >
-                            {tr.status === "approved" ? "90% Tier Active" : "Under Admin Review"}
-                          </Badge>
-                          <a
-                            href={tr.video_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs text-primary hover:underline flex items-center gap-1"
-                          >
-                            View Video <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </Card>
-            </div>
-          )}
-
-          {/* =============================================================================== */}
+                    {/* =============================================================================== */}
           {/* TAB 6: REVIEWS & RATINGS */}
           {/* =============================================================================== */}
           {activeTab === "reviews" && (
